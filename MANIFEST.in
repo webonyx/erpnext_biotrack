@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include erpnext_biotrack *.css
+recursive-include erpnext_biotrack *.csv
+recursive-include erpnext_biotrack *.html
+recursive-include erpnext_biotrack *.ico
+recursive-include erpnext_biotrack *.js
+recursive-include erpnext_biotrack *.json
+recursive-include erpnext_biotrack *.md
+recursive-include erpnext_biotrack *.png
+recursive-include erpnext_biotrack *.py
+recursive-include erpnext_biotrack *.svg
+recursive-include erpnext_biotrack *.txt
+recursive-exclude erpnext_biotrack *.pyc
