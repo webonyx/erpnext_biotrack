@@ -81,23 +81,23 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"erpnext_biotrack.tasks.all"
 # 	],
 # 	"daily": [
 # 		"erpnext_biotrack.tasks.daily"
 # 	],
-# 	"hourly": [
-# 		"erpnext_biotrack.tasks.hourly"
-# 	],
+	"hourly": [
+		"erpnext_biotrack.tasks.sync_biotrack"
+	]
 # 	"weekly": [
 # 		"erpnext_biotrack.tasks.weekly"
 # 	]
 # 	"monthly": [
 # 		"erpnext_biotrack.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------
