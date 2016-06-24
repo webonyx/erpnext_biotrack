@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from . import __version__ as app_version
 
 app_name = "erpnext_biotrack"
-app_title = "Erpnext Biotrack"
+app_title = "ERPNext Biotrack"
 app_publisher = "Webonyx"
 app_description = "Biotrack connector for ERPNext"
 app_icon = "octicon octicon-globe"
