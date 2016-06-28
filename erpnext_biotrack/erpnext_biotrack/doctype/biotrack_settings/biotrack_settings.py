@@ -19,4 +19,3 @@ class BiotrackSettings(Document):
 							raise_exception=BiotrackSetupError)
 
 	def validate_access(self): pass
-
