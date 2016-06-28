@@ -11,6 +11,18 @@ app_color = "green"
 app_email = "jared@webonyx.com"
 app_license = "MIT"
 
+fixtures = [
+	{
+		"doctype":"Custom Field",
+		"filters": [["fieldname", "in", (
+			"biotrack_employee_id",
+			"biotrack_transaction_id",
+			"biotrack_transaction_id_original",
+			"sync_with_biotrack"
+		)]]
+	}
+]
+
 # Includes in <head>
 # ------------------
 
