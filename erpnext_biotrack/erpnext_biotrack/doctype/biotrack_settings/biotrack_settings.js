@@ -13,7 +13,7 @@ frappe.ui.form.on('Biotrack Settings', {
 			)
 		}
 
-		cur_frm.add_custom_button(__("Biotrack Log"), function() {
+		cur_frm.add_custom_button('<span class="octicon octicon-info" aria-hidden="true"></span> ' + __("Biotrack Log"), function() {
 			frappe.set_route("List", "Biotrack Log");
 		});
 	}

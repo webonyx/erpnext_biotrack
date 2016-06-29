@@ -11,16 +11,12 @@ from .sync_employees import sync_employees
 
 @frappe.whitelist()
 def sync_biotrack():
-	"Enqueue longjob for syncing biotrack. Maybe only for production."
-	
-	# from frappe.tasks import scheduler_task
-	# scheduler_task.delay(site=frappe.local.site, event="hourly_long",
-	# 	handler="erpnext_biotrack.api.sync_biotrack_resources")
-	# frappe.msgprint(_("Queued for syncing. It may take a few minutes to an hour if this is your first sync."))
+	"Enqueue longjob for syncing biotrack."
+	from frappe.utils.background_jobs import enqueue
+	enqueue(sync_biotrack_resources)
 
-	sync_biotrack_resources()
+	frappe.msgprint(_("Queued for syncing. It may take a few minutes to an hour if this is your first sync."))
 
-@frappe.whitelist()
 def sync_biotrack_resources():
 	biotrack_settings = frappe.get_doc("Biotrack Settings")
 
