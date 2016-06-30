@@ -18,7 +18,7 @@
   "in_list_view": 0, 
   "insert_after": "user_id", 
   "label": "Biotrack Employee Id", 
-  "modified": "2016-06-28 11:52:12.987509", 
+  "modified": "2016-06-30 09:32:47.324293", 
   "name": "Employee-biotrack_employee_id", 
   "no_copy": 1, 
   "options": null, 
@@ -31,7 +31,7 @@
   "report_hide": 0, 
   "reqd": 0, 
   "search_index": 0, 
-  "unique": 0, 
+  "unique": 1, 
   "width": null
  }, 
  {
