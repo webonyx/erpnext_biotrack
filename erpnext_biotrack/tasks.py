@@ -19,7 +19,7 @@ def sync_biotrack():
 	except:
 		# Try this shit since rq is still in development branch
 		from frappe.tasks import scheduler_task
-		scheduler_task.delay(site=frappe.local.site, event="hourly_long",
+		scheduler_task.delay(site=frappe.local.site, event="all",
 							 handler="erpnext_biotrack.tasks.sync_biotrack_resources")
 
 	frappe.msgprint(_("Queued for syncing. It may take a few minutes to an hour if this is your first sync."))
