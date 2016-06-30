@@ -2,15 +2,13 @@ from __future__ import unicode_literals
 import frappe
 from datetime import date
 from frappe.exceptions import DoesNotExistError
-
+from frappe.defaults import get_defaults
 from .utils import make_biotrack_log
-from erpnext import get_default_company
-
 from biotrack_requests import do_request
 
 def sync_employees():
 	biotrack_employee_list = []
-	company = frappe.get_value("Biotrack Settings", None, 'company') or get_default_company()
+	company = frappe.get_value("Biotrack Settings", None, 'company') or get_defaults().get("company")
 
 	for biotrack_employee in get_biotrack_employees():
 		create_or_update_employee(biotrack_employee, company, biotrack_employee_list)
