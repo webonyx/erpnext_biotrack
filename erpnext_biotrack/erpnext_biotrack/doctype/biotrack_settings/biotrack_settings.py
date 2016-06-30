@@ -14,7 +14,7 @@ class BiotrackSettings(Document):
 			self.validate_access()
 
 	def validate_access_credentials(self):
-		if not (self.username and  self.get_password(raise_exception=False) and self.license_number):
+		if not (self.username and  self.password and self.license_number):
 			frappe.msgprint(_("Missing value for License number, username and password"),
 							raise_exception=BiotrackSetupError)
 
