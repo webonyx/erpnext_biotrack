@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from frappe.utils.background_jobs import enqueue
 from .exceptions import BiotrackError
 from .utils import disable_biotrack_sync_on_exception, make_biotrack_log
 from .sync_employees import sync_employees
@@ -13,7 +12,16 @@ from .sync_employees import sync_employees
 @frappe.whitelist()
 def sync_biotrack():
 	"Enqueue longjob for syncing biotrack."
-	enqueue(sync_biotrack_resources)
+
+	try:
+		from frappe.utils.background_jobs import enqueue
+		enqueue(sync_biotrack_resources)
+	except:
+		# Try this shit since rq is still in development branch
+		from frappe.tasks import scheduler_task
+		scheduler_task.delay(site=frappe.local.site, event="hourly_long",
+							 handler="erpnext_biotrack.tasks.sync_biotrack_resources")
+
 	frappe.msgprint(_("Queued for syncing. It may take a few minutes to an hour if this is your first sync."))
 
 def sync_biotrack_resources():
