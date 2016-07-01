@@ -8,9 +8,14 @@ from biotrack_requests import do_request
 
 def sync_employees():
 	biotrack_employee_list = []
-	company = frappe.get_value("Biotrack Settings", None, 'custom_company') or get_defaults().get("company")
+	biotrack_settings = frappe.get_doc("Biotrack Settings")
+	company = biotrack_settings.custom_company or get_defaults().get("company")
 
 	for biotrack_employee in get_biotrack_employees():
+		if biotrack_settings.skip_on_duplicate:
+			if frappe.get_value("Employee", {'employee_name': biotrack_employee.get("employee_name")}, 'name'):
+				continue
+
 		create_or_update_employee(biotrack_employee, company, biotrack_employee_list)
 
 	return len(biotrack_employee_list)
@@ -18,7 +23,7 @@ def sync_employees():
 def create_or_update_employee(biotrack_employee, company, biotrack_employee_list):
 	try:
 		employee = frappe.get_doc("Employee", {'biotrack_employee_id': biotrack_employee.get("employee_id")})
-		if not employee.get('sync_with_biotrack'):
+		if not employee.sync_with_biotrack:
 			return
 	except DoesNotExistError as e:
 		employee = frappe.get_doc({'doctype':'Employee'})
