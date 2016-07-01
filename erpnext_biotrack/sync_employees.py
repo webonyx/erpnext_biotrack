@@ -8,7 +8,7 @@ from biotrack_requests import do_request
 
 def sync_employees():
 	biotrack_employee_list = []
-	company = frappe.get_value("Biotrack Settings", None, 'company') or get_defaults().get("company")
+	company = frappe.get_value("Biotrack Settings", None, 'custom_company') or get_defaults().get("company")
 
 	for biotrack_employee in get_biotrack_employees():
 		create_or_update_employee(biotrack_employee, company, biotrack_employee_list)
