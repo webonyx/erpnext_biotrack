@@ -18,7 +18,15 @@ fixtures = [
 			"biotrack_employee_id",
 			"biotrack_transaction_id",
 			"biotrack_transaction_id_original",
-			"sync_with_biotrack"
+			"sync_with_biotrack",
+
+			"biotrack_warehouse",
+			"biotrack_room_id",
+			"biotrack_warehouse_location_id",
+			"biotrack_warehouse_transaction_id",
+			"biotrack_warehouse_transaction_id_original",
+			"biotrack_warehouse_is_plant_room",
+			"biotrack_warehouse_quarantine",
 		)]]
 	}
 ]
