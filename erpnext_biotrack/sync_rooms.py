@@ -23,14 +23,16 @@ def sync_with_check(biotrack_rooms, is_plant_room = True):
 	return len(synced)
 
 def create_room(biotrack_room, list):
+	company = get_default_company()
+
 	try:
 		warehouse = frappe.get_doc('Warehouse', {'biotrack_room_id': biotrack_room.get("roomid")})
 		if not warehouse.biotrack_warehouse_sync:
 			return
 	except DoesNotExistError as e:
 		warehouse = frappe.get_doc({'doctype':'Warehouse'})
-
-	company = get_default_company()
+		warehouse.set('biotrack_warehouse_sync', 1)
+		warehouse.set('company', company)
 
 	stock_group = frappe.db.get_value("Account", {"account_type": "Stock", "is_group": 1, "company": company})
 	if stock_group:
@@ -41,9 +43,7 @@ def create_room(biotrack_room, list):
 			"biotrack_warehouse_transaction_id": biotrack_room.get("transactionid"),
 			"biotrack_warehouse_transaction_id_original": biotrack_room.get("transactionid_original"),
 			"biotrack_warehouse_is_plant_room": biotrack_room.get("is_plant_room") or 0,
-			"biotrack_warehouse_quarantine": biotrack_room.get("quarantine") or 0,
-			"biotrack_warehouse_sync": 1,
-			"company": company
+			"biotrack_warehouse_quarantine": biotrack_room.get("quarantine") or 0
 		})
 
 		warehouse.flags.ignore_permissions = True
