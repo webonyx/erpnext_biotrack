@@ -21,6 +21,7 @@ fixtures = [
 			"sync_with_biotrack",
 
 			"biotrack_warehouse",
+			"biotrack_warehouse_sync",
 			"biotrack_room_id",
 			"biotrack_warehouse_location_id",
 			"biotrack_warehouse_transaction_id",
@@ -105,15 +106,15 @@ scheduler_events = {
 # 	"all": [
 # 		"erpnext_biotrack.tasks.all"
 # 	],
-# 	"daily": [
-# 		"erpnext_biotrack.tasks.daily"
-# 	],
+	"daily": [
+		"erpnext_biotrack.tasks.daily"
+	],
 	"hourly": [
-		"erpnext_biotrack.tasks.sync_biotrack"
+		"erpnext_biotrack.tasks.hourly"
+	],
+	"weekly": [
+		"erpnext_biotrack.tasks.weekly"
 	]
-# 	"weekly": [
-# 		"erpnext_biotrack.tasks.weekly"
-# 	]
 # 	"monthly": [
 # 		"erpnext_biotrack.tasks.monthly"
 # 	]

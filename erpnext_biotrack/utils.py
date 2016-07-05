@@ -7,6 +7,7 @@ import json
 import frappe
 from .exceptions import BiotrackSetupError
 from .exceptions import BiotrackError
+from frappe.defaults import get_defaults
 
 def get_biotrack_settings():
 	d = frappe.get_doc("Biotrack Settings")
@@ -62,3 +63,9 @@ name=None, request_data={}):
 
 		log.save(ignore_permissions=True)
 		frappe.db.commit()
+
+def get_default_company():
+	return  frappe.get_value("Biotrack Settings", None, 'custom_company') or get_defaults().get("company")
+
+def skip_on_duplicating():
+	return  frappe.get_value("Biotrack Settings", None, 'skip_on_duplicate') or False
