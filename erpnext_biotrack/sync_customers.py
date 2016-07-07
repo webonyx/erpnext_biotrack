@@ -54,6 +54,7 @@ def create_customer(biotrack_customer, synced_list):
 	elif cint(biotrack_customer.get("processor")):
 		add_tag("Customer", customer.name, "processor")
 
+	add_tag("Customer", customer.name, "Biotrack")
 	frappe.db.commit()
 	synced_list.append(customer.biotrack_customer_ubi)
 
