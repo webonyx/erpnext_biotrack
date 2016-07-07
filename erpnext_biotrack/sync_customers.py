@@ -35,8 +35,8 @@ def create_customer(biotrack_customer, synced_list):
 			"customer_type": _("Company"),
 			"biotrack_customer_sync": 1,
 			"biotrack_customer_ubi": biotrack_customer.get("ubi"),
-			"biotrack_customer_location": biotrack_customer.get("location"),
-			"biotrack_customer_location_type": biotrack_customer.get("locationtype"),
+			"biotrack_customer_license": biotrack_customer.get("location"),
+			"biotrack_customer_license_type": biotrack_customer.get("locationtype"),
 			"biotrack_customer_transaction_id": biotrack_customer.get("transactionid"),
 			"biotrack_customer_transaction_id_original": biotrack_customer.get("transactionid_original"),
 		})

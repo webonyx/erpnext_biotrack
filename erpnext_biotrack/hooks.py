@@ -31,8 +31,8 @@ fixtures = [
 
 			"biotrack_customer_sync",
 			"biotrack_customer_ubi",
-			"biotrack_customer_location",
-			"biotrack_customer_location_type",
+			"biotrack_customer_license",
+			"biotrack_customer_license_type",
 			"biotrack_customer_transaction_id",
 			"biotrack_customer_transaction_id_original",
 		)]]
