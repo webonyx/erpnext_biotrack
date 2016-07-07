@@ -13,11 +13,14 @@ def do_request(action, data=None):
 		data = frappe._dict()
 
 	biotrack_settings = get_biotrack_settings()
-	ensure_valid_session(biotrack_settings)
 
 	data['action'] = action
 	data['API'] = __api_version__
-	data['sessionid'] = biotrack_settings.session_id
+	data['username'] = biotrack_settings.username
+	data['password'] = biotrack_settings.password
+	data['license_number'] = biotrack_settings.license_number
+
+	data['nosession'] = 1
 
 	s = get_request_session()
 	r = s.post(__api_endpoint__, data=json.dumps(data), headers=get_header())
@@ -28,11 +31,10 @@ def do_request(action, data=None):
     # {"errorcode": "62", "success": 0, "error": "The current session does not possess access to the sync_employeess privilege."}
 	# {"errorcode": "60", "success": 0, "error": "Invalid session."}
 
-	return result
+	if not result.get('success'):
+		frappe.throw(result.get('error'), BiotrackError)
 
-def ensure_valid_session(biotrack_settings):
-	if not biotrack_settings.session_id:
-		biotrack_settings.session_id = login()
+	return result
 
 def login():
 	biotrack_settings = frappe.get_doc("Biotrack Settings")

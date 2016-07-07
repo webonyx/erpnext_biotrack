@@ -28,6 +28,13 @@ fixtures = [
 			"biotrack_warehouse_transaction_id_original",
 			"biotrack_warehouse_is_plant_room",
 			"biotrack_warehouse_quarantine",
+
+			"biotrack_customer_sync",
+			"biotrack_customer_ubi",
+			"biotrack_customer_location",
+			"biotrack_customer_location_type",
+			"biotrack_customer_transaction_id",
+			"biotrack_customer_transaction_id_original",
 		)]]
 	}
 ]

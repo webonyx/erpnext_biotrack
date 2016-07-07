@@ -8,6 +8,7 @@ from frappe import _
 from .exceptions import BiotrackError
 from .utils import disable_biotrack_sync_on_exception, make_biotrack_log
 from .sync_employees import sync_employees
+from .sync_customers import sync as sync_customers
 from .sync_rooms import sync as sync_rooms, sync_inventory
 
 @frappe.whitelist()
@@ -39,12 +40,13 @@ def sync_biotrack_resources():
 			frappe.local.form_dict.count_dict["employees"] = sync_employees()
 			frappe.local.form_dict.count_dict["plant_rooms"] = sync_rooms()
 			frappe.local.form_dict.count_dict["inventory_rooms"] = sync_inventory()
+			frappe.local.form_dict.count_dict["customers"] = sync_customers()
 			# todo
 
 			frappe.db.set_value("Biotrack Settings", None, "last_sync_datetime", now_time)
 			
 			make_biotrack_log(title="Sync Completed", status="Success", method=frappe.local.form_dict.cmd,
-				message= "Updated {employees} employee(s), {plant_rooms} plant rooms(s), {inventory_rooms} inventory rooms(s)".format(**frappe.local.form_dict.count_dict))
+				message= "Updated {employees} employee(s), {customers} customer(s), {plant_rooms} plant rooms(s), {inventory_rooms} inventory rooms(s)".format(**frappe.local.form_dict.count_dict))
 
 		except Exception as e:
 			make_biotrack_log(title="sync has terminated", status="Error", method="sync_biotrack_resources",

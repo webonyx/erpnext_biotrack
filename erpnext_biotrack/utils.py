@@ -8,6 +8,7 @@ import frappe
 from .exceptions import BiotrackSetupError
 from .exceptions import BiotrackError
 from frappe.defaults import get_defaults
+from frappe.desk.tags import DocTags
 
 def get_biotrack_settings():
 	d = frappe.get_doc("Biotrack Settings")
@@ -69,3 +70,8 @@ def get_default_company():
 
 def skip_on_duplicating():
 	return  frappe.get_value("Biotrack Settings", None, 'skip_on_duplicate') or False
+
+def add_tag(doctype, name, tag):
+	DocTags(doctype).add(name, tag)
+
+	return tag
