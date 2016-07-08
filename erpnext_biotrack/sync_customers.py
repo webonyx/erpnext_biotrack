@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.exceptions import DoesNotExistError
-from .utils import make_biotrack_log
+from frappe.utils import cstr
 from biotrack_requests import do_request
 from frappe.utils.nestedset import get_root_of
 
@@ -84,32 +84,37 @@ def get_or_create_group(name):
 	return group
 
 def create_customer_address(customer, biotrack_customer):
-	address1 = biotrack_customer.get("address1")
-	if address1.strip() == '':
+	address1 = cstr(biotrack_customer.get("address1")).strip()
+
+	if address1 == '':
 		return
 
-	if frappe.db.exists({'doctype': 'Address', 'customer_name': customer.customer_name, 'address_line1': address1}):
-		return
+	address_type = _("Billing")
+	name = cstr(customer.customer_name).strip() + "-" + address_type
 
 	try:
-		frappe.get_doc({
-			"doctype": "Address",
-			"address_title": customer.customer_name,
-			"address_type": _("Billing"),
-			"address_line1": address1,
-			"address_line2": biotrack_customer.get("address2"),
-			"city": biotrack_customer.get("city") or "City",
-			"state": biotrack_customer.get("state"),
-			"pincode": biotrack_customer.get("zip"),
-			"country": biotrack_customer.get("country") or frappe.defaults.get_defaults().get('country'),
-			"customer": customer.name,
-			"customer_name": customer.customer_name
-		}).insert()
+		address = frappe.get_doc('Address', name)
+	except DoesNotExistError as e:
+		address = frappe.get_doc(
+			{
+				"doctype": "Address",
+				"address_title": customer.customer_name,
+				"address_type": address_type,
+				"customer": customer.name,
+				"customer_name": customer.customer_name
+			}
+		)
 
-	except Exception as e:
-		make_biotrack_log(title=e.message, status="Error", method="create_customer_address",
-						  message=frappe.get_traceback(),
-						  request_data=biotrack_customer, exception=True)
+	address.update({
+		"address_line1": address1,
+		"address_line2": biotrack_customer.get("address2"),
+		"city": biotrack_customer.get("city") or "City",
+		"state": biotrack_customer.get("state"),
+		"pincode": biotrack_customer.get("zip"),
+		"country": biotrack_customer.get("country") or frappe.defaults.get_defaults().get('country'),
+	})
+
+	address.save()
 
 
 def get_biotrack_vendors():
