@@ -113,6 +113,6 @@ def create_customer_address(customer, biotrack_customer):
 
 
 def get_biotrack_vendors():
-	data = do_request('sync_vendor')
+	data = do_request('sync_vendor', {'active': 1})
 	return data.get('vendor') if bool(data.get('success')) else []
 
