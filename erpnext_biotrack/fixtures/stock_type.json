@@ -1,0 +1,281 @@
+[
+ {
+  "amended_from": null, 
+  "docstatus": 1, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 16:46:47.351335", 
+  "name": "Kief", 
+  "type_name": "Kief", 
+  "type_no": "5"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 16:50:09.033948", 
+  "name": "Flower", 
+  "type_name": "Flower", 
+  "type_no": "6"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 16:54:04.724269", 
+  "name": "Clone", 
+  "type_name": "Clone", 
+  "type_no": "7"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:08:10.384924", 
+  "name": "Other Plant Material", 
+  "type_name": "Other Plant Material", 
+  "type_no": "9"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:08:23.009578", 
+  "name": "Seed", 
+  "type_name": "Seed", 
+  "type_no": "10"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:08:36.690833", 
+  "name": "Plant Tissue", 
+  "type_name": "Plant Tissue", 
+  "type_no": "11"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:08:54.702461", 
+  "name": "Mature Plant", 
+  "type_name": "Mature Plant", 
+  "type_no": "12"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:09:18.054047", 
+  "name": "Flower Lot", 
+  "type_name": "Flower Lot", 
+  "type_no": "13"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:09:30.601886", 
+  "name": "Other Plant Material Lot", 
+  "type_name": "Other Plant Material Lot", 
+  "type_no": "14"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:09:41.770849", 
+  "name": "Bubble Hash", 
+  "type_name": "Bubble Hash", 
+  "type_no": "15"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:09:54.680073", 
+  "name": "Hash", 
+  "type_name": "Hash", 
+  "type_no": "16"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:10:05.737511", 
+  "name": "Hydrocarbon Wax", 
+  "type_name": "Hydrocarbon Wax", 
+  "type_no": "17"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:10:16.764032", 
+  "name": "CO2 Hash Oil", 
+  "type_name": "CO2 Hash Oil", 
+  "type_no": "18"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:10:31.025047", 
+  "name": "Food Grade Solvent Extract", 
+  "type_name": "Food Grade Solvent Extract", 
+  "type_no": "19"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:10:45.286317", 
+  "name": "Infused Dairy Butter or Fat in Solid Form", 
+  "type_name": "Infused Dairy Butter or Fat in Solid Form", 
+  "type_no": "20"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:10:58.049041", 
+  "name": "Infused Cooking Oil", 
+  "type_name": "Infused Cooking Oil", 
+  "type_no": "21"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:11:22.235446", 
+  "name": "Solid Marijuana Infused Edible", 
+  "type_name": "Solid Marijuana Infused Edible", 
+  "type_no": "22"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:11:34.460119", 
+  "name": "Liquid Marijuana Infused Edible", 
+  "type_name": "Liquid Marijuana Infused Edible", 
+  "type_no": "23"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:11:47.821621", 
+  "name": "Marijuana Extract for Inhalation", 
+  "type_name": "Marijuana Extract for Inhalation", 
+  "type_no": "24"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:12:01.808314", 
+  "name": "Marijuana Infused Topicals", 
+  "type_name": "Marijuana Infused Topicals", 
+  "type_no": "25"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:12:13.807551", 
+  "name": "Sample Jar", 
+  "type_name": "Sample Jar", 
+  "type_no": "26"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:12:22.412734", 
+  "name": "Waste", 
+  "type_name": "Waste", 
+  "type_no": "27"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:12:40.153285", 
+  "name": "Usable Marijuana", 
+  "type_name": "Usable Marijuana", 
+  "type_no": "28"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:12:51.906244", 
+  "name": "Wet Flower", 
+  "type_name": "Wet Flower", 
+  "type_no": "29"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:13:03.096323", 
+  "name": "Marijuana Mix", 
+  "type_name": "Marijuana Mix", 
+  "type_no": "30"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:13:13.510802", 
+  "name": "Marijuana Mix Packaged", 
+  "type_name": "Marijuana Mix Packaged", 
+  "type_no": "31"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:13:26.792044", 
+  "name": "Marijuana Mix Infused", 
+  "type_name": "Marijuana Mix Infused", 
+  "type_no": "32"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:13:40.793960", 
+  "name": "Capsule", 
+  "type_name": "Capsule", 
+  "type_no": "34"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:14:47.279633", 
+  "name": "Tincture", 
+  "type_name": "Tincture", 
+  "type_no": "35"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:15:16.030973", 
+  "name": "Transdermal Patch", 
+  "type_name": "Transdermal Patch", 
+  "type_no": "36"
+ }, 
+ {
+  "amended_from": null, 
+  "docstatus": 0, 
+  "doctype": "Stock Type", 
+  "modified": "2016-07-10 17:15:35.385194", 
+  "name": "Suppository", 
+  "type_name": "Suppository", 
+  "type_no": "37"
+ }
+]

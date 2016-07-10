@@ -36,7 +36,8 @@ fixtures = [
 			"biotrack_customer_transaction_id",
 			"biotrack_customer_transaction_id_original",
 		)]]
-	}
+	},
+	'Stock Type'
 ]
 
 # Includes in <head>
