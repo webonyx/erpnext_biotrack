@@ -1,0 +1,26 @@
+[
+ {
+  "constant": "1", 
+  "docstatus": 0, 
+  "doctype": "Stock Status", 
+  "modified": "2016-07-10 19:14:47.908706", 
+  "name": "1", 
+  "status_name": "Scheduled for Destruction"
+ }, 
+ {
+  "constant": "2", 
+  "docstatus": 0, 
+  "doctype": "Stock Status", 
+  "modified": "2016-07-10 19:14:32.780364", 
+  "name": "2", 
+  "status_name": "Scheduled for Transport"
+ }, 
+ {
+  "constant": "3", 
+  "docstatus": 0, 
+  "doctype": "Stock Status", 
+  "modified": "2016-07-10 19:15:18.607198", 
+  "name": "3", 
+  "status_name": "In Transport"
+ }
+]

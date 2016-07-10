@@ -35,9 +35,14 @@ fixtures = [
 			"biotrack_customer_license_type",
 			"biotrack_customer_transaction_id",
 			"biotrack_customer_transaction_id_original",
+
+			"biotrack_inventory_id",
+			"biotrack_stock_type",
+			"biotrack_stock_statuses",
 		)]]
 	},
-	'Stock Type'
+	'Stock Type',
+	'Stock Status'
 ]
 
 # Includes in <head>
