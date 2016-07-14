@@ -5,7 +5,7 @@ default_stock_warehouse_name = "Bulk Inventory room"
 
 
 def is_training_mode():
-	return int(frappe.get_value("Biotrack Settings", None, 'is_training')) or 0
+	return int(frappe.get_value("BioTrack Settings", None, 'is_training')) or 0
 
 
 def get_default_stock_warehouse():

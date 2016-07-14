@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 import unittest
 
-# test_records = frappe.get_test_records('Biotrack Log')
+# test_records = frappe.get_test_records('BioTrack Log')
 
 class TestBiotrackLog(unittest.TestCase):
 	pass

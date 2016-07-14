@@ -30,7 +30,7 @@ def sync_biotrack():
 
 
 def sync_biotrack_resources():
-	biotrack_settings = frappe.get_doc("Biotrack Settings")
+	biotrack_settings = frappe.get_doc("BioTrack Settings")
 
 	make_biotrack_log(title="Sync Job Queued", status="Queued", method=frappe.local.form_dict.cmd,
 					  message="Sync Job Queued")
@@ -47,7 +47,7 @@ def sync_biotrack_resources():
 			frappe.local.form_dict.count_dict["customers"] = sync_customers()
 			# todo
 
-			frappe.db.set_value("Biotrack Settings", None, "last_sync_datetime", now_time)
+			frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", now_time)
 
 			message="Updated {employees} employee(s), " \
 					  "{customers} customer(s), " \
@@ -68,9 +68,9 @@ def sync_biotrack_resources():
 			)
 
 	else:
-		message=_("""Biotrack connector is not enabled""")
+		message=_("""BioTrack connector is not enabled""")
 		make_biotrack_log(
-			title="Biotrack connector is disabled",
+			title="BioTrack connector is disabled",
 			status="Error",
 			method="sync_biotrack_resources",
 			message=message,
@@ -103,7 +103,7 @@ def weekly():
 
 
 def sync_if(schedule, default='Daily'):
-	schedule_config = frappe.get_value("Biotrack Settings", None, 'schedule_in') or default
+	schedule_config = frappe.get_value("BioTrack Settings", None, 'schedule_in') or default
 
 	if schedule_config == schedule:
 		sync_biotrack()

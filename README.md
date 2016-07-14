@@ -1,10 +1,10 @@
-## ERPNext Biotrack
+## ERPNext BioTrack
 
-Biotrack connector for ERPNext
+BioTrack connector for ERPNext
 
 #### Settings
 
-* Desktop > Explore > Setup > Integrations > Biotrack Settings
+* Desktop > Explore > Setup > Integrations > BioTrack Settings
 
 #### License
 

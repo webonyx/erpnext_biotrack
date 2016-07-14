@@ -37,9 +37,9 @@ def login():
 
 	if not rs.get('success'):
 		disable_biotrack_sync_on_exception()
-		frappe.throw(_("Biotrack authentication failed. {0}".format(rs.get('error'))), BiotrackError)
+		frappe.throw(_("BioTrack authentication failed. {0}".format(rs.get('error'))), BiotrackError)
 
-	biotrack_settings = frappe.get_doc("Biotrack Settings")
+	biotrack_settings = frappe.get_doc("BioTrack Settings")
 	biotrack_settings.session_id = rs.get('sessionid')
 	biotrack_settings.session_time = datetime.fromtimestamp(rs.get('time'))
 	biotrack_settings.save()

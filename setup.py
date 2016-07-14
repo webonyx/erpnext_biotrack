@@ -15,7 +15,7 @@ requirements = parse_requirements("requirements.txt", session="")
 setup(
 	name='erpnext_biotrack',
 	version=version,
-	description='Biotrack connector for ERPNext',
+	description='BioTrack connector for ERPNext',
 	author='Webonyx',
 	author_email='jared@webonyx.com',
 	packages=find_packages(),

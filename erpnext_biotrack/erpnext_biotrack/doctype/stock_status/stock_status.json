@@ -71,7 +71,7 @@
  "max_attachments": 0, 
  "modified": "2016-07-10 19:17:20.688231", 
  "modified_by": "Administrator", 
- "module": "ERPNext Biotrack", 
+ "module": "ERPNext BioTrack",
  "name": "Stock Status", 
  "name_case": "", 
  "owner": "Administrator", 

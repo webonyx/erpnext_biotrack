@@ -149,8 +149,8 @@
  "max_attachments": 0, 
  "modified": "2016-06-27 06:34:16.417805", 
  "modified_by": "Administrator", 
- "module": "ERPNext Biotrack", 
- "name": "Biotrack Log", 
+ "module": "ERPNext BioTrack",
+ "name": "BioTrack Log",
  "name_case": "", 
  "owner": "Administrator", 
  "permissions": [

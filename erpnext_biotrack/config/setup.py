@@ -9,8 +9,8 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Biotrack Settings",
-					"description": _("Connect Biotrack with ERPNext"),
+					"name": "BioTrack Settings",
+					"description": _("Connect BioTrack with ERPNext"),
 					"hide_count": True
 				}
 			]

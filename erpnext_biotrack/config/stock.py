@@ -9,7 +9,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Stock Type",
-					"description": _("Biotrack Inventory Type"),
+					"description": _("BioTrack Inventory Type"),
 				}
 			]
 		},

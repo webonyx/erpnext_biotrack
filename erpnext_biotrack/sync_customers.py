@@ -14,7 +14,7 @@ def sync():
 	return len(synced_list)
 
 def create_or_update_customer(biotrack_customer, synced_list):
-	# biotrack_settings = frappe.get_doc("Biotrack Settings", "Biotrack Settings")
+	# biotrack_settings = frappe.get_doc("BioTrack Settings", "BioTrack Settings")
 
 	try:
 		customer = frappe.get_doc('Customer', {'customer_name': biotrack_customer.get("name")})

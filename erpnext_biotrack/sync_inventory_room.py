@@ -13,7 +13,7 @@ def sync():
 
 	# Bulk Inventory room
 	if not frappe.db.exists('Warehouse', {'warehouse_name': default_stock_warehouse_name}):
-		under_account = frappe.get_value('Biotrack Settings', None, 'inventory_room_parent_account')
+		under_account = frappe.get_value('BioTrack Settings', None, 'inventory_room_parent_account')
 		warehouse = frappe.get_doc({
 			'doctype': 'Warehouse',
 			'company': get_default_company(),
