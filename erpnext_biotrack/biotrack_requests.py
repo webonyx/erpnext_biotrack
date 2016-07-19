@@ -9,8 +9,8 @@ from .config import is_training_mode
 from frappe.utils import get_request_session
 from . import __api_version__, __api_endpoint__
 
-def do_request(action, data=None):
 
+def do_request(action, data=None):
 	data = build_action_data(action, data)
 
 	s = get_request_session()
@@ -18,14 +18,15 @@ def do_request(action, data=None):
 	r.raise_for_status()
 
 	result = r.json()
-    #  todo handle errors
-    # {"errorcode": "62", "success": 0, "error": "The current session does not possess access to the sync_employeess privilege."}
+	#  todo handle errors
+	# {"errorcode": "62", "success": 0, "error": "The current session does not possess access to the sync_employeess privilege."}
 	# {"errorcode": "60", "success": 0, "error": "Invalid session."}
 
 	if not result.get('success'):
 		frappe.throw(result.get('error'), BiotrackError)
 
 	return result
+
 
 def login():
 	s = get_request_session()
@@ -46,10 +47,12 @@ def login():
 
 	return biotrack_settings
 
+
 def get_headers():
 	return {'Content-Type': 'application/json'}
 
-def build_action_data(action, data = None):
+
+def build_action_data(action, data=None):
 	if not data:
 		data = frappe._dict()
 

@@ -129,6 +129,7 @@ def fix_duplicate(warehouse, is_plant_room=0):
 	if not frappe.db.exists('Warehouse', name):
 		return
 
+	# todo use de_duplicate helper instead
 	for index in range(1, 11):
 		warehouse_name = '{0} {1}'.format(warehouse.warehouse_name, index)
 		name = warehouse_name + suffix

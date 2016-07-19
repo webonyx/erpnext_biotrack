@@ -10,15 +10,14 @@ def get_data():
 					"type": "doctype",
 					"name": "Stock Type",
 					"description": _("BioTrack Inventory Type"),
-				}
-			]
-		},
-		{
-			"label": _("Stock Transactions"),
-			"items": [
+				},
 				{
 					"type": "doctype",
 					"name": "Stock Status",
+				},
+				{
+					"type": "doctype",
+					"name": "Strain",
 				}
 			]
 		}

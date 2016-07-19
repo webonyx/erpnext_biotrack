@@ -20,6 +20,7 @@ def sync_employees():
 
 	return len(biotrack_employee_list)
 
+
 def create_or_update_employee(biotrack_employee, company, biotrack_employee_list):
 	try:
 		employee = frappe.get_doc("Employee", {'biotrack_employee_id': biotrack_employee.get("employee_id")})
@@ -52,6 +53,7 @@ def create_or_update_employee(biotrack_employee, company, biotrack_employee_list
 	except Exception as e:
 		make_biotrack_log(title=e.message, status="Error", method="create_employee", message=frappe.get_traceback(),
 						  request_data=biotrack_employee, exception=True)
+
 
 def get_biotrack_employees():
 	data = do_request('sync_employee', {'active': 1})

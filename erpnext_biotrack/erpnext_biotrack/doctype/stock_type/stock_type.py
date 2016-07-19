@@ -11,3 +11,7 @@ class StockType(Document):
 		"""set name as type_name"""
 		if not self.name:
 			self.name = self.type_name
+
+
+def find_by_code(code):
+	return frappe.db.get_value("Stock Type", {"type_no": code}, "type_name")

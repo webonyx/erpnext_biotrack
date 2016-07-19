@@ -1,0 +1,7 @@
+execute:frappe.delete_doc("DocType", "Biotrack Settings")
+execute:frappe.delete_doc("DocType", "Biotrack Log")
+execute:frappe.db.sql("DROP TABLE IF EXISTS `Biotrack Log`")
+execute:frappe.db.sql("UPDATE `tabSingles` SET value='BioTrack Settings' WHERE doctype='Biotrack Settings' AND field='name'")
+execute:frappe.db.sql("UPDATE `tabSingles` SET doctype='BioTrack Settings' WHERE doctype='Biotrack Settings'")
+execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_settings')
+execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_log')
