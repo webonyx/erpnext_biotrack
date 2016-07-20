@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from . import __version__ as app_version
 
 app_name = "erpnext_biotrack"
 app_title = "ERPNext BioTrack"
@@ -88,7 +87,7 @@ fixtures = [
 # ------------
 
 # before_install = "erpnext_biotrack.install.before_install"
-# after_install = "erpnext_biotrack.install.after_install"
+after_install = "erpnext_biotrack.install.after_install"
 
 # Desk Notifications
 # ------------------

@@ -11,6 +11,7 @@ from .sync_employees import sync_employees
 from .sync_customers import sync as sync_customers
 import sync_plant_room
 import sync_inventory_room
+import sync_inventory
 
 
 @frappe.whitelist()
@@ -31,7 +32,6 @@ def sync_biotrack():
 
 def sync_biotrack_resources():
 	biotrack_settings = frappe.get_doc("BioTrack Settings")
-
 	make_biotrack_log(title="Sync Job Queued", status="Queued", method=frappe.local.form_dict.cmd,
 					  message="Sync Job Queued")
 
@@ -39,12 +39,12 @@ def sync_biotrack_resources():
 		try:
 			now_time = frappe.utils.now()
 			validate_biotrack_settings(biotrack_settings)
-			frappe.local.form_dict.count_dict = {}
-
-			frappe.local.form_dict.count_dict["employees"] = sync_employees()
-			frappe.local.form_dict.count_dict["plant_rooms"] = sync_plant_room.sync()
-			frappe.local.form_dict.count_dict["inventory_rooms"] = sync_inventory_room.sync()
-			frappe.local.form_dict.count_dict["customers"] = sync_customers()
+			count_dict = {}
+			count_dict["employees"] = sync_employees()
+			count_dict["plant_rooms"] = sync_plant_room.sync()
+			count_dict["inventory_rooms"] = sync_inventory_room.sync()
+			count_dict["customers"] = sync_customers()
+			count_dict["inventories"] = sync_inventory.sync()
 			# todo
 
 			frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", now_time)
@@ -52,8 +52,9 @@ def sync_biotrack_resources():
 			message="Updated {employees} employee(s), " \
 					  "{customers} customer(s), " \
 					  "{plant_rooms} plant rooms(s), " \
-					  "{inventory_rooms} inventory rooms(s)" \
-				.format(**frappe.local.form_dict.count_dict)
+					  "{inventory_rooms} inventory rooms(s), " \
+					  "{inventories} inventories" \
+				.format(**count_dict)
 
 			make_biotrack_log(title="Sync Completed", status="Success", method=frappe.local.form_dict.cmd, message=message)
 
