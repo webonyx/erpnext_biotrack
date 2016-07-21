@@ -12,8 +12,9 @@ app_license = "MIT"
 
 fixtures = [
 	{
-		"doctype":"Custom Field",
+		"doctype": "Custom Field",
 		"filters": [["fieldname", "in", (
+			"external_id", # Item Group for inventory type
 			"biotrack_employee_id",
 			"biotrack_transaction_id",
 			"biotrack_transaction_id_original",
@@ -35,7 +36,6 @@ fixtures = [
 			"biotrack_customer_transaction_id",
 			"biotrack_customer_transaction_id_original",
 
-			"biotrack_inventory_type",
 			"biotrack_inventory_status",
 
 			"biotrack_stock_section_break",
@@ -47,7 +47,14 @@ fixtures = [
 			"biotrack_stock_transaction_id_original",
 		)]]
 	},
-	'Stock Type',
+	{
+		"doctype": "Item Group",
+		"filters": [
+			{
+				"parent_item_group": "WA State Classifications"
+			}
+		]
+	},
 	'Stock Status',
 	'BioTrack Settings'
 ]
@@ -123,9 +130,9 @@ after_install = "erpnext_biotrack.install.after_install"
 # ---------------
 
 scheduler_events = {
-# 	"all": [
-# 		"erpnext_biotrack.tasks.all"
-# 	],
+	# 	"all": [
+	# 		"erpnext_biotrack.tasks.all"
+	# 	],
 	"daily": [
 		"erpnext_biotrack.tasks.daily"
 	],
@@ -135,9 +142,9 @@ scheduler_events = {
 	"weekly": [
 		"erpnext_biotrack.tasks.weekly"
 	]
-# 	"monthly": [
-# 		"erpnext_biotrack.tasks.monthly"
-# 	]
+	# 	"monthly": [
+	# 		"erpnext_biotrack.tasks.monthly"
+	# 	]
 }
 
 # Testing
@@ -151,4 +158,3 @@ scheduler_events = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "erpnext_biotrack.event.get_events"
 # }
-

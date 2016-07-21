@@ -8,3 +8,4 @@ execute:frappe.db.sql("UPDATE `tabSingles` SET doctype='BioTrack Settings' WHERE
 execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_settings')
 execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_log')
 erpnext_biotrack.patches.create_weight_uom
+erpnext_biotrack.patches.install_inventory_type_fixtures

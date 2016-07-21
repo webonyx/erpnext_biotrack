@@ -22,6 +22,9 @@ def sync():
 
 
 def sync_stock(biotrack_inventory, is_plant=0):
+	# if not biotrack_inventory.get("productname"):
+	# 	return False
+
 	try:
 		stock_entry = frappe.get_doc("Stock Entry", {
 			"biotrack_stock_external_id": biotrack_inventory.get("id"),
@@ -46,10 +49,12 @@ def sync_stock(biotrack_inventory, is_plant=0):
 			"biotrack_stock_transaction_id_original": biotrack_inventory.get("transactionid_original")
 		})
 
-	inventory_type = find_by_code(biotrack_inventory.get("inventorytype"))
-	if not inventory_type:
-		make_biotrack_log(title="Invalid inventory data", status="Error", method="sync_stock",
-						  message="inventorytype '%s' is invalid".format(biotrack_inventory.get("inventorytype")),
+	# inventory type
+	item_group = frappe.get_doc("Item Group", {"external_id": biotrack_inventory.get("inventorytype"),
+											   "parent_item_group": "WA State Classifications"})
+	if not item_group:
+		make_biotrack_log(title="Invalid inventory type", status="Error", method="sync_stock",
+						  message="inventorytype '%s' is not found".format(biotrack_inventory.get("inventorytype")),
 						  request_data=biotrack_inventory)
 		return
 
@@ -60,48 +65,74 @@ def sync_stock(biotrack_inventory, is_plant=0):
 		from_warehouse = frappe.get_doc("Warehouse", {"biotrack_room_id": biotrack_inventory.get("currentroom"),
 													  "biotrack_warehouse_is_plant_room": is_plant})
 
-	# product (Item) mapping
-	if biotrack_inventory.get("productname"):
-		item = make_item(biotrack_inventory.get("productname"), {
-			"is_stock_item": 1,
-			"stock_uom": "G",
-			"default_warehouse": from_warehouse.name
-		})
-
 	stock_entry.update({
-		"biotrack_inventory_type": inventory_type,
 		"biotrack_stock_strain": register_new_strain(biotrack_inventory.get("strain")),
 		"biotrack_stock_transaction_id": biotrack_inventory.get("transactionid"),
 		"from_warehouse": from_warehouse.get("name") if from_warehouse else None,
 	})
 
+	# product (Item) mapping
+	if biotrack_inventory.get("productname"):
+		item = make_item(biotrack_inventory.get("productname"), {
+			"is_stock_item": 1,
+			"stock_uom": "Gram",
+			"item_group": item_group.name,
+			"default_warehouse": from_warehouse.name
+		})
+
+		add_item_detail(stock_entry, item, biotrack_inventory)
+
 	stock_entry.save(ignore_permissions=True)
-	frappe.db.commit()
+
+ 	frappe.db.commit()
 
 	return True
 
 
+def add_item_detail(stock_entry, item, biotrack_inventory):
+	stock_entry_detail = None
+	qty = int(float(biotrack_inventory.get("remaining_quantity")))
+
+	for item_detail in stock_entry.get("items"):
+		if item_detail.item_code == item.item_code:
+			stock_entry_detail = item_detail
+			break
+
+	if not stock_entry_detail:
+		stock_entry_detail = frappe.get_doc({
+			"doctype": "Stock Entry Detail",
+			"barcode": biotrack_inventory.get("id"),
+			"item_code": item.item_code,
+			"qty": qty,
+			"actual_qty": qty,
+			"conversion_factor": 1,
+			"uom": item.stock_uom,
+			"parentfield": "items",
+		})
+
+		stock_entry.get("items").append(stock_entry_detail)
+	else:
+		stock_entry_detail.update({
+			"qty": qty,
+			"actual_qty": qty,
+		})
+
+
 def make_item(item_code, properties=None):
 	if frappe.db.exists("Item", item_code):
-		uom = frappe.get_doc("Item", item_code)
-		if uom.stock_uom != "G":
-			uom.stock_uom = "G"
-			uom.save()
-
-		return frappe.get_doc("Item", item_code)
-
-	item = frappe.get_doc({
-		"doctype": "Item",
-		"item_code": item_code,
-		"item_name": item_code,
-		"description": item_code,
-		"item_group": "Products"
-	})
+		item = frappe.get_doc("Item", item_code)
+	else:
+		item = frappe.get_doc({
+			"doctype": "Item",
+			"item_code": item_code,
+			"item_name": item_code,
+			"description": item_code,
+		})
 
 	if properties:
 		item.update(properties)
 
-	item.insert()
+	item.save()
 
 	return item
 
