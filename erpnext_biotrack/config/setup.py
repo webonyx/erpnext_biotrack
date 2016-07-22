@@ -10,11 +10,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "BioTrack Settings",
-					"description": _("Connect BioTrack with ERPNext"),
+					"label": "WA State Compliance Settings",
 				},
 				{
 					"type": "doctype",
 					"name": "BioTrack Log",
+					"label": "WA State Compliance Syncing Logs",
 				}
 			]
 		}

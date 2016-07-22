@@ -26,7 +26,7 @@ def create_or_update_customer(biotrack_customer, synced_list):
 			"customer_name": biotrack_customer.get("name"),
 			"territory": get_root_of("Territory"),
 			"customer_type": _("Company"),
-			"biotrack_customer_sync": 1,
+			"wa_state_compliance_sync": 1,
 			"biotrack_customer_transaction_id_original": biotrack_customer.get("transactionid_original"),
 		})
 

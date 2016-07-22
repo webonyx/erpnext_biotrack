@@ -6,6 +6,7 @@ from frappe.defaults import get_defaults
 from .utils import make_biotrack_log
 from biotrack_requests import do_request
 
+
 def sync_employees():
 	biotrack_employee_list = []
 	biotrack_settings = frappe.get_doc("BioTrack Settings")
@@ -23,7 +24,7 @@ def sync_employees():
 
 def create_or_update_employee(biotrack_employee, company, biotrack_employee_list):
 	try:
-		employee = frappe.get_doc("Employee", {'biotrack_employee_id': biotrack_employee.get("employee_id")})
+		employee = frappe.get_doc("Employee", {'external_id': biotrack_employee.get("employee_id")})
 		if not employee.sync_with_biotrack:
 			return
 	except DoesNotExistError as e:
@@ -35,10 +36,9 @@ def create_or_update_employee(biotrack_employee, company, biotrack_employee_list
 	try:
 		employee.update({
 			"employee_name": biotrack_employee.get("employee_name"),
-			"biotrack_employee_id": biotrack_employee.get("employee_id"),
-			"biotrack_transaction_id": biotrack_employee.get("transactionid"),
-			"biotrack_transaction_id_original": biotrack_employee.get("transactionid_original"),
-			"sync_with_biotrack": 1,
+			"external_id": biotrack_employee.get("employee_id"),
+			"external_transaction_id": biotrack_employee.get("transactionid"),
+			"wa_state_compliance_sync": 1,
 			"company": company,
 			"date_of_birth": date_of_birth,
 			"date_of_joining": date_of_joining,

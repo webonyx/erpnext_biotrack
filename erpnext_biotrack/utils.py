@@ -99,7 +99,6 @@ def create_or_update_warehouse(biotrack_room, is_plant_room=0, synced_list=[]):
 			'biotrack_warehouse_sync': 1,
 			'biotrack_warehouse_is_plant_room': is_plant_room,
 			'biotrack_room_id': biotrack_room.get('roomid'),
-			'biotrack_warehouse_transaction_id_original': biotrack_room.get('transactionid_original')
 		})
 
 	if is_plant_room:

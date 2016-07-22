@@ -9,3 +9,19 @@ execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_settings')
 execute:frappe.reload_doc('erpnext_biotrack', 'doctype', 'biotrack_log')
 erpnext_biotrack.patches.create_weight_uom
 erpnext_biotrack.patches.install_inventory_type_fixtures
+
+execute:frappe.delete_doc("DocType", "Stock Type")
+execute:frappe.db.sql("ALTER TABLE `tabEmployee` CHANGE `biotrack_employee_id` `external_id` VARCHAR(140)  CHARACTER SET utf8mb4  COLLATE utf8mb4_unicode_ci  NULL  DEFAULT NULL")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_id', `name` = 'Employee-external_id' WHERE `dt` = 'Employee' AND `fieldname` ='biotrack_employee_id'")
+
+execute:frappe.db.sql("ALTER TABLE `tabEmployee` CHANGE `biotrack_transaction_id` `external_transaction_id` INT(11) NULL")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_transaction_id', `name` = 'Employee-external_transaction_id' WHERE `dt` = 'Employee' AND `fieldname` ='biotrack_transaction_id'")
+execute:frappe.db.sql("ALTER TABLE `tabEmployee` CHANGE `biotrack_transaction_id_original` `external_transaction_id_original` INT(11)  NULL")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_transaction_id_original', `name` = 'Employee-external_transaction_id_original' WHERE `dt` = 'Employee' AND `fieldname` ='biotrack_transaction_id_original'")
+execute:frappe.db.sql("ALTER TABLE `tabEmployee` CHANGE `sync_with_biotrack` `wa_state_compliance_sync` INT(1)  NOT NULL  DEFAULT '0'")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'wa_state_compliance_sync', `name` = 'Employee-wa_state_compliance_sync' WHERE `dt` = 'Employee' AND `fieldname` ='sync_with_biotrack'")
+
+execute:frappe.db.sql("ALTER TABLE `tabCustomer` CHANGE `biotrack_customer_sync` `wa_state_compliance_sync` INT(1)  NOT NULL  DEFAULT '0'")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'wa_state_compliance_sync', `name` = 'Customer-wa_state_compliance_sync' WHERE `dt` = 'Customer' AND `fieldname` ='biotrack_customer_sync'")
+execute:frappe.db.sql("ALTER TABLE `tabCustomer` CHANGE `biotrack_customer_transaction_id` `external_transaction_id` INT(11) NULL")
+execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_transaction_id', `name` = 'Customer-external_transaction_id' WHERE `dt` = 'Customer' AND `fieldname` ='biotrack_customer_transaction_id'")

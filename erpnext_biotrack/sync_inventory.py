@@ -6,7 +6,6 @@ from biotrack_requests import do_request
 from .utils import get_default_company, make_biotrack_log
 from .config import get_default_stock_warehouse
 
-from erpnext_biotrack.doctype.stock_type.stock_type import find_by_code
 from erpnext_biotrack.doctype.strain.strain import register_new_strain
 
 
@@ -22,9 +21,6 @@ def sync():
 
 
 def sync_stock(biotrack_inventory, is_plant=0):
-	# if not biotrack_inventory.get("productname"):
-	# 	return False
-
 	try:
 		stock_entry = frappe.get_doc("Stock Entry", {
 			"biotrack_stock_external_id": biotrack_inventory.get("id"),
@@ -46,7 +42,6 @@ def sync_stock(biotrack_inventory, is_plant=0):
 			"biotrack_stock_sync": 1,
 			"biotrack_stock_external_id": biotrack_inventory.get("id"),
 			"biotrack_stock_is_plant": is_plant,
-			"biotrack_stock_transaction_id_original": biotrack_inventory.get("transactionid_original")
 		})
 
 	# inventory type
@@ -54,7 +49,7 @@ def sync_stock(biotrack_inventory, is_plant=0):
 											   "parent_item_group": "WA State Classifications"})
 	if not item_group:
 		make_biotrack_log(title="Invalid inventory type", status="Error", method="sync_stock",
-						  message="inventorytype '%s' is not found".format(biotrack_inventory.get("inventorytype")),
+						  message="inventorytype '{0}' is not found".format(biotrack_inventory.get("inventorytype")),
 						  request_data=biotrack_inventory)
 		return
 
@@ -66,23 +61,31 @@ def sync_stock(biotrack_inventory, is_plant=0):
 													  "biotrack_warehouse_is_plant_room": is_plant})
 
 	stock_entry.update({
-		"biotrack_stock_strain": register_new_strain(biotrack_inventory.get("strain")),
 		"biotrack_stock_transaction_id": biotrack_inventory.get("transactionid"),
 		"from_warehouse": from_warehouse.get("name") if from_warehouse else None,
 	})
 
 	# product (Item) mapping
 	if biotrack_inventory.get("productname"):
-		item = make_item(biotrack_inventory.get("productname"), {
-			"is_stock_item": 1,
-			"stock_uom": "Gram",
-			"item_group": item_group.name,
-			"default_warehouse": from_warehouse.name
-		})
+		item_code = biotrack_inventory.get("productname")
+	else:
+		item_code = "{0} - {1}".format(biotrack_inventory.get("strain"), item_group.name)
 
-		add_item_detail(stock_entry, item, biotrack_inventory)
+	item = make_item(item_code, {
+		"is_stock_item": 1,
+		"stock_uom": "Gram",
+		"item_group": item_group.name,
+		"default_warehouse": from_warehouse.name
+	})
 
-	stock_entry.save(ignore_permissions=True)
+	add_item_detail(stock_entry, item, biotrack_inventory)
+
+	try:
+		stock_entry.save(ignore_permissions=True)
+	except frappe.exceptions.ValidationError as e:
+		make_biotrack_log(title="Inventory syncing exception", status="Error", method="sync_stock",
+						  message=frappe.get_traceback(),
+						  request_data=biotrack_inventory)
 
  	frappe.db.commit()
 
@@ -91,7 +94,7 @@ def sync_stock(biotrack_inventory, is_plant=0):
 
 def add_item_detail(stock_entry, item, biotrack_inventory):
 	stock_entry_detail = None
-	qty = int(float(biotrack_inventory.get("remaining_quantity")))
+	qty = float(biotrack_inventory.get("remaining_quantity"))
 
 	for item_detail in stock_entry.get("items"):
 		if item_detail.item_code == item.item_code:
@@ -102,6 +105,7 @@ def add_item_detail(stock_entry, item, biotrack_inventory):
 		stock_entry_detail = frappe.get_doc({
 			"doctype": "Stock Entry Detail",
 			"barcode": biotrack_inventory.get("id"),
+			"strain": register_new_strain(biotrack_inventory.get("strain")),
 			"item_code": item.item_code,
 			"qty": qty,
 			"actual_qty": qty,

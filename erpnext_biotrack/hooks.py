@@ -13,39 +13,56 @@ app_license = "MIT"
 fixtures = [
 	{
 		"doctype": "Custom Field",
-		"filters": [["fieldname", "in", (
-			"external_id", # Item Group for inventory type
-			"biotrack_employee_id",
-			"biotrack_transaction_id",
-			"biotrack_transaction_id_original",
-			"sync_with_biotrack",
+		"filters": [
+			["fieldname", "in", (
+				# Item Group
+				# "Item Group-external_id",
+				"external_id",
 
-			"biotrack_warehouse",
-			"biotrack_warehouse_sync",
-			"biotrack_room_id",
-			"biotrack_warehouse_location_id",
-			"biotrack_warehouse_transaction_id",
-			"biotrack_warehouse_transaction_id_original",
-			"biotrack_warehouse_is_plant_room",
-			"biotrack_warehouse_quarantine",
+				# Employee
+				# "Employee-external_id",
+				# "Employee-external_transaction_id",
+				# "Employee-wa_state_compliance_sync",
+				"external_id",
+				"external_transaction_id",
+				"wa_state_compliance_sync",
 
-			"biotrack_customer_sync",
-			"biotrack_customer_ubi",
-			"biotrack_customer_license",
-			"biotrack_customer_license_type",
-			"biotrack_customer_transaction_id",
-			"biotrack_customer_transaction_id_original",
+				"biotrack_warehouse",
+				"biotrack_warehouse_sync",
+				"biotrack_room_id",
+				"biotrack_warehouse_location_id",
+				"biotrack_warehouse_transaction_id",
+				"biotrack_warehouse_is_plant_room",
+				"biotrack_warehouse_quarantine",
 
-			"biotrack_inventory_status",
+				# Customer
+				# "Customer-wa_state_compliance_sync",
+				# "Customer-external_transaction_id",
+				"biotrack_customer_ubi",
+				"biotrack_customer_license",
+				"biotrack_customer_license_type",
 
-			"biotrack_stock_section_break",
-			"biotrack_stock_external_id",
-			"biotrack_stock_sync",
-			"biotrack_stock_strain",
-			"biotrack_stock_is_plant",
-			"biotrack_stock_transaction_id",
-			"biotrack_stock_transaction_id_original",
-		)]]
+				"biotrack_inventory_status",
+
+				"biotrack_stock_section_break",
+				"biotrack_stock_external_id",
+				"biotrack_stock_sync",
+				"biotrack_stock_is_plant",
+				"biotrack_stock_transaction_id",
+
+				# Stock Entry Detail
+				"strain"
+			)],
+
+			["dt", "in", (
+				"Warehouse",
+				"Customer",
+				"Employee",
+				"Item Group",
+				"Stock Entry",
+				"Stock Entry Detail",
+			)]
+		]
 	},
 	{
 		"doctype": "Item Group",
