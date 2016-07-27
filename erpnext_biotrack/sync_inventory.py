@@ -57,8 +57,8 @@ def sync_stock(biotrack_inventory, is_plant=0):
 	if not biotrack_inventory.get("currentroom"):
 		from_warehouse = get_default_stock_warehouse()
 	else:
-		from_warehouse = frappe.get_doc("Warehouse", {"biotrack_room_id": biotrack_inventory.get("currentroom"),
-													  "biotrack_warehouse_is_plant_room": is_plant})
+		from_warehouse = frappe.get_doc("Warehouse", {"external_id": biotrack_inventory.get("currentroom"),
+													  "plant_room": is_plant})
 
 	stock_entry.update({
 		"external_transaction_id": biotrack_inventory.get("transactionid"),
