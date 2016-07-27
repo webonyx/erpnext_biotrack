@@ -25,7 +25,7 @@ def sync_employees():
 def create_or_update_employee(biotrack_employee, company, biotrack_employee_list):
 	try:
 		employee = frappe.get_doc("Employee", {'external_id': biotrack_employee.get("employee_id")})
-		if not employee.sync_with_biotrack:
+		if not employee.wa_state_compliance_sync:
 			return
 	except DoesNotExistError as e:
 		employee = frappe.get_doc({'doctype':'Employee'})

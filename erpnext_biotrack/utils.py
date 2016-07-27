@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import json
 import frappe
+from frappe.model.db_schema import DbTable
 from .exceptions import BiotrackSetupError
 from .exceptions import BiotrackError
 from frappe.defaults import get_defaults
@@ -85,10 +86,10 @@ def add_tag(doctype, name, tag):
 def create_or_update_warehouse(biotrack_room, is_plant_room=0, synced_list=[]):
 	try:
 		warehouse = frappe.get_doc('Warehouse', {
-			'biotrack_room_id': biotrack_room.get('roomid'),
-			'biotrack_warehouse_is_plant_room': is_plant_room})
+			'external_id': biotrack_room.get('roomid'),
+			'plant_room': is_plant_room})
 
-		if not warehouse.biotrack_warehouse_sync:
+		if not warehouse.wa_state_compliance_sync:
 			return
 
 	except DoesNotExistError:
@@ -96,9 +97,9 @@ def create_or_update_warehouse(biotrack_room, is_plant_room=0, synced_list=[]):
 		warehouse.update({
 			'doctype': 'Warehouse',
 			'company': get_default_company(),
-			'biotrack_warehouse_sync': 1,
-			'biotrack_warehouse_is_plant_room': is_plant_room,
-			'biotrack_room_id': biotrack_room.get('roomid'),
+			'wa_state_compliance_sync': 1,
+			'plant_room': is_plant_room,
+			'external_id': biotrack_room.get('roomid'),
 		})
 
 	if is_plant_room:
@@ -109,16 +110,15 @@ def create_or_update_warehouse(biotrack_room, is_plant_room=0, synced_list=[]):
 	warehouse.update({
 		"warehouse_name": biotrack_room.get("name"),
 		"create_account_under": under_account,
-		"biotrack_warehouse_location_id": biotrack_room.get("location"),
-		"biotrack_warehouse_transaction_id": biotrack_room.get("transactionid"),
-		"biotrack_warehouse_quarantine": biotrack_room.get("quarantine") or 0
+		"external_transaction_id": biotrack_room.get("transactionid"),
+		"quarantine": biotrack_room.get("quarantine") or 0
 	})
 
 	fix_duplicate(warehouse)
 
 	warehouse.save(ignore_permissions=True)
 	frappe.db.commit()
-	synced_list.append(warehouse.biotrack_room_id)
+	synced_list.append(warehouse.external_transaction_id)
 
 
 def fix_duplicate(warehouse, is_plant_room=0):
@@ -135,3 +135,24 @@ def fix_duplicate(warehouse, is_plant_room=0):
 		if not frappe.db.exists('Warehouse', name):
 			warehouse.set('warehouse_name', warehouse_name)
 			return
+
+def rename_custom_field(doctype, old_fieldname, new_fieldname):
+	if not frappe.db.exists('DocType', doctype):
+		return
+
+	tab = DbTable(doctype)
+	frappe.db.commit()
+
+	columns = tab.columns
+	# if old_fieldname not in columns:
+	# 	return
+
+	query = "change `{}` `{}` {}".format(old_fieldname, new_fieldname, tab.columns[old_fieldname].get_definition())
+
+	frappe.db.sql("ALTER TABLE `{}` {}".format(tab.name, query))
+
+	update_custom_field_sql = "UPDATE `tabCustom Field` SET `fieldname` = '{fieldname}', `name` = '{name}' WHERE `dt` = '{doctype}' AND `fieldname` ='{old_fieldname}'". \
+		format(fieldname=new_fieldname, name="{}-{}".format(doctype, new_fieldname), doctype=doctype,
+			   old_fieldname=old_fieldname)
+	frappe.db.sql(update_custom_field_sql)
+

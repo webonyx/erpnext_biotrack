@@ -14,11 +14,9 @@ def sync():
 	return len(synced_list)
 
 def create_or_update_customer(biotrack_customer, synced_list):
-	# biotrack_settings = frappe.get_doc("BioTrack Settings", "BioTrack Settings")
-
 	try:
 		customer = frappe.get_doc('Customer', {'customer_name': biotrack_customer.get("name")})
-		if not int(customer.biotrack_customer_sync):
+		if not int(customer.wa_state_compliance_sync):
 			return
 	except DoesNotExistError:
 		customer = frappe.get_doc({
@@ -34,10 +32,9 @@ def create_or_update_customer(biotrack_customer, synced_list):
 	customer.update({
 		"customer_group": customer_group.name if customer_group else None,
 		"territory": get_root_of("Territory"),
-		"biotrack_customer_ubi": biotrack_customer.get("ubi"),
-		"biotrack_customer_license": biotrack_customer.get("location"),
-		"biotrack_customer_license_type": biotrack_customer.get("locationtype"),
-		"biotrack_customer_transaction_id": biotrack_customer.get("transactionid")
+		"ubi": biotrack_customer.get("ubi"),
+		"license_no": biotrack_customer.get("location"),
+		"external_transaction_id": biotrack_customer.get("transactionid")
 	})
 
 	customer.flags.ignore_mandatory = True
@@ -48,7 +45,7 @@ def create_or_update_customer(biotrack_customer, synced_list):
 
 
 	frappe.db.commit()
-	synced_list.append(customer.biotrack_customer_ubi)
+	synced_list.append(customer.name)
 
 
 def detect_group(biotrack_customer):
@@ -78,7 +75,7 @@ def get_or_create_group(name):
 	try:
 		group = frappe.get_doc('Customer Group', name)
 	except DoesNotExistError as e:
-		group = frappe.get_doc({'doctype': 'Customer Group', 'name': name, 'customer_group_name': name, 'is_group': 'No', 'parent_customer_group': _('All Customer Groups')})
+		group = frappe.get_doc({'doctype': 'Customer Group', 'name': name, 'customer_group_name': name, 'is_group': 0, 'parent_customer_group': _('All Customer Groups')})
 		group.insert()
 
 	return group

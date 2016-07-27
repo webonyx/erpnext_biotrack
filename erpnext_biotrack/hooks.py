@@ -14,53 +14,37 @@ fixtures = [
 	{
 		"doctype": "Custom Field",
 		"filters": [
-			["fieldname", "in", (
+			["name", "in", (
 				# Item Group
-				# "Item Group-external_id",
-				"external_id",
+				"Item Group-external_id",
+				"Item Group-can_be_collected",
 
 				# Employee
-				# "Employee-external_id",
-				# "Employee-external_transaction_id",
-				# "Employee-wa_state_compliance_sync",
-				"external_id",
-				"external_transaction_id",
-				"wa_state_compliance_sync",
+				"Employee-external_id",
+				"Employee-external_transaction_id",
+				"Employee-wa_state_compliance_sync",
 
-				"biotrack_warehouse",
-				"biotrack_warehouse_sync",
-				"biotrack_room_id",
-				"biotrack_warehouse_location_id",
-				"biotrack_warehouse_transaction_id",
-				"biotrack_warehouse_is_plant_room",
-				"biotrack_warehouse_quarantine",
+
+				"Warehouse-external_id",
+				"Warehouse-external_transaction_id",
+				"Warehouse-plant_room",
+				"Warehouse-quarentine",
+				"Warehouse-wa_state_compliance_sync",
 
 				# Customer
-				# "Customer-wa_state_compliance_sync",
-				# "Customer-external_transaction_id",
-				"biotrack_customer_ubi",
-				"biotrack_customer_license",
-				"biotrack_customer_license_type",
+				"Customer-wa_state_compliance_sync",
+				"Customer-external_transaction_id",
+				"Customer-ubi",
+				"Customer-license_no",
 
-				"biotrack_inventory_status",
-
-				"biotrack_stock_section_break",
-				"biotrack_stock_external_id",
-				"biotrack_stock_sync",
-				"biotrack_stock_is_plant",
-				"biotrack_stock_transaction_id",
+				# Stock Entry
+				"Stock Entry-external_id",
+				"Stock Entry-is_plant",
+				"Stock Entry-external_transaction_id",
+				"Stock Entry-wa_state_compliance_sync",
 
 				# Stock Entry Detail
-				"strain"
-			)],
-
-			["dt", "in", (
-				"Warehouse",
-				"Customer",
-				"Employee",
-				"Item Group",
-				"Stock Entry",
-				"Stock Entry Detail",
+				"Stock Entry Detail-strain"
 			)]
 		]
 	},
@@ -72,8 +56,7 @@ fixtures = [
 			}
 		]
 	},
-	'Stock Status',
-	'BioTrack Settings'
+	'Stock Status'
 ]
 
 # Includes in <head>

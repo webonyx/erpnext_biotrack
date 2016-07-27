@@ -25,3 +25,4 @@ execute:frappe.db.sql("ALTER TABLE `tabCustomer` CHANGE `biotrack_customer_sync`
 execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'wa_state_compliance_sync', `name` = 'Customer-wa_state_compliance_sync' WHERE `dt` = 'Customer' AND `fieldname` ='biotrack_customer_sync'")
 execute:frappe.db.sql("ALTER TABLE `tabCustomer` CHANGE `biotrack_customer_transaction_id` `external_transaction_id` INT(11) NULL")
 execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_transaction_id', `name` = 'Customer-external_transaction_id' WHERE `dt` = 'Customer' AND `fieldname` ='biotrack_customer_transaction_id'")
+erpnext_biotrack.patches.rename_bulk_custom_fields

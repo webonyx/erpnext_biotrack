@@ -23,11 +23,11 @@ def sync():
 def sync_stock(biotrack_inventory, is_plant=0):
 	try:
 		stock_entry = frappe.get_doc("Stock Entry", {
-			"biotrack_stock_external_id": biotrack_inventory.get("id"),
-			"biotrack_stock_is_plant": is_plant
+			"external_id": biotrack_inventory.get("id"),
+			"is_plant": is_plant
 		})
 
-		if not stock_entry.biotrack_inventory_sync:
+		if not stock_entry.wa_state_compliance_sync:
 			return False
 
 	except frappe.exceptions.DoesNotExistError:
@@ -39,9 +39,9 @@ def sync_stock(biotrack_inventory, is_plant=0):
 			"company": get_default_company(),
 			"posting_date": posting_date,
 			"posting_time": posting_time,
-			"biotrack_stock_sync": 1,
-			"biotrack_stock_external_id": biotrack_inventory.get("id"),
-			"biotrack_stock_is_plant": is_plant,
+			"wa_state_compliance_sync": 1,
+			"external_id": biotrack_inventory.get("id"),
+			"is_plant": is_plant,
 		})
 
 	# inventory type
@@ -61,7 +61,7 @@ def sync_stock(biotrack_inventory, is_plant=0):
 													  "biotrack_warehouse_is_plant_room": is_plant})
 
 	stock_entry.update({
-		"biotrack_stock_transaction_id": biotrack_inventory.get("transactionid"),
+		"external_transaction_id": biotrack_inventory.get("transactionid"),
 		"from_warehouse": from_warehouse.get("name") if from_warehouse else None,
 	})
 
@@ -80,12 +80,14 @@ def sync_stock(biotrack_inventory, is_plant=0):
 
 	add_item_detail(stock_entry, item, biotrack_inventory)
 
-	try:
-		stock_entry.save(ignore_permissions=True)
-	except frappe.exceptions.ValidationError as e:
-		make_biotrack_log(title="Inventory syncing exception", status="Error", method="sync_stock",
-						  message=frappe.get_traceback(),
-						  request_data=biotrack_inventory)
+	stock_entry.submit()
+
+	# try:
+	#
+	# except frappe.exceptions.ValidationError as e:
+	# 	make_biotrack_log(title="Inventory syncing exception", status="Error", method="sync_stock",
+	# 					  message=frappe.get_traceback(),
+	# 					  request_data=biotrack_inventory)
 
  	frappe.db.commit()
 
