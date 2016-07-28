@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import frappe, os
 import datetime
+import json
 from client import get_data
 from erpnext_biotrack.utils import get_default_company, make_log
 from erpnext_biotrack.config import get_default_stock_warehouse
@@ -10,15 +11,24 @@ from erpnext_biotrack.erpnext_biotrack.doctype.strain import register_new_strain
 @frappe.whitelist()
 def sync():
 	synced_list = []
+	result = {
+		"error": 0,
+		"success": 0
+	}
 
 	for biotrack_inventory in get_biotrack_inventories():
-		if sync_stock(biotrack_inventory, 0):
+		if sync_stock(biotrack_inventory, 0, result):
 			synced_list.append(biotrack_inventory)
 
-	return len(synced_list)
+		if result['error'] > 10:
+			make_log(status="Error", method="inventories.sync",
+					 message="Manually stopped due to errors")
+			break
+
+	return result['success']
 
 
-def sync_stock(biotrack_inventory, is_plant=0):
+def sync_stock(biotrack_inventory, is_plant=0, result=None):
 	try:
 		stock_entry = frappe.get_doc("Stock Entry", {
 			"external_id": biotrack_inventory.get("id"),
@@ -78,16 +88,16 @@ def sync_stock(biotrack_inventory, is_plant=0):
 
 	add_item_detail(stock_entry, item, biotrack_inventory)
 
-	stock_entry.submit()
-
-	# try:
-	#
-	# except frappe.exceptions.ValidationError as e:
-	# 	make_log(title="Inventory syncing exception", status="Error", method="sync_stock",
-	# 					  message=frappe.get_traceback(),
-	# 					  request_data=biotrack_inventory)
+	try:
+		stock_entry.submit()
+	except frappe.exceptions.ValidationError as e:
+		result['error'] += 1
+		make_log(status="Error", method="inventories.sync_stock",
+						  message="{}: {}\n{}".format(type(e).__name__, e.message, json.dumps(biotrack_inventory)),
+						  request_data=biotrack_inventory)
 
  	frappe.db.commit()
+	result['success'] += 1
 
 	return True
 
@@ -123,6 +133,7 @@ def add_item_detail(stock_entry, item, biotrack_inventory):
 
 
 def make_item(item_code, properties=None):
+	item_code = str(item_code).strip()
 	if frappe.db.exists("Item", item_code):
 		item = frappe.get_doc("Item", item_code)
 	else:
@@ -142,19 +153,4 @@ def make_item(item_code, properties=None):
 
 
 def get_biotrack_inventories(active=1):
-	# f = frappe.get_app_path("erpnext_biotrack", "fixtures/sync_data", "sync_inventory.json")
-	# if os.path.exists(f):
-	# 	try:
-	# 		data = read_doc_from_file(f)
-	# 	except IOError:
-	# 		print f + " missing"
-	# 		return []
-	# else:
-	# 	result = get_data("sync_inventory", {"active": active})
-	# 	data = result.get('inventory') if bool(result.get('success')) else []
-	# 	with open(f, "w") as outfile:
-	# 		outfile.write(frappe.as_json(data))
-	#
-	# return data
-	data = get_data("sync_inventory", {"active": active})
-	return data.get('inventory') if bool(data.get('success')) else []
+	return get_data("sync_inventory", {"active": active}, 'inventory')

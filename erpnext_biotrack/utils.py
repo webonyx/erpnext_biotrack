@@ -59,11 +59,11 @@ def make_log(title=None, status="Queued", method="sync", message=None, exception
 			frappe.db.rollback()
 			log = frappe.get_doc({"doctype": "BioTrack Log"}).insert(ignore_permissions=True)
 
-		log.message = (log.message + "\n\n" if log.message else "") + "{}\n".format(frappe.utils.now())
-		if status == "Error":
-			log.message += "{}\n".format(status)
-			if not exception:
-				status = "Queued"
+
+		log.message = (log.message + "\n\n" if log.message else "") + "{}\n".format(json.dumps({"method": method
+																								, "status": status, "time": frappe.utils.now()}))
+		if status == "Error" and not exception:
+			status = "Queued"
 
 		log.message += message if message else frappe.get_traceback()
 		log.title = title[0:140] if title else (log.title if log.title else "Sync log")
