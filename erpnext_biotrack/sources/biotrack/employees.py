@@ -3,20 +3,16 @@ import frappe
 from datetime import date
 from frappe.exceptions import DoesNotExistError
 from frappe.defaults import get_defaults
-from .utils import make_biotrack_log
-from biotrack_requests import do_request
+from erpnext_biotrack.utils import make_log
+from client import get_data
 
 
-def sync_employees():
+def sync():
 	biotrack_employee_list = []
 	biotrack_settings = frappe.get_doc("BioTrack Settings")
 	company = biotrack_settings.custom_company or get_defaults().get("company")
 
 	for biotrack_employee in get_biotrack_employees():
-		if biotrack_settings.skip_on_duplicate:
-			if frappe.get_value("Employee", {'employee_name': biotrack_employee.get("employee_name")}, 'name'):
-				continue
-
 		create_or_update_employee(biotrack_employee, company, biotrack_employee_list)
 
 	return len(biotrack_employee_list)
@@ -51,11 +47,11 @@ def create_or_update_employee(biotrack_employee, company, biotrack_employee_list
 		frappe.db.commit()
 
 	except Exception as e:
-		make_biotrack_log(title=e.message, status="Error", method="create_employee", message=frappe.get_traceback(),
+		make_log(title=e.message, status="Error", method="create_employee", message=frappe.get_traceback(),
 						  request_data=biotrack_employee, exception=True)
 
 
 def get_biotrack_employees():
-	data = do_request('sync_employee', {'active': 1})
+	data = get_data('sync_employee', {'active': 1})
 
 	return data.get('employee') if bool(data.get('success')) else []

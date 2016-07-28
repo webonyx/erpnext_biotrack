@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 import frappe
-from .config import default_stock_warehouse_name
-from .utils import create_or_update_warehouse, get_default_company
-from biotrack_requests import do_request
+from erpnext_biotrack.config import default_stock_warehouse_name
+from erpnext_biotrack.utils import create_or_update_warehouse, get_default_company
+from client import get_data
 
 
 @frappe.whitelist()
@@ -29,5 +29,5 @@ def sync():
 
 
 def get_biotrack_inventory_rooms(active=1):
-	data = do_request('sync_inventory_room', {'active': active})
+	data = get_data('sync_inventory_room', {'active': active})
 	return data.get('inventory_room') if bool(data.get('success')) else []

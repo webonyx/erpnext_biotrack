@@ -26,3 +26,5 @@ execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'wa_state_comp
 execute:frappe.db.sql("ALTER TABLE `tabCustomer` CHANGE `biotrack_customer_transaction_id` `external_transaction_id` INT(11) NULL")
 execute:frappe.db.sql("UPDATE `tabCustom Field` SET `fieldname` = 'external_transaction_id', `name` = 'Customer-external_transaction_id' WHERE `dt` = 'Customer' AND `fieldname` ='biotrack_customer_transaction_id'")
 erpnext_biotrack.patches.rename_bulk_custom_fields
+execute:frappe.db.sql("UPDATE `tabModule Def` SET name='ERPNext BioTrack', module_name='ERPNext BioTrack' WHERE name='ERPNext BioTrack'")
+execute:frappe.db.sql("UPDATE `tabDocType` SET module='ERPNext BioTrack' WHERE name IN ('BioTrack Settings', 'BioTrack Log')")

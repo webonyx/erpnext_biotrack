@@ -42,7 +42,7 @@ def is_biotrack_enabled():
 	return True
 
 
-def make_biotrack_log(title="Sync Log", status="Queued", method="sync_biotrack", message=None, exception=False,
+def make_log(title=None, status="Queued", method="sync", message=None, exception=False,
 					  name=None, request_data={}):
 	if not name:
 		name = frappe.db.get_value("BioTrack Log", {"status": "Queued"})
@@ -59,8 +59,14 @@ def make_biotrack_log(title="Sync Log", status="Queued", method="sync_biotrack",
 			frappe.db.rollback()
 			log = frappe.get_doc({"doctype": "BioTrack Log"}).insert(ignore_permissions=True)
 
-		log.message = message if message else frappe.get_traceback()
-		log.title = title[0:140]
+		log.message = (log.message + "\n\n" if log.message else "") + "{}\n".format(frappe.utils.now())
+		if status == "Error":
+			log.message += "{}\n".format(status)
+			if not exception:
+				status = "Queued"
+
+		log.message += message if message else frappe.get_traceback()
+		log.title = title[0:140] if title else (log.title if log.title else "Sync log")
 		log.method = method
 		log.status = status
 		log.request_data = json.dumps(request_data)
@@ -71,10 +77,6 @@ def make_biotrack_log(title="Sync Log", status="Queued", method="sync_biotrack",
 
 def get_default_company():
 	return frappe.get_value("BioTrack Settings", None, 'custom_company') or get_defaults().get("company")
-
-
-def skip_on_duplicating():
-	return frappe.get_value("BioTrack Settings", None, 'skip_on_duplicate') or False
 
 
 def add_tag(doctype, name, tag):

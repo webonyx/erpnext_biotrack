@@ -3,7 +3,7 @@ import frappe
 from frappe import _
 from frappe.exceptions import DoesNotExistError
 from frappe.utils import cstr
-from biotrack_requests import do_request
+from client import get_data
 from frappe.utils.nestedset import get_root_of
 
 def sync():
@@ -115,6 +115,6 @@ def create_customer_address(customer, biotrack_customer):
 
 
 def get_biotrack_vendors():
-	data = do_request('sync_vendor', {'active': 1})
+	data = get_data('sync_vendor', {'active': 1})
 	return data.get('vendor') if bool(data.get('success')) else []
 

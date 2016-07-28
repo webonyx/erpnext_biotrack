@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 import frappe, os
 import datetime
-from frappe.modules.import_file import read_doc_from_file
-from biotrack_requests import do_request
-from .utils import get_default_company, make_biotrack_log
-from .config import get_default_stock_warehouse
-
-from erpnext_biotrack.doctype.strain.strain import register_new_strain
+from client import get_data
+from erpnext_biotrack.utils import get_default_company, make_log
+from erpnext_biotrack.config import get_default_stock_warehouse
+from erpnext_biotrack.erpnext_biotrack.doctype.strain import register_new_strain
 
 
 @frappe.whitelist()
@@ -48,7 +46,7 @@ def sync_stock(biotrack_inventory, is_plant=0):
 	item_group = frappe.get_doc("Item Group", {"external_id": biotrack_inventory.get("inventorytype"),
 											   "parent_item_group": "WA State Classifications"})
 	if not item_group:
-		make_biotrack_log(title="Invalid inventory type", status="Error", method="sync_stock",
+		make_log(title="Invalid inventory type", status="Error", method="sync_stock",
 						  message="inventorytype '{0}' is not found".format(biotrack_inventory.get("inventorytype")),
 						  request_data=biotrack_inventory)
 		return
@@ -85,7 +83,7 @@ def sync_stock(biotrack_inventory, is_plant=0):
 	# try:
 	#
 	# except frappe.exceptions.ValidationError as e:
-	# 	make_biotrack_log(title="Inventory syncing exception", status="Error", method="sync_stock",
+	# 	make_log(title="Inventory syncing exception", status="Error", method="sync_stock",
 	# 					  message=frappe.get_traceback(),
 	# 					  request_data=biotrack_inventory)
 
@@ -152,11 +150,11 @@ def get_biotrack_inventories(active=1):
 	# 		print f + " missing"
 	# 		return []
 	# else:
-	# 	result = do_request("sync_inventory", {"active": active})
+	# 	result = get_data("sync_inventory", {"active": active})
 	# 	data = result.get('inventory') if bool(result.get('success')) else []
 	# 	with open(f, "w") as outfile:
 	# 		outfile.write(frappe.as_json(data))
 	#
 	# return data
-	data = do_request("sync_inventory", {"active": active})
+	data = get_data("sync_inventory", {"active": active})
 	return data.get('inventory') if bool(data.get('success')) else []

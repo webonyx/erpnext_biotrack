@@ -3,12 +3,15 @@ from datetime import datetime
 import frappe
 from frappe import _
 import json
-from .exceptions import BiotrackError
-from .utils import get_biotrack_settings, disable_biotrack_sync_on_exception
-from .config import is_training_mode
+from erpnext_biotrack.exceptions import BiotrackError
+from erpnext_biotrack.utils import get_biotrack_settings, disable_biotrack_sync_on_exception
+from erpnext_biotrack.config import is_training_mode
 from frappe.utils import get_request_session
-from . import __api_version__, __api_endpoint__
+from erpnext_biotrack import __api_version__, __api_endpoint__
 
+
+def get_data(action, data=None):
+	return do_request(action=action, data=data)
 
 def do_request(action, data=None):
 	data = build_action_data(action, data)
