@@ -16,12 +16,15 @@ def sync():
 	frappe.msgprint("Queued for syncing. It may take a few minutes to an hour.")
 
 def sync_all():
+	frappe.flags.mute_emails = True
+
 	sources = ['biotrack']
 	make_log(title="Sync Job is started", status="Queued", method="sync_all", message="Started")
 	for s in sources:
 		sync_source(s)
 
 	make_log(title="Sync Completed", status="Success", method="sync_all", message="Completed")
+	frappe.flags.mute_emails = False
 
 def sync_source(source):
 	script = "erpnext_biotrack.sources.%s" % source

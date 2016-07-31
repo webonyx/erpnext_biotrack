@@ -15,6 +15,9 @@ fixtures = [
 		"doctype": "Custom Field",
 		"filters": [
 			["name", "in", (
+				# Item
+				"Item-is_plant",
+
 				# Item Group
 				"Item Group-external_id",
 				"Item Group-can_be_collected",
@@ -38,13 +41,12 @@ fixtures = [
 				"Customer-license_no",
 
 				# Stock Entry
-				"Stock Entry-external_id",
-				"Stock Entry-is_plant",
-				"Stock Entry-external_transaction_id",
-				"Stock Entry-wa_state_compliance_sync",
+				"Stock Reconciliation-is_plant",
+				"Stock Reconciliation-external_id",
+				"Stock Reconciliation-external_transaction_id",
 
 				# Stock Entry Detail
-				"Stock Entry Detail-strain"
+				"Stock Reconciliation Item-strain"
 			)]
 		]
 	},
