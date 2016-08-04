@@ -3,7 +3,8 @@ import frappe, os
 import datetime
 import json
 from client import get_data
-from erpnext_biotrack.utils import get_default_company, make_log
+from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import EmptyStockReconciliationItemsError
+from erpnext_biotrack.utils import get_default_company, make_log, inventories_price_log
 from erpnext_biotrack.config import get_default_stock_warehouse
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import register_new_strain
 
@@ -68,7 +69,8 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 
 def convert_to_sr(biotrack_inventory, item):
 	"""Stock Reconciliation"""
-	name = frappe.get_value("Stock Reconciliation", {"external_id": biotrack_inventory.get("id"), "is_plant": item.get("is_plant")}, "name")
+	barcode = biotrack_inventory.get("id")
+	name = frappe.get_value("Stock Reconciliation", {"external_id": barcode, "is_plant": item.get("is_plant")}, "name")
 	if name:
 		doc = frappe.get_doc("Stock Reconciliation", name)
 	else:
@@ -82,14 +84,23 @@ def convert_to_sr(biotrack_inventory, item):
 			"posting_date": posting_date,
 			"posting_time": posting_time,
 			"expense_account": default_account,
-			"external_id": biotrack_inventory.get("id"),
+			"external_id": barcode,
 			"is_plant": item.get("is_plant"),
 		})
 
 	if not doc.name and doc.external_transaction_id != biotrack_inventory.get("transactionid"):
 		pass
 
-	qty = float(biotrack_inventory.get("remaining_quantity"))
+	def update_vr(item):
+		vr = 0.0
+
+		inventories_price = get_inventories_price()
+		vr = inventories_price[barcode][0] if barcode in inventories_price else vr
+
+		item.update({
+			"qty": float(biotrack_inventory.get("remaining_quantity")),
+			"valuation_rate": vr
+		})
 
 	if len(doc.get("items")) == 0:
 		item = frappe.get_doc({
@@ -98,18 +109,26 @@ def convert_to_sr(biotrack_inventory, item):
 			"item_code": item.item_code,
 			"item_name": item.item_name,
 			"warehouse": item.default_warehouse,
-			"qty": qty,
-			"valuation_rate": 0.0,
 			"strain": register_new_strain(biotrack_inventory.get("strain")),
 		})
 
+		update_vr(item)
 		doc.get("items").append(item)
+	elif doc.get("docstatus") == 0:
+		update_vr(doc.get("items")[0])
 
 	doc.update({
 		"external_transaction_id": biotrack_inventory.get("transactionid"),
 	})
 
-	doc.save()
+	item = doc.get("items")[0]
+	if doc.get("docstatus") == 0 and item.valuation_rate > 0:
+		doc.submit()
+	else:
+		try:
+			doc.save()
+		except EmptyStockReconciliationItemsError as ex:
+			pass
 
 
 def convert_to_se(biotrack_inventory, item, f_warehouse, is_plant=0, result=None):
@@ -199,6 +218,8 @@ def make_item(item_code, properties=None):
 
 	return item
 
+def get_inventories_price():
+	return inventories_price_log()
 
 def get_biotrack_inventories(active=1):
 	return get_data("sync_inventory", {"active": active}, 'inventory')

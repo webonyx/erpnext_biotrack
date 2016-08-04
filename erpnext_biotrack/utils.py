@@ -3,16 +3,17 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import json
+import json, os
 import frappe
 from frappe.model.db_schema import DbTable
+from frappe.utils.csvutils import read_csv_content
 from .exceptions import BiotrackSetupError
 from .exceptions import BiotrackError
 from frappe.defaults import get_defaults
 from frappe.desk.tags import DocTags
-from frappe.exceptions import DoesNotExistError
+from frappe.exceptions import DoesNotExistError, ValidationError
 
-
+dumped_data = {}
 def get_biotrack_settings():
 	d = frappe.get_doc("BioTrack Settings")
 	d.password = d.get_password()
@@ -158,3 +159,32 @@ def rename_custom_field(doctype, old_fieldname, new_fieldname):
 			   old_fieldname=old_fieldname)
 	frappe.db.sql(update_custom_field_sql)
 
+
+def inventories_price_log():
+	if not "inventories_price" in dumped_data:
+		inventories_price = {}
+		for row in load_dumped_data("inventorytransfers_log"):
+			inventory_id = row[2]
+			price = row[19]
+
+			if inventory_id not in inventories_price:
+				inventories_price[inventory_id] = []
+
+			inventories_price[inventory_id].append(price)
+		dumped_data["inventories_price"] = inventories_price
+
+	return dumped_data["inventories_price"]
+
+
+def load_dumped_data(name):
+	if not name in dumped_data:
+		filename = name + '.csv'
+		file = frappe.get_app_path("erpnext_biotrack", "fixtures/dump", filename)
+		if os.path.exists(file):
+			with open(file, "r") as csvfile:
+				fcontent = csvfile.read()
+				dumped_data[name] = read_csv_content(fcontent, False)
+		else:
+			raise ValidationError, "Dumped file {} does not exists".format(filename)
+
+	return dumped_data[name]

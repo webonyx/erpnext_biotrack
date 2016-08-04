@@ -6,7 +6,7 @@ import vendors
 import employees
 import plant_rooms
 import inventory_rooms
-import inventories
+import inventory
 
 @frappe.whitelist()
 def sync():
@@ -21,7 +21,7 @@ def sync():
 			count_dict["plant_rooms"] = plant_rooms.sync()
 			count_dict["inventory_rooms"] = inventory_rooms.sync()
 			count_dict["vendors"] = vendors.sync()
-			count_dict["inventories"] = inventories.sync()
+			count_dict["inventories"] = inventory.sync()
 			# todo
 
 			frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", frappe.utils.now())
