@@ -878,5 +878,27 @@
   "show_in_website": 0, 
   "slideshow": null, 
   "website_specifications": []
+ }, 
+ {
+  "can_be_collected": 0, 
+  "default_cost_center": null, 
+  "default_expense_account": null, 
+  "default_income_account": null, 
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Item Group", 
+  "external_id": "33", 
+  "is_group": 0, 
+  "item_group_name": "Non-Mandatory QA Sample", 
+  "lft": 87, 
+  "modified": "2016-08-08 01:10:20.445959", 
+  "name": "Non-Mandatory QA Sample", 
+  "old_parent": "WA State Classifications", 
+  "parent_item_group": "WA State Classifications", 
+  "rgt": 88, 
+  "route": "non-mandatory-qa-sample", 
+  "show_in_website": 0, 
+  "slideshow": null, 
+  "website_specifications": []
  }
 ]

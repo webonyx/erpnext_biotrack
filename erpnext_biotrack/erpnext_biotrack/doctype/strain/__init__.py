@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 
-def register_new_strain(name):
+def find_strain(name):
 	name = str(name).strip()
 
 	if not name:

@@ -6,7 +6,7 @@ from client import get_data
 from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import EmptyStockReconciliationItemsError
 from erpnext_biotrack.utils import get_default_company, make_log, inventories_price_log
 from erpnext_biotrack.config import get_default_stock_warehouse
-from erpnext_biotrack.erpnext_biotrack.doctype.strain import register_new_strain
+from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 
 @frappe.whitelist()
 def sync():
@@ -109,7 +109,7 @@ def convert_to_sr(biotrack_inventory, item):
 			"item_code": item.item_code,
 			"item_name": item.item_name,
 			"warehouse": item.default_warehouse,
-			"strain": register_new_strain(biotrack_inventory.get("strain")),
+			"strain": find_strain(biotrack_inventory.get("strain")),
 		})
 
 		update_vr(item)
@@ -182,7 +182,7 @@ def add_item_detail(stock_entry, item, biotrack_inventory):
 		stock_entry_detail = frappe.get_doc({
 			"doctype": "Stock Entry Detail",
 			"barcode": biotrack_inventory.get("id"),
-			"strain": register_new_strain(biotrack_inventory.get("strain")),
+			"strain": find_strain(biotrack_inventory.get("strain")),
 			"item_code": item.item_code,
 			"qty": qty,
 			"actual_qty": qty,
