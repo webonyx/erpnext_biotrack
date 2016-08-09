@@ -560,7 +560,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
   "default": null, 
@@ -578,7 +578,7 @@
   "in_list_view": 0, 
   "insert_after": null, 
   "label": "External Transaction Id", 
-  "modified": "2016-07-31 06:44:50.944290", 
+  "modified": "2016-08-09 00:05:28.352861", 
   "name": "Stock Reconciliation-external_transaction_id", 
   "no_copy": 0, 
   "options": null, 
