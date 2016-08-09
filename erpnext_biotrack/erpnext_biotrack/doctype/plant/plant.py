@@ -28,5 +28,8 @@ class Plant(Document):
 			if data.get("removereason"):
 				properties["remove_reason"] = data.get("removereason")
 
+		state = int(data.get("state"))
+		properties["state"] = "Drying" if state == 1 else ("Cured" if state == 2 else "Growing")
+
 		self.update(properties)
 		self.save(ignore_permissions=True)
