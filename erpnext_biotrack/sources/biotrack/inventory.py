@@ -29,6 +29,8 @@ def sync():
 
 
 def sync_inventory(biotrack_inventory, is_plant=0, result=None):
+	barcode = str(biotrack_inventory.get("id"))
+
 	# inventory type
 	item_group = frappe.get_doc("Item Group", {"external_id": biotrack_inventory.get("inventorytype"),
 											   "parent_item_group": "WA State Classifications"})
@@ -47,19 +49,21 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 
 	# product (Item) mapping
 	if biotrack_inventory.get("productname"):
-		item_code = biotrack_inventory.get("productname")
+		item_name = biotrack_inventory.get("productname")
 	else:
-		item_code = "{0} - {1}".format(biotrack_inventory.get("strain"), item_group.name)
+		item_name = " - ".join(filter(None, [barcode[-4:], biotrack_inventory.get("strain"), item_group.name]))
 
-	item = make_item(item_code, {
+	item = make_item(barcode, item_name, {
 		"is_stock_item": 1,
 		"stock_uom": "Gram",
 		"item_group": item_group.name,
 		"default_warehouse": f_warehouse.name,
+		"strain": find_strain(biotrack_inventory.get("strain")),
 		"is_plant": is_plant,
 	})
 
-	convert_to_sr(biotrack_inventory, item)
+	# todo consider to make stock
+	# make_sr(biotrack_inventory, item)
 
  	frappe.db.commit()
 	result['success'] += 1
@@ -67,7 +71,7 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	return True
 
 
-def convert_to_sr(biotrack_inventory, item):
+def make_sr(biotrack_inventory, item):
 	"""Stock Reconciliation"""
 	barcode = biotrack_inventory.get("id")
 	name = frappe.get_value("Stock Reconciliation", {"external_id": barcode, "is_plant": item.get("is_plant")}, "name")
@@ -131,7 +135,7 @@ def convert_to_sr(biotrack_inventory, item):
 			pass
 
 
-def convert_to_se(biotrack_inventory, item, f_warehouse, is_plant=0, result=None):
+def make_se(biotrack_inventory, item, f_warehouse, is_plant=0, result=None):
 	try:
 		stock_entry = frappe.get_doc("Stock Entry", {
 			"external_id": biotrack_inventory.get("id"),
@@ -199,16 +203,15 @@ def add_item_detail(stock_entry, item, biotrack_inventory):
 		})
 
 
-def make_item(item_code, properties=None):
-	item_code = str(item_code).strip()
-	if frappe.db.exists("Item", item_code):
-		item = frappe.get_doc("Item", item_code)
+def make_item(barcode, item_name, properties=None):
+	if frappe.db.exists("Item", barcode):
+		item = frappe.get_doc("Item", barcode)
 	else:
 		item = frappe.get_doc({
 			"doctype": "Item",
-			"item_code": item_code,
-			"item_name": item_code,
-			"description": item_code,
+			"item_code": barcode,
+			"item_name": item_name,
+			"barcode": barcode,
 		})
 
 	if properties:

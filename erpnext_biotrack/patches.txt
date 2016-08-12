@@ -1,1 +1,3 @@
 execute:import unidecode # new requirement
+execute:frappe.delete_doc("Custom Field", "Stock Reconciliation Item-strain")
+execute:frappe.delete_doc("Custom Field", "Stock Reconciliation-is_plant")

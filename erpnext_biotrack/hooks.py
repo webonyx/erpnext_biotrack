@@ -17,6 +17,7 @@ fixtures = [
 			["name", "in", (
 				# Item
 				"Item-is_plant",
+				"Item-strain",
 
 				# Item Group
 				"Item Group-external_id",
@@ -41,12 +42,8 @@ fixtures = [
 				"Customer-license_no",
 
 				# Stock Entry
-				"Stock Reconciliation-is_plant",
 				"Stock Reconciliation-external_id",
 				"Stock Reconciliation-external_transaction_id",
-
-				# Stock Entry Detail
-				"Stock Reconciliation Item-strain"
 			)]
 		]
 	},
