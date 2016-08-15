@@ -41,6 +41,12 @@ fixtures = [
 				"Customer-ubi",
 				"Customer-license_no",
 
+				# Delivery Note
+				"Delivery Note-external_id",
+				"Delivery Note-depart_datetime",
+				"Delivery Note-arrive_datetime",
+
+				# @todo not use
 				# Stock Entry
 				"Stock Reconciliation-external_id",
 				"Stock Reconciliation-external_transaction_id",
