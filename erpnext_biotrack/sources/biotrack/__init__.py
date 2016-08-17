@@ -9,6 +9,8 @@ import inventory_room
 import plant
 import inventory
 import manifest
+import qa_lab
+import qa_sample
 
 @frappe.whitelist()
 def sync():
@@ -26,7 +28,8 @@ def sync():
 			count_dict["plants"] = plant.sync()
 			count_dict["inventories"] = inventory.sync()
 			count_dict["manifests"] = manifest.sync()
-			# todo
+			count_dict["qa_labs"] = qa_lab.sync()
+			count_dict["qa_samples"] = qa_sample.sync()
 
 			frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", frappe.utils.now())
 

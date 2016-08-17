@@ -50,6 +50,13 @@ fixtures = [
 				# Stock Entry
 				"Stock Reconciliation-external_id",
 				"Stock Reconciliation-external_transaction_id",
+
+				# Supplier
+				"Supplier-license_no",
+
+				"Quality Inspection-external_id",
+				"Quality Inspection-qa_lab",
+				"Quality Inspection-test_result",
 			)]
 		]
 	},
