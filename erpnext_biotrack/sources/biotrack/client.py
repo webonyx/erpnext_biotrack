@@ -3,10 +3,10 @@ from datetime import datetime
 import frappe, os
 from frappe import _
 import json
-from erpnext_biotrack.exceptions import BiotrackError
+from erpnext_biotrack.exceptions import BiotrackError, BioTrackClientError
 from erpnext_biotrack.utils import get_biotrack_settings, disable_biotrack_sync_on_exception
 from erpnext_biotrack.config import is_training_mode
-from frappe.utils import get_request_session
+from frappe.utils import get_request_session, encode
 from erpnext_biotrack import __api_version__, __api_endpoint__
 
 
@@ -18,13 +18,12 @@ def get_data(action, params=None, key=None):
 		filename = action + '.json'
 		f = frappe.get_app_path("erpnext_biotrack", "fixtures/offline_sync", filename)
 		if os.path.exists(f):
-			try:
-				data = read_doc_from_file(f)
-			except IOError:
-				print f + " missing"
-				return []
+			data = read_doc_from_file(f)
 		else:
 			data = do_request(action=action, data=params, return_key=key)
+			if not key and not data.get('success'):
+				return data
+
 			with open(f, "w") as outfile:
 				outfile.write(frappe.as_json(data))
 
@@ -45,7 +44,7 @@ def do_request(action, data=None, return_key=None):
 	# {"errorcode": "60", "success": 0, "error": "Invalid session."}
 
 	if not result.get('success'):
-		frappe.throw(result.get('error'), BiotrackError)
+		raise BioTrackClientError(encode(result.get('error')))
 
 	if return_key and return_key in result:
 		return result[return_key]

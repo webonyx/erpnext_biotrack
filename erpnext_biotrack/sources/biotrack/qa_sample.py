@@ -45,7 +45,7 @@ def sync_qa_sample(biotrack_item):
 		"test_result": result_map[result],
 	})
 
-	doc.save()
+	doc.submit()
 
 	frappe.db.commit()
 
@@ -53,4 +53,4 @@ def sync_qa_sample(biotrack_item):
 
 def get_biotrack_qa_samples(active=1):
 	data = get_data('sync_inventory_qa_sample', {'active': active})
-	return data.get('inventory_qa_sample') if bool(data.get('success')) else []
+	return data.get('inventory_qa_sample') or []

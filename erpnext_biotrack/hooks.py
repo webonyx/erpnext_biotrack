@@ -93,6 +93,17 @@ fixtures = [
 #	"Role": "home_page"
 # }
 
+
+# Form custom scripts
+# doctype_js = {
+# 	"Supplier": "custom_scripts/supplier/form.js"
+# }
+
+# List custom scripts
+doctype_list_js = {
+	"Supplier": "custom_scripts/supplier/list.js"
+}
+
 # Website user home page (by function)
 # get_website_user_home_page = "erpnext_biotrack.utils.get_home_page"
 
