@@ -23,24 +23,25 @@ frappe.listview_settings['Plant'] = {
     formatters: {
         creation: function (value, df, data) {
             var diff = dateutil.get_diff(dateutil.get_today(), value.split(' ')[0]);
-            // if (diff == 0) {
-            //     return comment_when(value);
-            // }
+            if (diff == 0) {
+                return comment_when(value);
+            }
             //
-            // if (diff == 1) {
-            //     return __('Yesterday')
-            // }
+            if (diff == 1) {
+                return __('Yesterday')
+            }
             //
-            // if (diff == 2) {
-            //     return __('2 days ago')
-            // }
+            if (diff == 2) {
+                return __('2 days ago')
+            }
 
             return diff + ' days';
         }
     },
 
     onload: function (DocListView) {
-       DocListView.listview.stats.push("warehouse")
+       DocListView.listview.stats.push("state");
+       DocListView.listview.stats.push("warehouse");
 
     }
 };
