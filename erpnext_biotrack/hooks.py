@@ -101,7 +101,8 @@ fixtures = [
 
 # List custom scripts
 doctype_list_js = {
-	"Supplier": "custom_scripts/supplier/list.js"
+	"Supplier": "custom_scripts/supplier_list.js",
+	"Plant": "custom_scripts/plant_list.js"
 }
 
 # Website user home page (by function)

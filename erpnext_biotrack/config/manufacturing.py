@@ -9,20 +9,11 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Plant",
-					"label": "Plants",
 				},
 				{
 					"type": "doctype",
 					"name": "Strain",
-					"label": "Strains",
-				},
-				{
-					"type": "doctype",
-					"name": "Supplier",
-					"label": "QA Labs",
-					"filters": {"supplier_type": _("Lab & Scientific")},
-					"hide_count": True
-				},
+				}
 			]
 		}
 	]
