@@ -9,10 +9,6 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Stock Status",
-				},
-				{
-					"type": "doctype",
 					"name": "Strain",
 				}
 			]

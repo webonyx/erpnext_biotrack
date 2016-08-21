@@ -18,6 +18,7 @@ fixtures = [
 				# Item
 				"Item-is_plant",
 				"Item-strain",
+				"Item-external_qty",
 
 				# Item Group
 				"Item Group-external_id",
@@ -60,15 +61,6 @@ fixtures = [
 			)]
 		]
 	},
-	{
-		"doctype": "Item Group",
-		"filters": [
-			{
-				"parent_item_group": "WA State Classifications"
-			}
-		]
-	},
-	'Stock Status'
 ]
 
 # Includes in <head>
