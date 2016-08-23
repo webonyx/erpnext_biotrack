@@ -74,10 +74,6 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	if remaining_quantity > qty:
 		make_stock_entry(item_code=barcode, target=item.default_warehouse, qty=remaining_quantity - qty)
 
-	# Material Issue
-	if remaining_quantity < qty:
-		make_stock_entry(item_code=barcode, source=item.default_warehouse, qty=qty - remaining_quantity)
-
 	update_properties = {
 		"external_qty": remaining_quantity,
 		"is_stock_item": 1 if remaining_quantity > 0 else 0,

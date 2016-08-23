@@ -19,6 +19,9 @@ fixtures = [
 				"Item-is_plant",
 				"Item-strain",
 				"Item-external_qty",
+				"Item-sub_lot_sec",
+				"Item-item_parent",
+				"Item-sub_items",
 
 				# Item Group
 				"Item Group-external_id",
@@ -68,7 +71,7 @@ fixtures = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
-# app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
+app_include_js = "/assets/erpnext_biotrack/js/canabis.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
@@ -87,12 +90,13 @@ fixtures = [
 
 
 # Form custom scripts
-# doctype_js = {
-# 	"Supplier": "custom_scripts/supplier/form.js"
-# }
+doctype_js = {
+	"Item": "custom_scripts/item.js"
+}
 
 # List custom scripts
 doctype_list_js = {
+	"Item": "custom_scripts/item_list.js",
 	"Supplier": "custom_scripts/supplier_list.js",
 	"Plant": "custom_scripts/plant_list.js"
 }
