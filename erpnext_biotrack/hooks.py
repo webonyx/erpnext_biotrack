@@ -18,7 +18,7 @@ fixtures = [
 				# Item
 				"Item-is_plant",
 				"Item-strain",
-				"Item-external_qty",
+				"Item-actual_qty",
 				"Item-sub_lot_sec",
 				"Item-item_parent",
 				"Item-sub_items",
@@ -49,11 +49,6 @@ fixtures = [
 				"Delivery Note-external_id",
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
-
-				# @todo not use
-				# Stock Entry
-				"Stock Reconciliation-external_id",
-				"Stock Reconciliation-external_transaction_id",
 
 				# Supplier
 				"Supplier-license_no",

@@ -1,5 +1,9 @@
 execute:import unidecode # new requirement
 execute:frappe.delete_doc_if_exists("Custom Field", "Stock Entry-biotrack_inventory_status")
 execute:frappe.delete_doc_if_exists("Custom Field", "Stock Entry-wa_state_compliance_sync")
+execute:frappe.delete_doc_if_exists("Custom Field", "Stock Entry-external_id")
+execute:frappe.delete_doc_if_exists("Custom Field", "Stock Entry Detail-strain")
+execute:frappe.delete_doc_if_exists("Custom Field", "Stock Reconciliation-external_id")
+execute:frappe.delete_doc_if_exists("Custom Field", "Stock Reconciliation-external_transaction_id")
 execute:frappe.delete_doc_if_exists("DocType", "Stock Entry Status")
 execute:frappe.delete_doc_if_exists("DocType", "Stock Status")

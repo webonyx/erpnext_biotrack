@@ -68,14 +68,14 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	else:
 		item = frappe.get_doc("Item", barcode)
 
-	qty = float(item.get("external_qty") or 0)
+	qty = float(item.get("actual_qty") or 0)
 
 	# Material Receipt
 	if remaining_quantity > qty:
 		make_stock_entry(item_code=barcode, target=item.default_warehouse, qty=remaining_quantity - qty)
 
 	update_properties = {
-		"external_qty": remaining_quantity,
+		"actual_qty": remaining_quantity,
 		"is_stock_item": 1 if remaining_quantity > 0 else 0,
 	}
 

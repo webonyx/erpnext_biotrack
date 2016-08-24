@@ -34,6 +34,7 @@ def new_item(item_name, item_group, strain, actual_qty, default_warehouse):
 		"strain": strain,
 		"stock_uom": "Gram",
 		"is_stock_item": 1,
+		"actual_qty": actual_qty,
 	})
 
 	item.insert()
