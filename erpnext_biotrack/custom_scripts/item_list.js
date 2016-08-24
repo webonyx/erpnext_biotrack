@@ -1,5 +1,6 @@
 frappe.listview_settings['Item'] = {
     onload: function (DocListView) {
+        DocListView.listview.stats.push("item_group");
         DocListView.page.add_action_item(__("New Synchronous Item"), function () {
             var fields = [
                 {
