@@ -52,7 +52,8 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 		item_name = " - ".join(filter(None, [barcode[-4:], biotrack_inventory.get("strain"), item_group.name]))
 
 	remaining_quantity = float(biotrack_inventory.get("remaining_quantity"))
-	if not frappe.db.exists("Item", barcode):
+	name = frappe.db.sql("select name from tabItem where barcode = '{barcode}' or name = '{barcode}'".format(barcode=barcode), as_list=True)
+	if not name:
 		item = frappe.get_doc({
 			"doctype": "Item",
 			"item_code": barcode,
@@ -65,14 +66,16 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 		})
 
 		item.insert()
+		name = barcode
 	else:
-		item = frappe.get_doc("Item", barcode)
+		name = name[0][0]
+		item = frappe.get_doc("Item", name)
 
 	qty = float(item.get("actual_qty") or 0)
 
 	# Material Receipt
 	if remaining_quantity > qty:
-		make_stock_entry(item_code=barcode, target=item.default_warehouse, qty=remaining_quantity - qty)
+		make_stock_entry(item_code=name, target=item.default_warehouse, qty=remaining_quantity - qty)
 
 	properties = {
 		"actual_qty": remaining_quantity,
@@ -84,17 +87,20 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 		strain = find_strain(biotrack_inventory.get("strain"))
 
 	if biotrack_inventory.get("parentid"):
-		parent_name = biotrack_inventory.get("parentid")[0]
-		if frappe.db.exists("Item", parent_name):
-			parent = frappe.get_doc("Item", parent_name)
-			parent.append("sub_items", {
-				"item_code": barcode,
-				"qty": remaining_quantity
-			})
-			parent.save()
-			properties["item_parent"] = parent_name
+		for parent_name in biotrack_inventory.get("parentid"):
+			if parent_name != item.item_parent and frappe.db.exists("Item", parent_name):
+				parent = frappe.get_doc("Item", parent_name)
+				parent.append("sub_items", {
+					"item_code": barcode,
+					"qty": remaining_quantity
+				})
+				parent.save()
+				properties["item_parent"] = parent_name
+
+
 
 	properties["strain"] = strain
+	properties["item_name"] = item_name
 	item.update(properties)
 	item.save()
 
