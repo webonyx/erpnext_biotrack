@@ -32,6 +32,13 @@ frappe.ui.form.on("Item", {
                         if (actual_qty) {
                             erpnext.item.clone_item(frm.doc, actual_qty, r.message.rate)
                         } else {
+                            frappe.msgprint(
+                                {
+                                    message: __("Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>. <br><br>Available qty is <strong>0</strong>", [frm.doc['item_name'], frm.doc['default_warehouse']]),
+                                    title: "Insufficient Stock",
+                                    indicator: 'red'
+                                }
+                            );
                             $btn.prop('disabled', true);
                         }
                     }
@@ -97,6 +104,8 @@ $.extend(erpnext.item, {
             });
         });
 
-        $('<p style="margin-left: 10px;"></p>').appendTo(dialog.body);
+        $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
+                '<strong><em>Please be considerate!</em></strong> This action will synchronous with BioTrackTCH database.' +
+            '</div>').appendTo(dialog.body);
     }
 });

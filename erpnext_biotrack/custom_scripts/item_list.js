@@ -1,6 +1,6 @@
 frappe.listview_settings['Item'] = {
     onload: function (DocListView) {
-        DocListView.page.add_action_item(__("New Item With Sync"), function () {
+        DocListView.page.add_action_item(__("New Synchronous Item"), function () {
             var fields = [
                 {
                     fieldname: 'item_name', label: __('Item Name'), reqd: 1, fieldtype: 'Data'
@@ -34,7 +34,7 @@ frappe.listview_settings['Item'] = {
             ];
 
             var dialog = new frappe.ui.Dialog({
-                title: __("New Item"),
+                title: __("New Synchronous Item"),
                 fields: fields
             });
 
@@ -71,7 +71,7 @@ frappe.listview_settings['Item'] = {
 
             dialog.show();
             $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
-                'Please take consideration! This action will be synchronous with BioTrackTCH database.' +
+                '<strong><em>Please be considerate!</em></strong> This action will synchronous with BioTrackTCH database.' +
             '</div>').appendTo(dialog.body);
 
         }, "octicon octicon-sync");
