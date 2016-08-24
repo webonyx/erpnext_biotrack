@@ -1,7 +1,15 @@
 import json, frappe
 from frappe.utils import get_request_session, encode
 
-class BioTrackClientError(frappe.ValidationError): pass
+class BioTrackClientError(frappe.ValidationError):
+	http_status_code = 500
+
+	def __init__(self, *args, **kwargs):
+		if len(args) and isinstance(args[0], basestring):
+			frappe.local.message_log.append(args[0])
+
+		super(frappe.ValidationError, self).__init__(*args, **kwargs)
+
 class BioTrackEmptyDataError(BioTrackClientError): pass
 
 class BioTrackClient:

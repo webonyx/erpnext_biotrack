@@ -61,6 +61,8 @@ fixtures = [
 	},
 ]
 
+error_report_email = "viet@webonyx.com"
+
 # Includes in <head>
 # ------------------
 

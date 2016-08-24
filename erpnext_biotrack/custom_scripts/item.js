@@ -52,7 +52,7 @@ $.extend(erpnext.item, {
                     fieldtype: 'Link', options: 'Item', read_only: 1
                 },
                 {
-                    fieldname: 'source', label: __('Warehouse'),
+                    fieldname: 'default_warehouse', label: __('Warehouse'),
                     fieldtype: 'Link', options: 'Warehouse', read_only: 1
                 },
 
@@ -60,19 +60,16 @@ $.extend(erpnext.item, {
                     fieldname: 'qty', label: __('Quantity'), reqd: 1,
                     fieldtype: 'Float', description: __('Available <strong>{0}</strong>', [actual_qty])
                 },
-                {fieldname: 'rate', label: __('Rate'), fieldtype: 'Currency', hidden: 1}
+                { fieldname: 'rate', label: __('Rate'), fieldtype: 'Currency', reqd: 1 }
             ]
         });
         dialog.show();
 
         dialog.get_field('item_code').set_input(doc['item_code']);
-        dialog.get_field('source').set_input(doc['default_warehouse']);
+        dialog.get_field('default_warehouse').set_input(doc['default_warehouse']);
 
-        if (rate) {
-            dialog.get_field('rate').set_value(rate);
-            dialog.get_field('rate').df.hidden = 0;
-            dialog.get_field('rate').refresh();
-        }
+        dialog.get_field('rate').set_value(rate);
+        dialog.get_field('rate').refresh();
 
         dialog.set_primary_action(__('Submit'), function () {
             var values = dialog.get_values();
@@ -95,6 +92,7 @@ $.extend(erpnext.item, {
                     frappe.show_alert(__('Item {0} created',
                         ['<a href="#Form/Item/' + r.message.item_name + '">' + r.message.item_name + '</a>']));
                     dialog.hide();
+                    cur_frm.reload_doc();
                 }
             });
         });

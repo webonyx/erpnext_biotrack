@@ -74,7 +74,7 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	if remaining_quantity > qty:
 		make_stock_entry(item_code=barcode, target=item.default_warehouse, qty=remaining_quantity - qty)
 
-	update_properties = {
+	properties = {
 		"actual_qty": remaining_quantity,
 		"is_stock_item": 1 if remaining_quantity > 0 else 0,
 	}
@@ -83,8 +83,19 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	if biotrack_inventory.get("strain"):
 		strain = find_strain(biotrack_inventory.get("strain"))
 
-	update_properties["strain"] = strain
-	item.update(update_properties)
+	if biotrack_inventory.get("parentid"):
+		parent_name = biotrack_inventory.get("parentid")[0]
+		if frappe.db.exists("Item", parent_name):
+			parent = frappe.get_doc("Item", parent_name)
+			parent.append("sub_items", {
+				"item_code": barcode,
+				"qty": remaining_quantity
+			})
+			parent.save()
+			properties["item_parent"] = parent_name
+
+	properties["strain"] = strain
+	item.update(properties)
 	item.save()
 
 	frappe.db.commit()
