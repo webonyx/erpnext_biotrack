@@ -31,6 +31,12 @@ frappe.listview_settings['Item'] = {
                             filters: {"is_group": 0, "plant_room": 0}
                         }
                     }
+                },
+                {
+                    fieldname: 'plant',
+                    label: __('Plant'),
+                    fieldtype: 'Link',
+                    options: 'Plant'
                 }
             ];
 
@@ -72,7 +78,7 @@ frappe.listview_settings['Item'] = {
 
             dialog.show();
             $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
-                '<strong><em>Please be considerate!</em></strong> This action will synchronous with BioTrackTCH database.' +
+                '<strong><em>Please be considerate!</em></strong> This action will synchronize with BioTrackTCH database.' +
             '</div>').appendTo(dialog.body);
 
         }, "octicon octicon-sync");

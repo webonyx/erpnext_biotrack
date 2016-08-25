@@ -86,6 +86,7 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	if biotrack_inventory.get("strain"):
 		strain = find_strain(biotrack_inventory.get("strain"))
 
+	# Parent
 	if biotrack_inventory.get("parentid"):
 		for parent_name in biotrack_inventory.get("parentid"):
 			if parent_name != item.item_parent and frappe.db.exists("Item", parent_name):
@@ -97,8 +98,13 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 				parent.save()
 				properties["item_parent"] = parent_name
 
+	# Plant
+	plant = ""
+	if biotrack_inventory.get("plantid"):
+		if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
+			plant = biotrack_inventory.get("plantid")
 
-
+	properties["plant"] = plant
 	properties["strain"] = strain
 	properties["item_name"] = item_name
 	item.update(properties)

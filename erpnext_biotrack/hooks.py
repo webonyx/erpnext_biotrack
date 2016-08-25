@@ -16,11 +16,11 @@ fixtures = [
 		"filters": [
 			["name", "in", (
 				# Item
-				"Item-is_plant",
 				"Item-strain",
 				"Item-actual_qty",
 				"Item-sub_lot_sec",
 				"Item-item_parent",
+				"Item-plant",
 				"Item-sub_items",
 
 				# Item Group
@@ -96,6 +96,10 @@ doctype_list_js = {
 	"Item": "custom_scripts/item_list.js",
 	"Supplier": "custom_scripts/supplier_list.js",
 	"Plant": "custom_scripts/plant_list.js"
+}
+
+standard_queries = {
+	"Plant": "erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.get_plant_list"
 }
 
 # Website user home page (by function)

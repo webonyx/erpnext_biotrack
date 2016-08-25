@@ -17,6 +17,7 @@ def sync():
 
 def sync_all():
 	frappe.flags.mute_emails = True
+	frappe.flags.in_import = True
 
 	sources = ['biotrack']
 	make_log(title="Sync Job is started", status="Queued", method="sync_all", message="Started")
@@ -25,6 +26,7 @@ def sync_all():
 
 	make_log(title="Sync Completed", status="Success", method="sync_all", message="Completed")
 	frappe.flags.mute_emails = False
+	frappe.flags.in_import = False
 
 def sync_source(source):
 	script = "erpnext_biotrack.sources.%s" % source

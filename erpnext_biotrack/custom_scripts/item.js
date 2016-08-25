@@ -105,7 +105,7 @@ $.extend(erpnext.item, {
         });
 
         $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
-                '<strong><em>Please be considerate!</em></strong> This action will synchronous with BioTrackTCH database.' +
+                '<strong><em>Please be considerate!</em></strong> This action will synchronize with BioTrackTCH database.' +
             '</div>').appendTo(dialog.body);
     }
 });

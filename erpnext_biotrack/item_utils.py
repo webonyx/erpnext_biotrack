@@ -9,17 +9,23 @@ from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 
 from .biotrackthc import call as biotrackthc_call
 
+
 @frappe.whitelist()
-def new_item(item_name, item_group, strain, actual_qty, default_warehouse):
+def new_item(item_name, item_group, strain, actual_qty, default_warehouse, plant=None):
 	item_group = frappe.get_doc("Item Group", item_group)
 	location = frappe.get_value("BioTrack Settings", None, "location")
 
+	call_data = {
+		"invtype": item_group.external_id,
+		"quantity": actual_qty,
+		"strain": strain,
+	}
+
+	if plant:
+		call_data["source_id"] = plant
+
 	data = biotrackthc_call("inventory_new", data={
-		"data": {
-			"invtype": item_group.external_id,
-			"quantity": actual_qty,
-			"strain": strain,
-		},
+		"data": call_data,
 		"location": location
 	})
 
@@ -32,6 +38,7 @@ def new_item(item_name, item_group, strain, actual_qty, default_warehouse):
 		"item_group": item_group.name,
 		"default_warehouse": default_warehouse,
 		"strain": strain,
+		"plant": plant,
 		"stock_uom": "Gram",
 		"is_stock_item": 1,
 		"actual_qty": actual_qty,
@@ -41,6 +48,7 @@ def new_item(item_name, item_group, strain, actual_qty, default_warehouse):
 	make_stock_entry(item_code=barcode, target=default_warehouse, qty=actual_qty)
 
 	return item
+
 
 @frappe.whitelist()
 def clone_item(item_code, qty, rate, default_warehouse):
