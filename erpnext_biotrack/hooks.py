@@ -22,6 +22,7 @@ fixtures = [
 				"Item-item_parent",
 				"Item-plant",
 				"Item-sub_items",
+				"Item-is_marijuana_item",
 
 				# Item Group
 				"Item Group-external_id",
@@ -139,13 +140,12 @@ after_install = "erpnext_biotrack.install.after_install"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Item": {
+		"validate": "erpnext_biotrack.item_utils.on_validate",
+		"after_insert": "erpnext_biotrack.item_utils.after_insert",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

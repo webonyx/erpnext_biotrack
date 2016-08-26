@@ -1,7 +1,14 @@
 frappe.listview_settings['Item'] = {
     onload: function (DocListView) {
         DocListView.listview.stats.push("item_group");
-        DocListView.page.add_action_item(__("New Synchronous Item"), function () {
+        DocListView.page.add_action_item(__("New Marijuana Item"), function () {
+            var doc = frappe.model.get_new_doc(doctype, null, null, true);
+            doc.is_marijuana_item = true;
+
+            // Use full page form instead
+            frappe.set_route("Form", "Item", doc.name);
+            return
+
             var fields = [
                 {
                     fieldname: 'item_name', label: __('Item Name'), reqd: 1, fieldtype: 'Data'
@@ -41,7 +48,7 @@ frappe.listview_settings['Item'] = {
             ];
 
             var dialog = new frappe.ui.Dialog({
-                title: __("New Synchronous Item"),
+                title: __("New Marijuana Item"),
                 fields: fields
             });
 

@@ -17,7 +17,7 @@ frappe.ui.form.on("Item", {
     },
 
     refresh: function (frm) {
-        if (frm.doc.is_stock_item) {
+        if (!frm.doc.__islocal && frm.doc.is_stock_item) {
             var $btn = frm.add_custom_button(__("Sub Lot/Batch"), function () {
                 frappe.call({
                     method: 'erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_stock_balance_for',
@@ -46,6 +46,13 @@ frappe.ui.form.on("Item", {
 
             })
         }
+
+
+        erpnext.item.toggle_marijuana_attributes(frm);
+
+    },
+    is_marijuana_item: function (frm) {
+        erpnext.item.toggle_marijuana_attributes(frm)
     }
 });
 
@@ -65,9 +72,9 @@ $.extend(erpnext.item, {
 
                 {
                     fieldname: 'qty', label: __('Quantity'), reqd: 1,
-                    fieldtype: 'Float', description: __('Available <strong>{0}</strong>', [actual_qty])
+                    fieldtype: 'Float', description: __('Default Unit of Measure <strong>{0}</strong>. Available <strong>{1}</strong>', [doc.stock_uom, actual_qty])
                 },
-                { fieldname: 'rate', label: __('Rate'), fieldtype: 'Currency', reqd: 1 }
+                { fieldname: 'rate', label: __('Valuation Rate'), fieldtype: 'Currency', reqd: 1 }
             ]
         });
         dialog.show();
@@ -107,5 +114,19 @@ $.extend(erpnext.item, {
         $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
                 '<strong><em>Please be considerate!</em></strong> This action will synchronize with BioTrackTCH database.' +
             '</div>').appendTo(dialog.body);
+    },
+    toggle_marijuana_attributes: function(frm) {
+        if (frm.doc.__islocal && frm.doc.is_marijuana_item) {
+            frm.set_value("stock_uom", 'Gram');
+        }
+
+        frm.toggle_display("is_marijuana_item", frm.doc.__islocal);
+        frm.toggle_reqd("strain", frm.doc.is_marijuana_item);
+        frm.toggle_reqd("default_warehouse", frm.doc.is_marijuana_item);
+
+        frm.toggle_display("actual_qty", frm.doc.is_marijuana_item);
+        frm.toggle_reqd("actual_qty", frm.doc.is_marijuana_item);
+        frm.toggle_display("barcode", !frm.doc.__islocal || (frm.doc.__islocal && !frm.doc.is_marijuana_item));
+
     }
 });

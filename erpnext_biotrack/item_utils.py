@@ -3,9 +3,9 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import json, os
 import frappe
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
+from frappe.utils.data import flt
 
 from .biotrackthc import call as biotrackthc_call
 
@@ -100,5 +100,80 @@ def clone_item(item_code, qty, rate, default_warehouse):
 
 	parent.actual_qty = remaining_qty
 	parent.save()
+
+	return item.as_dict()
+
+def on_validate(item, method):
+	if not item.is_marijuana_item:
+		return item
+
+	missing = []
+	marijuana_req_fields = ["strain", "item_group"]
+	for field in marijuana_req_fields:
+		if item.get(field) is None:
+			missing.append(field)
+
+	if flt(item.get("actual_qty")) == 0:
+		missing.append("actual_qty")
+
+	if not missing:
+		return
+
+	raise frappe.MandatoryError('[{doctype}, {name}]: {fields}'.format(
+		fields=", ".join((each for each in missing)),
+		doctype=item.doctype,
+		name=item.name))
+
+def after_insert(item, method):
+	if not item.is_marijuana_item:
+		return item
+
+	item_group = frappe.get_doc("Item Group", item.item_group)
+	location = frappe.get_value("BioTrack Settings", None, "location")
+
+	call_data = {
+		"invtype": item_group.external_id,
+		"quantity": item.actual_qty,
+		"strain": item.strain,
+	}
+
+	if item.plant:
+		call_data["source_id"] = item.plant
+
+	data = biotrackthc_call("inventory_new", data={
+		"data": call_data,
+		"location": location
+	})
+
+	item.update({
+		"barcode": data['barcode_id'][0]
+	})
+
+	make_stock_entry(item_code=item.item_code, target=item.default_warehouse, qty=item.actual_qty)
+	item.save()
+
+def test_insert():
+	item = frappe.get_doc({
+		"doctype": "Item",
+		"item_name": "_Test Item",
+		"item_code": "_Test Item",
+		"item_group": "Usable Marijuana",
+		"strain": "Pineapple",
+		"stock_uom": "Gram",
+		"actual_qty": 50,
+		"default_warehouse": "Bulk Inventory room - EV",
+		"is_marijuana_item": 1,
+	})
+
+	item.save()
+
+	# success and tear down
+	entries = frappe.get_list("Stock Entry", {"item_code": item.item_code})
+	for name in entries:
+		entry = frappe.get_doc("Stock Entry", name)
+		entry.cancel()
+		entry.delete()
+
+	item.delete()
 
 	return item.as_dict()
