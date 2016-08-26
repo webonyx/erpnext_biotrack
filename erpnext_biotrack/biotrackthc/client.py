@@ -33,12 +33,14 @@ class BioTrackClient:
 			"license_number": self.license_number,
 			"username": self.username,
 			"password": self.password,
-			"nosession": 1,
 			"training": self.is_training,
 			"API": self.__API__,
 		})
 
-		if (frappe.conf.get("logging") or False) == 2:
+		if action != 'login':
+			data["nosession"] = 1
+
+		if (frappe.conf.get("logging") or 0) > 0:
 			frappe.log("<<<< BioTrackTHC")
 			frappe.log(json.dumps(action_data))
 			frappe.log(">>>>")
@@ -58,19 +60,19 @@ class BioTrackClient:
 
 		return result
 
-def get_client():
+	def login(self):
+		return self.post('login', {})
+
+def get_client(license_number, username, password, is_training=0):
 	"""
 	:return BioTrackClient:
 	"""
+	return BioTrackClient(license_number, username, password, is_training)
+
+def post(action, data):
 	settings = frappe.get_doc("BioTrack Settings")
 	if not settings.enable_biotrack:
 		raise BioTrackClientError('BioTrackTHC integration is not enabled')
 
-	client = BioTrackClient(settings.license_number, settings.username,
-							settings.get_password(), int(settings.is_training))
-
-	return client
-
-def post(action, data):
-	client = get_client()
+	client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
 	return client.post(action, data)

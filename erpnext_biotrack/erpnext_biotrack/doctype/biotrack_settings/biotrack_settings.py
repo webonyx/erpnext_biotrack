@@ -4,25 +4,22 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe import _
+from erpnext_biotrack.biotrackthc.client import get_client, BioTrackClientError
 from frappe.model.document import Document
-from erpnext_biotrack.exceptions import BiotrackSetupError
 from frappe.utils.data import cint
-
 
 class BioTrackSettings(Document):
 	def validate(self):
 		if self.enable_biotrack == 1:
-			self.validate_access_credentials()
 			self.validate_access()
 
-	def validate_access_credentials(self):
-		if not (self.username and self.get_password() and self.license_number):
-			frappe.msgprint(_("Missing value for License number, username and password"),
-							raise_exception=BiotrackSetupError)
-
 	def validate_access(self):
-		pass
+		client = get_client(self.license_number, self.username, self.get_password(), self.is_training)
+		try:
+			client.login()
+		except BioTrackClientError as ex:
+			frappe.local.message_log = []
+			frappe.msgprint(ex.message, indicator='red', title='Access Error')
 
 	def get_password(self, fieldname='password', raise_exception=True):
 		""" This fix because master branch is still storing raw password in database """

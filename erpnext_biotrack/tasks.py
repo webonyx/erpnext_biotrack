@@ -11,7 +11,7 @@ def sync():
 	"Enqueue longjob for syncing biotrack."
 	settings = frappe.get_doc("BioTrack Settings")
 	if not settings.is_sync_enabled():
-		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Error', indicator='red')
+		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Sync Error', indicator='red')
 		return
 
 	from frappe.utils.background_jobs import enqueue
