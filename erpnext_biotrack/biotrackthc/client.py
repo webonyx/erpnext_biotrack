@@ -63,6 +63,9 @@ def get_client():
 	:return BioTrackClient:
 	"""
 	settings = frappe.get_doc("BioTrack Settings")
+	if not settings.enable_biotrack:
+		raise BioTrackClientError('BioTrackTHC integration is not enabled')
+
 	client = BioTrackClient(settings.license_number, settings.username,
 							settings.get_password(), int(settings.is_training))
 

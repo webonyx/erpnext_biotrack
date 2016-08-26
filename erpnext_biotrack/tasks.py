@@ -9,6 +9,10 @@ from .utils import make_log
 @frappe.whitelist()
 def sync():
 	"Enqueue longjob for syncing biotrack."
+	settings = frappe.get_doc("BioTrack Settings")
+	if not settings.is_sync_enabled():
+		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Error', indicator='red')
+		return
 
 	from frappe.utils.background_jobs import enqueue
 	enqueue(sync_all)
@@ -44,8 +48,7 @@ def weekly():
 	return sync_if('Weekly')
 
 
-def sync_if(schedule, default='Daily'):
-	schedule_config = frappe.get_value("BioTrack Settings", None, 'schedule_in') or default
-
-	if schedule_config == schedule:
+def sync_if(frequency, default='Daily'):
+	settings = frappe.get_doc("BioTrack Settings")
+	if settings.is_sync_enabled() and (settings.schedule_in or default) == frequency:
 		sync_all()

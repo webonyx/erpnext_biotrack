@@ -16,5 +16,11 @@ frappe.ui.form.on('BioTrack Settings', {
 		cur_frm.add_custom_button('<span class="octicon octicon-info" aria-hidden="true"></span> ' + __("Sync Log"), function() {
 			frappe.set_route("List", "BioTrack Log");
 		});
+	},
+
+	enable_biotrack: function(frm) {
+		if (!frm.enable_biotrack) {
+			frm.set_value('sync_enabled', 0)
+		}
 	}
 });

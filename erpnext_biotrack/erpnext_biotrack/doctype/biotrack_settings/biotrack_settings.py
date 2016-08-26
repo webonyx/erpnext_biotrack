@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from erpnext_biotrack.exceptions import BiotrackSetupError
+from frappe.utils.data import cint
 
 
 class BioTrackSettings(Document):
@@ -29,3 +30,6 @@ class BioTrackSettings(Document):
 			return super(Document, self).get_password(fieldname, raise_exception)
 		except AttributeError:
 			return self.get(fieldname)
+
+	def is_sync_enabled(self):
+		return cint(self.enable_biotrack) and cint(self.sync_enabled)
