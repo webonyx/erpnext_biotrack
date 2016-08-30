@@ -20,7 +20,7 @@ def sync_plant(biotrack_plant):
         creation_datetime = datetime.datetime.fromtimestamp(int(biotrack_plant.get("sessiontime")))
         doc = frappe.get_doc({"doctype": "Plant", "barcode": barcode, "creation": get_datetime_str(creation_datetime)})
 
-    doc.sync_with_biotrack(biotrack_plant)
+    doc.biotrack_sync_down(biotrack_plant)
     frappe.db.commit()
 
 def get_biotrack_plants(active=1):

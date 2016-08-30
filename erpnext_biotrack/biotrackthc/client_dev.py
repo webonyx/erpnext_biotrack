@@ -1,4 +1,6 @@
 import frappe
+from frappe.utils.data import now_datetime
+
 from .client import BioTrackClientError
 
 def _validate_data(attrs, data):
@@ -33,6 +35,24 @@ def inventory_new(data):
 	return frappe._dict({
 		"barcode_id": [random_digits(16)],
 		"sessiontime": 1,
+		"success": 1,
+		"transactionid": random_digits(4),
+	})
+
+
+def plant_new(data):
+	_validate_data([
+		"room",
+		"quantity",
+		"source",
+		"strain",
+		"mother",
+		"location",
+	], data)
+
+	return frappe._dict({
+		"barcode_id": [random_digits(16)],
+		"sessiontime": now_datetime(),
 		"success": 1,
 		"transactionid": random_digits(4),
 	})

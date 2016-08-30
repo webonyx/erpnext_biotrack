@@ -4,26 +4,53 @@
 
 from __future__ import unicode_literals
 import frappe, datetime
+from erpnext_biotrack.biotrackthc import call as biotrackthc_call
 from frappe.desk.reportview import build_match_conditions
-from frappe.utils.data import get_datetime_str
+from frappe.utils.data import get_datetime_str, DATE_FORMAT, cint
 from frappe.model.document import Document
-from erpnext.stock.doctype.item.item import Item
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 
 class Plant(Document):
+	def before_insert(self):
+		self.biotrack_sync_up()
 
-	def sync_with_biotrack(self, data):
+	def biotrack_sync_up(self):
+		warehouse = frappe.get_doc("Warehouse", self.get("warehouse"))
+		location = frappe.get_value("BioTrack Settings", None, "location")
+
+		result = biotrackthc_call("plant_new", {
+			"room": warehouse.external_id,
+			"quantity": 1,
+			"strain": self.get("strain"),
+			"source": self.get("source"),
+			"mother": cint(self.get("is_mother")),
+			"location": location
+		})
+
+		self.set("barcode", result.get("barcode_id")[0])
+
+	def biotrack_sync_down(self, data):
+		if self.get("transaction_id") == data.get("transactionid"):
+			return
+
 		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "plant_room": 1})
 
 		properties = {
 			"strain": find_strain(data.get("strain")),
 			"warehouse": warehouse.name,
-			"is_mother_plant": int(data.get("mother")),
-			"remove_scheduled": int(data.get("removescheduled")),
+			"is_mother_plant": cint(data.get("mother")),
+			"remove_scheduled": cint(data.get("removescheduled")),
+			"transaction_id": cint(data.get("transactionid")),
 		}
 
+		if not self.get("birthdate"):
+			if isinstance(self.get("creation"), basestring) :
+				properties["birthdate"] = self.get("creation").split(" ")[0]
+			else:
+				properties["birthdate"] = self.get("creation").strftime(DATE_FORMAT)
+
 		if properties["remove_scheduled"]:
-			remove_datetime = datetime.datetime.fromtimestamp(int(data.get("removescheduletime")))
+			remove_datetime = datetime.datetime.fromtimestamp(cint(data.get("removescheduletime")))
 			properties["remove_time"] = get_datetime_str(remove_datetime)
 
 			if data.get("removereason"):

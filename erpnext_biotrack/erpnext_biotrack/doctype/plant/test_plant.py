@@ -10,3 +10,20 @@ import unittest
 
 class TestPlant(unittest.TestCase):
 	pass
+
+
+def test_insert():
+	frappe.conf["biotrack.developer_mode"] = 1
+
+	doc = frappe.get_doc({
+		"doctype": "Plant",
+		"item_group": "Plant Tissue",
+		"source": "6033336840000140",
+		"strain": "RaspberryKush",
+		"warehouse": "Room4Row11 - EV",
+	})
+
+	doc.insert()
+	doc.delete()
+
+	print doc.as_dict()
