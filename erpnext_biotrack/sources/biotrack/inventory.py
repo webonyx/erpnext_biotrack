@@ -82,12 +82,13 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 		strain = find_strain(biotrack_inventory.get("strain"))
 
 	# Plant
-	plant = ""
-	if biotrack_inventory.get("plantid"):
-		if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
-			plant = biotrack_inventory.get("plantid")
+	# plant = ""
+	# if biotrack_inventory.get("plantid"):
+	# 	if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
+	# 		plant = biotrack_inventory.get("plantid")
+	#
+	# properties["plant"] = plant
 
-	properties["plant"] = plant
 	properties["strain"] = strain
 	properties["item_name"] = item_name
 	item.update(properties)

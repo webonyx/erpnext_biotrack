@@ -45,10 +45,13 @@ class Plant(Document):
 			return
 
 		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "plant_room": 1})
+		source = frappe.get_doc("Item", {"barcode": data.get("parentid")})
 
 		properties = {
 			"strain": find_strain(data.get("strain")),
 			"warehouse": warehouse.name,
+			"source": source.name,
+			"item_group": source.item_group,
 			"is_mother_plant": cint(data.get("mother")),
 			"remove_scheduled": cint(data.get("removescheduled")),
 			"transaction_id": cint(data.get("transactionid")),
