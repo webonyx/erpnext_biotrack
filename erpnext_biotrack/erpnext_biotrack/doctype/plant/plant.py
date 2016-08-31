@@ -9,12 +9,23 @@ from frappe.desk.reportview import build_match_conditions
 from frappe.utils.data import get_datetime_str, DATE_FORMAT, cint
 from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
+from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 
 class Plant(Document):
 	def before_insert(self):
 		self.biotrack_sync_up()
 
+	def after_insert(self):
+		if frappe.flags.in_import or frappe.flags.in_test:
+			return
+
+		source_item = frappe.get_doc("Item", self.get("source"))
+		make_stock_entry(item_code=source_item.name, source=source_item.default_warehouse, qty=1)
+
 	def biotrack_sync_up(self):
+		if frappe.flags.in_import or frappe.flags.in_test:
+			return
+
 		warehouse = frappe.get_doc("Warehouse", self.get("warehouse"))
 		location = frappe.get_value("BioTrack Settings", None, "location")
 
@@ -60,7 +71,22 @@ class Plant(Document):
 		properties["state"] = "Drying" if state == 1 else ("Cured" if state == 2 else "Growing")
 
 		self.update(properties)
+		self.flags.ignore_mandatory = True
 		self.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def plant_new_undo(name):
+	doc = frappe.get_doc("Plant", name)
+	biotrackthc_call("plant_new_undo", {
+		"barcodeid": [doc.name],
+	})
+
+	# Restore Item source balance
+	item = frappe.get_doc("Item", doc.get("source"))
+	make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=1)
+	doc.delete()
+
+	return {"ok": 1}
 
 def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 	fields = ["name", "strain"]

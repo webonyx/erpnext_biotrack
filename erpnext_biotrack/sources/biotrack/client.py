@@ -16,7 +16,12 @@ def get_data(action, params=None, key=None):
 	if offline_sync:
 		from frappe.modules.import_file import read_doc_from_file
 		filename = action + '.json'
-		f = frappe.get_app_path("erpnext_biotrack", "fixtures/offline_sync", filename)
+		training = '/training' if is_training_mode() else ''
+		cache_dir = frappe.get_app_path("erpnext_biotrack", "fixtures/offline_sync{training}".format(training=training))
+		if not os.path.exists(cache_dir):
+			os.mkdir(cache_dir)
+
+		f = frappe.get_app_path("erpnext_biotrack", cache_dir, filename)
 		if os.path.exists(f):
 			data = read_doc_from_file(f)
 		else:

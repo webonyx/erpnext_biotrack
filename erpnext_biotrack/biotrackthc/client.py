@@ -40,10 +40,7 @@ class BioTrackClient:
 		if action != 'login':
 			data["nosession"] = 1
 
-		if (frappe.conf.get("logging") or 0) > 0:
-			frappe.log("<<<< BioTrackTHC")
-			frappe.log(json.dumps(action_data))
-			frappe.log(">>>>")
+		print_log(data, " - Request Data")
 
 		request = get_request_session()
 		response = request.post(self.__API_URL__, data=json.dumps(data), headers={'Content-Type': 'application/json'})
@@ -57,6 +54,8 @@ class BioTrackClient:
 			raise BioTrackEmptyDataError(
 				'BioTrackTHC request was response empty data: {}'.format(json.dumps(action_data))
 			)
+
+		print_log(result, " - Response")
 
 		return result
 
@@ -76,3 +75,9 @@ def post(action, data):
 
 	client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
 	return client.post(action, data)
+
+def print_log(data, description=None):
+	if (frappe.conf.get("logging") or 0) > 0:
+		frappe.log("<<<< BioTrackTHC{description}".format(description=description))
+		frappe.log(json.dumps(data))
+		frappe.log(">>>>")

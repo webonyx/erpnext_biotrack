@@ -5,10 +5,12 @@ from frappe.utils.data import get_datetime_str
 
 @frappe.whitelist()
 def sync():
+    frappe.flags.in_import = True
     biotrack_plants = get_biotrack_plants()
     for biotrack_plant in biotrack_plants:
         sync_plant(biotrack_plant)
 
+    frappe.flags.in_import = False
     return len(biotrack_plants)
 
 

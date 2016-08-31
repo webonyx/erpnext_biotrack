@@ -65,17 +65,12 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 			"default_warehouse": f_warehouse.name,
 		})
 
-		item.insert()
 		name = barcode
 	else:
 		name = name[0][0]
 		item = frappe.get_doc("Item", name)
 
 	qty = float(item.get("actual_qty") or 0)
-
-	# Material Receipt
-	if remaining_quantity > qty:
-		make_stock_entry(item_code=name, target=item.default_warehouse, qty=remaining_quantity - qty)
 
 	properties = {
 		"actual_qty": remaining_quantity,
@@ -85,6 +80,18 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 	strain = ""
 	if biotrack_inventory.get("strain"):
 		strain = find_strain(biotrack_inventory.get("strain"))
+
+	# Plant
+	plant = ""
+	if biotrack_inventory.get("plantid"):
+		if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
+			plant = biotrack_inventory.get("plantid")
+
+	properties["plant"] = plant
+	properties["strain"] = strain
+	properties["item_name"] = item_name
+	item.update(properties)
+	item.save()
 
 	# Parent
 	if biotrack_inventory.get("parentid"):
@@ -98,17 +105,9 @@ def sync_inventory(biotrack_inventory, is_plant=0, result=None):
 				parent.save()
 				properties["item_parent"] = parent_name
 
-	# Plant
-	plant = ""
-	if biotrack_inventory.get("plantid"):
-		if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
-			plant = biotrack_inventory.get("plantid")
-
-	properties["plant"] = plant
-	properties["strain"] = strain
-	properties["item_name"] = item_name
-	item.update(properties)
-	item.save()
+	# Material Receipt
+	if remaining_quantity > qty:
+		make_stock_entry(item_code=name, target=item.default_warehouse, qty=remaining_quantity - qty)
 
 	frappe.db.commit()
 	result['success'] += 1
