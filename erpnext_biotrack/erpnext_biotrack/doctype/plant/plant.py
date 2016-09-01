@@ -44,18 +44,23 @@ class Plant(Document):
 		if self.get("transaction_id") == data.get("transactionid"):
 			return
 
-		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "plant_room": 1})
-		source = frappe.get_doc("Item", {"barcode": data.get("parentid")})
+		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "warehouse_type": 'Plant Room'})
+
 
 		properties = {
 			"strain": find_strain(data.get("strain")),
 			"warehouse": warehouse.name,
-			"source": source.name,
-			"item_group": source.item_group,
 			"is_mother_plant": cint(data.get("mother")),
 			"remove_scheduled": cint(data.get("removescheduled")),
 			"transaction_id": cint(data.get("transactionid")),
 		}
+
+		if frappe.db.exists("Item", {"barcode": data.get("parentid")}):
+			source = frappe.get_doc("Item", {"barcode": data.get("parentid")})
+			properties["source"] = source.name
+			properties["item_group"] = source.item_group
+		else:
+			print "skip %s" % data.get("parentid")
 
 		if not self.get("birthdate"):
 			if isinstance(self.get("creation"), basestring) :

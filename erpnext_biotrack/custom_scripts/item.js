@@ -4,7 +4,7 @@ frappe.ui.form.on("Item", {
 
         frm.fields_dict['default_warehouse'].get_query = function (doc, cdt, cdn) {
             return {
-                filters: {"is_group": 0, "plant_room": 0}
+                filters: {"is_group": 0, "warehouse_type": 'Inventory Room'}
             }
         };
 

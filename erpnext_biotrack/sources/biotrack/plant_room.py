@@ -1,14 +1,14 @@
 from __future__ import unicode_literals
 import frappe
-from erpnext_biotrack.utils import create_or_update_warehouse
+from erpnext_biotrack.sources.biotrack.inventory_room import sync_warehouse
 from client import get_data
-
 
 @frappe.whitelist()
 def sync():
     synced_list = []
     for biotrack_room in get_biotrack_plant_rooms():
-        create_or_update_warehouse(biotrack_room, 1, synced_list)
+        if sync_warehouse(biotrack_room):
+            synced_list.append(biotrack_room)
 
     return len(synced_list)
 

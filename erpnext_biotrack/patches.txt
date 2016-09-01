@@ -9,3 +9,5 @@ execute:frappe.delete_doc_if_exists("Custom Field", "Item-is_plant")
 execute:frappe.delete_doc_if_exists("Custom Field", "Stock Entry-is_plant")
 execute:frappe.delete_doc_if_exists("DocType", "Stock Entry Status")
 execute:frappe.delete_doc_if_exists("DocType", "Stock Status")
+erpnext_biotrack.patches.migrate_warehouse_type
+execute:frappe.delete_doc_if_exists("Custom Field", "Warehouse-wa_state_compliance_sync")

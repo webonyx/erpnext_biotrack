@@ -33,7 +33,7 @@ def inventory_new(data):
 	], data.get("data"))
 
 	return frappe._dict({
-		"barcode_id": [random_digits(16)],
+		"barcode_id": [random_digits(16) for i in range(len(data.get("data")))],
 		"sessiontime": 1,
 		"success": 1,
 		"transactionid": random_digits(4),
@@ -51,7 +51,7 @@ def plant_new(data):
 	], data)
 
 	return frappe._dict({
-		"barcode_id": [random_digits(16)],
+		"barcode_id": [random_digits(16) for i in range(int(data["quantity"]))],
 		"sessiontime": now_datetime(),
 		"success": 1,
 		"transactionid": random_digits(4),

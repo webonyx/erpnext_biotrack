@@ -81,11 +81,11 @@ def clone_item(item_code, qty, rate, default_warehouse):
 	item.insert()
 	make_stock_entry(item_code=barcode, target=default_warehouse, qty=qty)
 
-	parent.append("sub_items", {
-		"item_code": item.item_code,
-		"qty": qty
-	})
-	remaining_qty = float(parent.actual_qty) - float(qty)
+	# parent.append("sub_items", {
+	# 	"item_code": item.item_code,
+	# 	"qty": qty
+	# })
+	remaining_qty = flt(parent.actual_qty) - flt(qty)
 
 	stock_reco = frappe.new_doc("Stock Reconciliation")
 	stock_reco.posting_date = frappe.flags.current_date
@@ -95,15 +95,17 @@ def clone_item(item_code, qty, rate, default_warehouse):
 		"qty": remaining_qty,
 		"valuation_rate": rate or 1,
 	})
-	stock_reco.save()
-	stock_reco.submit()
 
+	stock_reco.submit()
 	parent.actual_qty = remaining_qty
 	parent.save()
 
 	return item.as_dict()
 
 def on_validate(item, method):
+	if frappe.flags.in_import or frappe.flags.in_test:
+		return
+
 	if not item.is_marijuana_item:
 		return item
 
@@ -125,6 +127,9 @@ def on_validate(item, method):
 		name=item.name))
 
 def after_insert(item, method):
+	if frappe.flags.in_import or frappe.flags.in_test:
+		return
+
 	if not item.is_marijuana_item:
 		return item
 

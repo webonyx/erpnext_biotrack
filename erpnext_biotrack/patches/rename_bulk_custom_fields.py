@@ -5,7 +5,7 @@ from erpnext_biotrack.utils import rename_custom_field
 
 def execute():
 
-	drop_columns('Warehouse', ['quarentine', 'plant_room', 'biotrack_transaction_id',
+	drop_columns('Warehouse', ['quarentine', 'biotrack_transaction_id',
 							   'biotrack_warehouse_transaction_id_original', 'biotrack_warehouse_location_id'])
 	drop_columns('Customer', ['license_no', 'ubi', 'biotrack_customer_transaction_id_original'
 		, 'biotrack_customer_license_type', 'biotrack_customer_license', 'biotrack_customer_ubi'])
@@ -29,7 +29,6 @@ def execute():
 	rename_custom_field('Warehouse', 'biotrack_warehouse_sync', 'wa_state_compliance_sync')
 	rename_custom_field('Warehouse', 'biotrack_room_id', 'external_id')
 	rename_custom_field('Warehouse', 'biotrack_warehouse_transaction_id', 'external_transaction_id')
-	rename_custom_field('Warehouse', 'biotrack_warehouse_is_plant_room', 'plant_room')
 	rename_custom_field('Warehouse', 'biotrack_warehouse_quarantine', 'quarentine')
 
 	rename_custom_field('Stock Entry', 'biotrack_stock_sync', 'wa_state_compliance_sync')

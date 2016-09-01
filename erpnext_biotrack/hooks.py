@@ -36,9 +36,8 @@ fixtures = [
 
 				"Warehouse-external_id",
 				"Warehouse-external_transaction_id",
-				"Warehouse-plant_room",
 				"Warehouse-quarentine",
-				"Warehouse-wa_state_compliance_sync",
+				"Warehouse-warehouse_type",
 
 				# Customer
 				"Customer-wa_state_compliance_sync",
@@ -96,7 +95,7 @@ doctype_js = {
 doctype_list_js = {
 	"Item": "custom_scripts/item_list.js",
 	"Supplier": "custom_scripts/supplier_list.js",
-	"Plant": "custom_scripts/plant_list.js"
+	"Warehouse": "custom_scripts/warehouse_list.js"
 }
 
 standard_queries = {

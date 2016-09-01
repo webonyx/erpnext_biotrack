@@ -86,59 +86,6 @@ def add_tag(doctype, name, tag):
 	return tag
 
 
-def create_or_update_warehouse(biotrack_room, is_plant_room=0, synced_list=[]):
-	try:
-		warehouse = frappe.get_doc('Warehouse', {
-			'external_id': biotrack_room.get('roomid'),
-			'plant_room': is_plant_room})
-
-		if not warehouse.wa_state_compliance_sync:
-			return
-
-	except DoesNotExistError:
-		warehouse = frappe.new_doc('Warehouse')
-		warehouse.update({
-			'doctype': 'Warehouse',
-			'company': get_default_company(),
-			'wa_state_compliance_sync': 1,
-			'plant_room': is_plant_room,
-			'external_id': biotrack_room.get('roomid'),
-		})
-
-	if is_plant_room:
-		under_account = frappe.get_value("BioTrack Settings", None, 'plant_room_parent_account')
-	else:
-		under_account = frappe.get_value("BioTrack Settings", None, 'inventory_room_parent_account')
-
-	warehouse.update({
-		"warehouse_name": biotrack_room.get("name"),
-		"create_account_under": under_account,
-		"external_transaction_id": biotrack_room.get("transactionid"),
-		"quarantine": biotrack_room.get("quarantine") or 0
-	})
-
-	fix_duplicate(warehouse)
-
-	warehouse.save(ignore_permissions=True)
-	frappe.db.commit()
-	synced_list.append(warehouse.external_transaction_id)
-
-
-def fix_duplicate(warehouse, is_plant_room=0):
-	suffix = " - " + frappe.db.get_value("Company", warehouse.company, "abbr")
-	name = warehouse.warehouse_name + suffix
-
-	if not frappe.db.exists('Warehouse', name):
-		return
-
-	# todo use de_duplicate helper instead
-	for index in range(1, 11):
-		warehouse_name = '{0} {1}'.format(warehouse.warehouse_name, index)
-		name = warehouse_name + suffix
-		if not frappe.db.exists('Warehouse', name):
-			warehouse.set('warehouse_name', warehouse_name)
-			return
-
 def rename_custom_field(doctype, old_fieldname, new_fieldname):
 	if not frappe.db.exists('DocType', doctype):
 		return

@@ -1,5 +1,6 @@
-frappe.listview_settings['Supplier'] = {
-	// add_fields: ["supplier_name", "supplier_type", 'status'],
+// Merge with apps/erpnext/erpnext/buying/doctype/supplier/supplier_list.js
+$.extend(frappe.listview_settings['Supplier'], {
+	// add_fields: ["supplier_name", "supplier_type", 'status', 'license_no'],
 	// filters: [],
 	// group_by: 'supplier_type',
 	// get_indicator: function(doc) {
@@ -31,4 +32,4 @@ frappe.listview_settings['Supplier'] = {
     post_render: function (DocListView) {
 
     }*/
-};
+})

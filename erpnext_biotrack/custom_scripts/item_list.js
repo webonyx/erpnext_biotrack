@@ -1,4 +1,4 @@
-frappe.listview_settings['Item'] = {
+$.extend(frappe.listview_settings['Item'], {
     onload: function (DocListView) {
         DocListView.listview.stats.push("item_group");
         DocListView.page.add_action_item(__("New Marijuana Item"), function () {
@@ -35,7 +35,7 @@ frappe.listview_settings['Item'] = {
                     options: 'Warehouse',
                     get_query: function (doc, cdt, cdn) {
                         return {
-                            filters: {"is_group": 0, "plant_room": 0}
+                            filters: {"is_group": 0, "warehouse_type": 'Inventory Room'}
                         }
                     }
                 },
@@ -89,7 +89,6 @@ frappe.listview_settings['Item'] = {
             '</div>').appendTo(dialog.body);
 
         }, "octicon octicon-sync");
-    },
-    refresh: function (DocListView) {
     }
-};
+});
+

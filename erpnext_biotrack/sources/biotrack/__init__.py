@@ -53,11 +53,11 @@ class BioTrack:
 	def sync_03_vendor(self):
 		return vendor.sync()
 
-	def sync_04_plant(self):
-		return plant.sync()
-
-	def sync_05_inventory(self):
+	def sync_04_inventory(self):
 		return inventory.sync()
+
+	def sync_05_plant(self):
+		return plant.sync()
 
 	def sync_06_manifest(self):
 		return manifest.sync()
