@@ -23,6 +23,8 @@ fixtures = [
 				"Item-plant",
 				"Item-sub_items",
 				"Item-is_marijuana_item",
+				"Item-last_sync",
+				"Item-transaction_id",
 
 				# Item Group
 				"Item Group-external_id",
@@ -88,7 +90,14 @@ error_report_email = "viet@webonyx.com"
 
 # Form custom scripts
 doctype_js = {
-	"Item": "custom_scripts/item.js"
+	"Item": "custom_scripts/item.js",
+	"Delivery Note": "custom_scripts/grid_item_name_injection.js",
+	"Supplier Quotation": "custom_scripts/grid_item_name_injection.js",
+	"Quotation": "custom_scripts/grid_item_name_injection.js",
+	"Sales Invoice": "custom_scripts/grid_item_name_injection.js",
+	"Purchase Invoice": "custom_scripts/grid_item_name_injection.js",
+	"Sales Order": "custom_scripts/grid_item_name_injection.js",
+	"Purchase Order": "custom_scripts/grid_item_name_injection.js",
 }
 
 # List custom scripts
