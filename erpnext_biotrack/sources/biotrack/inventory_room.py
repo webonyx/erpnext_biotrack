@@ -39,7 +39,7 @@ def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
 
 	if name:
 		warehouse = frappe.get_doc('Warehouse', name)
-		if warehouse.external_transaction_id == biotrack_data.get("transactionid"):
+		if not frappe.flags.force_sync or False and warehouse.external_transaction_id == biotrack_data.get("transactionid"):
 			return False
 
 	else:
@@ -56,7 +56,7 @@ def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
 		})
 
 	warehouse.update({
-		# "warehouse_name": biotrack_data.get("name"),
+		"warehouse_name": biotrack_data.get("name"),
 		"external_transaction_id": biotrack_data.get("transactionid"),
 		"quarantine": biotrack_data.get("quarantine") or 0,
 		"disabled": biotrack_data.get("deleted"),
@@ -84,5 +84,5 @@ def de_duplicate(warehouse_name):
 
 
 def get_biotrack_inventory_rooms(active=1):
-	data = get_data('sync_inventory_room', {})
+	data = get_data('sync_inventory_room', {"active": active})
 	return data.get('inventory_room') if bool(data.get('success')) else []
