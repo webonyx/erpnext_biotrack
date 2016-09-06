@@ -70,7 +70,7 @@ error_report_email = "viet@webonyx.com"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
-# app_include_js = "/assets/erpnext_biotrack/js/canabis.js"
+app_include_js = "/assets/erpnext_biotrack/js/link_formatters.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
@@ -91,13 +91,12 @@ error_report_email = "viet@webonyx.com"
 # Form custom scripts
 doctype_js = {
 	"Item": "custom_scripts/item.js",
-	"Delivery Note": "custom_scripts/grid_item_name_injection.js",
-	"Supplier Quotation": "custom_scripts/grid_item_name_injection.js",
-	"Quotation": "custom_scripts/grid_item_name_injection.js",
-	"Sales Invoice": "custom_scripts/grid_item_name_injection.js",
-	"Purchase Invoice": "custom_scripts/grid_item_name_injection.js",
-	"Sales Order": "custom_scripts/grid_item_name_injection.js",
-	"Purchase Order": "custom_scripts/grid_item_name_injection.js",
+	"Delivery Note": "custom_scripts/delivery_note.js",
+	"Material Request": "custom_scripts/material_request.js",
+	"Sales Order": "custom_scripts/sales_order.js",
+	"Production Order": "custom_scripts/production_order.js",
+	"Purchase Invoice": "custom_scripts/purchase_invoice.js",
+	"Purchase Order": "custom_scripts/purchase_order.js",
 }
 
 # List custom scripts

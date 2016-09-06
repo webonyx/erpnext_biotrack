@@ -119,6 +119,7 @@ def adjust_stock(item, remaining_quantity):
 	if remaining_quantity < qty:
 		create_stock_reconciliation(
 			item_code=item.name,
+			item_name=item.item_name,
 			warehouse=item.default_warehouse,
 			qty=remaining_quantity,
 			rate=rate if rate > 0 else 1
@@ -133,6 +134,7 @@ def create_stock_reconciliation(**args):
 	sr.company = args.company or get_default_company()
 	sr.append("items", {
 		"item_code": args.item_code,
+		"item_name": args.item_name,
 		"warehouse": args.warehouse,
 		"qty": args.qty,
 		"valuation_rate": args.rate

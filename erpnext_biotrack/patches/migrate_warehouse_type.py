@@ -20,17 +20,3 @@ def execute():
 
 	frappe.delete_doc_if_exists("Custom Field", "Warehouse-plant_room")
 
-	frappe.db.commit()
-
-	frappe.flags.force_sync = True
-	print "Syncing Warehouse..."
-	sync_inventory_room()
-	frappe.db.commit()
-
-	print "Syncing Plant Room..."
-	sync_plant_room()
-	frappe.db.commit()
-
-	print "Syncing Item..."
-	sync_inventory()
-
