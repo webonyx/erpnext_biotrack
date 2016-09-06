@@ -1,16 +1,3 @@
-frappe._messages["0"] = "No";
-alert('a')
-frappe.realtime.on("refresh_plant", function () {
-    var dialog = frappe.msgprint({
-        message: __("The application has been updated to a new version, please refresh this page"),
-        indicator: 'green',
-        title: 'Version Updated'
-    });
-    dialog.set_primary_action("Refresh", function () {
-        location.reload(true);
-    });
-    dialog.get_close_btn().toggle(false);
-});
 frappe.listview_settings['Plant'] = {
     add_fields: ['disabled', 'birthdate'],
     filters: [["disabled", "=", "No"]],
