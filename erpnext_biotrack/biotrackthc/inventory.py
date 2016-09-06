@@ -3,6 +3,7 @@ import frappe, os
 from erpnext import get_default_company
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
+from erpnext_biotrack.item_utils import get_item_values
 from erpnext_biotrack.sources.biotrack.client import get_data
 from erpnext_biotrack.config import get_default_stock_warehouse
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
@@ -12,7 +13,6 @@ from frappe.utils.data import flt, nowdate, nowtime, now
 @frappe.whitelist()
 def sync():
 	frappe.flags.in_import = True
-	# frappe.flags.force_sync = True
 	success = 0
 	sync_time = now()
 
@@ -34,15 +34,11 @@ def sync_item(biotrack_inventory, sync_time=None):
 	if not sync_time:
 		sync_time = now()
 
-	result = frappe.db.sql(
-		"select name, transaction_id from tabItem where `barcode` = '{barcode}' or `name` = '{barcode}'".format(barcode=barcode),
-		as_list=True)
-
-	if result:
-		name, transaction_id = result[0]
+	item_values = get_item_values(barcode, ["name", "transaction_id"])
+	if item_values:
+		name, transaction_id = item_values
 		if not frappe.flags.force_sync or False and transaction_id == biotrack_inventory.get("transactionid"):
 			frappe.db.set_value("Item", name, "last_sync", sync_time, update_modified=False)
-			# print "skipped {}".format(barcode)
 			return False
 
 	# inventory type
@@ -54,7 +50,6 @@ def sync_item(biotrack_inventory, sync_time=None):
 		item_name = biotrack_inventory.get("productname")
 	else:
 		item_name = " ".join(filter(None, [biotrack_inventory.get("strain"), item_group.name]))
-
 
 	if not name:
 		item = frappe.get_doc({
@@ -128,7 +123,7 @@ def adjust_stock(item, remaining_quantity):
 		create_stock_reconciliation(
 			item_code=item.name,
 			warehouse=item.default_warehouse,
-			qty = remaining_quantity,
+			qty=remaining_quantity,
 			rate=rate if rate > 0 else 1
 		)
 
@@ -149,28 +144,34 @@ def create_stock_reconciliation(**args):
 	sr.submit()
 	return sr
 
+
 def find_warehouse(data):
 	if not data.get("currentroom"):
 		warehouse = get_default_stock_warehouse()
 	else:
 		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("currentroom"),
-												   "warehouse_type": 'Inventory Room'})
+												 "warehouse_type": 'Inventory Room'})
 	return warehouse
+
 
 def find_item_group(data):
 	item_group = frappe.get_doc("Item Group", {"external_id": data.get("inventorytype"),
 											   "parent_item_group": "WA State Classifications"})
 	if not item_group:
-		raise ImportError("Data error, inventorytype '{0}' was not found. Please update database from state.".format(data.get("inventorytype")))
+		raise ImportError("Data error, inventorytype '{0}' was not found. Please update database from state.".format(
+			data.get("inventorytype")))
 
 	return item_group
+
 
 def disable_deleted_items(last_sync=None):
 	if not last_sync:
 		last_sync = now()
 
-	return frappe.db.sql("update tabItem set `actual_qty` = 0, `disabled` = 1 where transaction_id IS NOT NULL and `last_sync` < %(last_sync)s",
-						 {"last_sync": last_sync})
+	return frappe.db.sql(
+		"update tabItem set `actual_qty` = 0, `disabled` = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
+		{"last_sync": last_sync})
+
 
 def get_biotrack_inventories(active=1):
 	return get_data("sync_inventory", {"active": active}, 'inventory')

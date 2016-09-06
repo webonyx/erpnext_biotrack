@@ -14,6 +14,8 @@ frappe.ui.form.on('Plant', {
         frm.toggle_display("state", !is_new);
         frm.toggle_display("barcode", !is_new);
         frm.toggle_reqd("barcode", !is_new);
+        frm.toggle_reqd("item_group", is_new);
+        frm.toggle_reqd("source", is_new);
 
         if (!is_new && frappe.model.can_delete('Plant') && frm.doc.state == 'Growing') {
             frm.add_custom_button(__("Undo Plant"), function () {

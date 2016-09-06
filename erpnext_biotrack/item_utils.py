@@ -102,6 +102,21 @@ def clone_item(item_code, qty, rate, default_warehouse):
 
 	return item.as_dict()
 
+
+def get_item_values(barcode, fields="name"):
+	if isinstance(fields, basestring):
+		fl = fields
+	else:
+		fl = ["`" + f + "`" for f in fields]
+		fl = ", ".join(fl)
+
+	result = frappe.db.sql(
+		"select {0} from tabItem where `name` = %(barcode)s or `barcode` =  %(barcode)s".format(fl),
+		{"barcode": barcode}, as_list=True)
+
+	return result[0] if result else None
+
+
 def on_validate(item, method):
 	if frappe.flags.in_import or frappe.flags.in_test:
 		return

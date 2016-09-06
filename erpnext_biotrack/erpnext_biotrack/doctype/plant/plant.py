@@ -5,8 +5,9 @@
 from __future__ import unicode_literals
 import frappe, datetime
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
+from erpnext_biotrack.item_utils import get_item_values
 from frappe.desk.reportview import build_match_conditions
-from frappe.utils.data import get_datetime_str, DATE_FORMAT, cint
+from frappe.utils.data import get_datetime_str, DATE_FORMAT, cint, now
 from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
@@ -41,26 +42,23 @@ class Plant(Document):
 		self.set("barcode", result.get("barcode_id")[0])
 
 	def biotrack_sync_down(self, data):
-		if self.get("transaction_id") == data.get("transactionid"):
+		if not frappe.flags.force_sync or False and self.get("transaction_id") == data.get("transactionid"):
+			frappe.db.set_value("Plant", self.name, "last_sync", now(), update_modified=False)
 			return
 
 		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "warehouse_type": 'Plant Room'})
-
-
 		properties = {
 			"strain": find_strain(data.get("strain")),
 			"warehouse": warehouse.name,
 			"is_mother_plant": cint(data.get("mother")),
 			"remove_scheduled": cint(data.get("removescheduled")),
 			"transaction_id": cint(data.get("transactionid")),
+			"last_sync": now(),
 		}
 
-		if frappe.db.exists("Item", {"barcode": data.get("parentid")}):
-			source = frappe.get_doc("Item", {"barcode": data.get("parentid")})
-			properties["source"] = source.name
-			properties["item_group"] = source.item_group
-		else:
-			print "skip %s" % data.get("parentid")
+		item_values = get_item_values(data.get("parentid"), ["name", "item_group"])
+		if item_values:
+			properties["source"], properties["item_group"] = item_values
 
 		if not self.get("birthdate"):
 			if isinstance(self.get("creation"), basestring) :

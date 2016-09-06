@@ -5,6 +5,8 @@
 from __future__ import unicode_literals
 import frappe
 from .utils import make_log
+from frappe.utils.background_jobs import enqueue
+
 
 @frappe.whitelist()
 def sync():
@@ -14,10 +16,22 @@ def sync():
 		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Sync Error', indicator='red')
 		return
 
-	from frappe.utils.background_jobs import enqueue
 	enqueue(sync_all)
 
 	frappe.msgprint("Queued for syncing. It may take a few minutes to an hour.")
+
+
+@frappe.whitelist()
+def sync_plant():
+	"Enqueue longjob for syncing biotrack."
+	settings = frappe.get_doc("BioTrack Settings")
+	if not settings.enable_biotrack:
+		frappe.msgprint('BioTrackTHC is not enabled.', title='Error', indicator='red')
+		return
+
+	enqueue("erpnext_biotrack.sources.biotrack.plant.sync")
+	frappe.msgprint("Synchronization is enqueued.")
+
 
 def sync_all():
 	frappe.flags.mute_emails = True
@@ -32,9 +46,11 @@ def sync_all():
 	frappe.flags.mute_emails = False
 	frappe.flags.in_import = False
 
+
 def sync_source(source):
 	script = "erpnext_biotrack.sources.%s" % source
 	frappe.get_attr(script + ".sync")()
+
 
 def hourly():
 	return sync_if('Hourly')
