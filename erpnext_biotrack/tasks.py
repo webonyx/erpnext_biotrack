@@ -22,16 +22,26 @@ def sync():
 
 
 @frappe.whitelist()
-def sync_plant():
+def client_sync(doctype):
 	"Enqueue longjob for syncing biotrack."
 	settings = frappe.get_doc("BioTrack Settings")
 	if not settings.enable_biotrack:
 		frappe.msgprint('BioTrackTHC is not enabled.', title='Error', indicator='red')
 		return
 
-	enqueue("erpnext_biotrack.sources.biotrack.plant.sync")
+	enqueue(async_client_sync, queue="long", doctype=doctype)
 	frappe.msgprint("Synchronization is enqueued.")
 
+
+def async_client_sync(doctype):
+	if doctype == "Plant":
+		from .sources.biotrack.plant import sync
+		sync()
+	elif doctype == "Item":
+		from .sources.biotrack.inventory import sync
+		sync()
+
+	frappe.publish_realtime("list_update", {"doctype": doctype})
 
 def sync_all():
 	frappe.flags.mute_emails = True

@@ -15,7 +15,7 @@ def sync():
 
 	disable_deleted_plants(sync_time)
 	frappe.flags.in_import = False
-	frappe.publish_realtime("list_update", {"doctype": "Plant"})
+
 
 	return len(biotrack_plants)
 

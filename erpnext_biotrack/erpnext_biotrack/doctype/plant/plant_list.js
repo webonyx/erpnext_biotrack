@@ -15,7 +15,8 @@ frappe.listview_settings['Plant'] = {
 
         DocListView.page.add_action_item(__("Synchronization"), function () {
             frappe.call({
-                method: "erpnext_biotrack.tasks.sync_plant"
+                method: "erpnext_biotrack.tasks.client_sync",
+                args: {"doctype": "Plant"}
             })
         })
     },

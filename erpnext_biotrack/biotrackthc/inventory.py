@@ -17,7 +17,7 @@ def sync():
 	sync_time = now()
 
 	for biotrack_inventory in get_biotrack_inventories():
-		if sync_item(biotrack_inventory, sync_time):
+		if sync_item(biotrack_inventory):
 			success += 1
 
 	disable_deleted_items(sync_time)
@@ -26,19 +26,16 @@ def sync():
 	return success, 0
 
 
-def sync_item(biotrack_inventory, sync_time=None):
+def sync_item(biotrack_inventory):
 	barcode = str(biotrack_inventory.get("id"))
 	remaining_quantity = flt(biotrack_inventory.get("remaining_quantity"))
 	name = None
-
-	if not sync_time:
-		sync_time = now()
 
 	item_values = get_item_values(barcode, ["name", "transaction_id"])
 	if item_values:
 		name, transaction_id = item_values
 		if not frappe.flags.force_sync or False and transaction_id == biotrack_inventory.get("transactionid"):
-			frappe.db.set_value("Item", name, "last_sync", sync_time, update_modified=False)
+			frappe.db.set_value("Item", name, "last_sync", now(), update_modified=False)
 			return False
 
 	# inventory type
@@ -164,13 +161,13 @@ def find_item_group(data):
 	return item_group
 
 
-def disable_deleted_items(last_sync=None):
-	if not last_sync:
-		last_sync = now()
+def disable_deleted_items(sync_time=None):
+	if not sync_time:
+		sync_time = now()
 
 	return frappe.db.sql(
 		"update tabItem set `actual_qty` = 0, `disabled` = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
-		{"last_sync": last_sync})
+		{"last_sync": sync_time})
 
 
 def get_biotrack_inventories(active=1):

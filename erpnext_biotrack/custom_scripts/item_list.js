@@ -89,6 +89,13 @@ $.extend(frappe.listview_settings['Item'], {
             '</div>').appendTo(dialog.body);
 
         }, "octicon octicon-sync");
+
+        DocListView.page.add_action_item(__("Synchronization"), function () {
+            frappe.call({
+                method: "erpnext_biotrack.tasks.client_sync",
+                args: {"doctype": "Item"}
+            })
+        })
     }
 });
 
