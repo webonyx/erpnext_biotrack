@@ -1,31 +1,34 @@
 from __future__ import unicode_literals
 import frappe
+from erpnext_biotrack.sources.biotrack.client import get_data
 from frappe import _
 from frappe.exceptions import DoesNotExistError
 from frappe.utils import cstr
-from client import get_data
 from frappe.utils.nestedset import get_root_of
 
+
 def sync():
-	synced_list = []
+	success = 0
 	for biotrack_customer in get_biotrack_vendors():
-		create_or_update_customer(biotrack_customer, synced_list)
+		if create_or_update_customer(biotrack_customer):
+			success += 1
 
-	return len(synced_list)
+	return success, 0
 
-def create_or_update_customer(biotrack_customer, synced_list):
+
+def create_or_update_customer(biotrack_customer):
 	try:
-		customer = frappe.get_doc('Customer', {'customer_name': biotrack_customer.get("name")})
-		if not int(customer.wa_state_compliance_sync):
-			return
+		customer = frappe.get_doc('Customer', biotrack_customer.get("name"))
+		if not frappe.flags.force_sync or False and customer.get("external_transaction_id") == biotrack_customer.get(
+				"transactionid"):
+			return False
+
 	except DoesNotExistError:
 		customer = frappe.get_doc({
 			"doctype": "Customer",
 			"customer_name": biotrack_customer.get("name"),
 			"territory": get_root_of("Territory"),
-			"customer_type": _("Company"),
-			"wa_state_compliance_sync": 1,
-			"biotrack_customer_transaction_id_original": biotrack_customer.get("transactionid_original"),
+			"customer_type": _("Company")
 		})
 
 	customer_group = detect_group(biotrack_customer)
@@ -43,9 +46,8 @@ def create_or_update_customer(biotrack_customer, synced_list):
 	if customer:
 		create_customer_address(customer, biotrack_customer)
 
-
 	frappe.db.commit()
-	synced_list.append(customer.name)
+	return True
 
 
 def detect_group(biotrack_customer):
@@ -71,14 +73,17 @@ def detect_group(biotrack_customer):
 	if name:
 		return get_or_create_group(name)
 
+
 def get_or_create_group(name):
 	try:
 		group = frappe.get_doc('Customer Group', name)
 	except DoesNotExistError as e:
-		group = frappe.get_doc({'doctype': 'Customer Group', 'name': name, 'customer_group_name': name, 'is_group': 0, 'parent_customer_group': _('All Customer Groups')})
+		group = frappe.get_doc({'doctype': 'Customer Group', 'name': name, 'customer_group_name': name, 'is_group': 0,
+								'parent_customer_group': _('All Customer Groups')})
 		group.insert()
 
 	return group
+
 
 def create_customer_address(customer, biotrack_customer):
 	address1 = cstr(biotrack_customer.get("address1")).strip()
@@ -86,30 +91,29 @@ def create_customer_address(customer, biotrack_customer):
 	if address1 == '':
 		return
 
-	address_type = _("Billing")
-	name = cstr(customer.customer_name).strip() + "-" + address_type
+	address_type = _("Shop")
+	if frappe.db.exists("Address", {"customer": customer.name, "address_line1": address1,
+									"city": biotrack_customer.get("city"),
+									"state": biotrack_customer.get("state")}):
+		return
 
-	try:
-		address = frappe.get_doc('Address', name)
-	except DoesNotExistError as e:
-		address = frappe.get_doc(
-			{
-				"doctype": "Address",
-				"address_title": customer.customer_name,
-				"address_type": address_type,
-				"customer": customer.name,
-				"customer_name": customer.customer_name
-			}
-		)
+	idx = frappe.db.count("Address", {"customer": customer.name})
 
-	address.update({
-		"address_line1": address1,
-		"address_line2": biotrack_customer.get("address2"),
-		"city": biotrack_customer.get("city") or "City",
-		"state": biotrack_customer.get("state"),
-		"pincode": biotrack_customer.get("zip"),
-		"country": biotrack_customer.get("country") or frappe.defaults.get_defaults().get('country'),
-	})
+	address = frappe.get_doc(
+		{
+			"doctype": "Address",
+			"address_title": customer.customer_name + (' - ' + str(idx) if idx > 0 else ''),
+			"address_type": address_type,
+			"customer": customer.name,
+			"customer_name": customer.customer_name,
+			"address_line1": address1,
+			"address_line2": biotrack_customer.get("address2"),
+			"city": biotrack_customer.get("city"),
+			"state": biotrack_customer.get("state"),
+			"pincode": biotrack_customer.get("zip"),
+			"country": biotrack_customer.get("country") or frappe.defaults.get_defaults().get('country'),
+		}
+	)
 
 	address.save()
 
@@ -117,4 +121,3 @@ def create_customer_address(customer, biotrack_customer):
 def get_biotrack_vendors():
 	data = get_data('sync_vendor', {'active': 1})
 	return data.get('vendor') if bool(data.get('success')) else []
-

@@ -42,7 +42,6 @@ fixtures = [
 				"Warehouse-warehouse_type",
 
 				# Customer
-				"Customer-wa_state_compliance_sync",
 				"Customer-external_transaction_id",
 				"Customer-ubi",
 				"Customer-license_no",
@@ -102,6 +101,7 @@ doctype_js = {
 # List custom scripts
 doctype_list_js = {
 	"Item": "custom_scripts/item_list.js",
+	"Customer": "custom_scripts/customer_list.js",
 	"Supplier": "custom_scripts/supplier_list.js",
 	"Warehouse": "custom_scripts/warehouse_list.js"
 }

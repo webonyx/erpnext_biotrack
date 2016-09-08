@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 import frappe
 from erpnext_biotrack.utils import disable_biotrack_sync_on_exception, make_log
 from erpnext_biotrack.exceptions import BiotrackError, BioTrackClientError
-import vendor
 import employee
 import plant_room
 import inventory_room
 import plant
-import inventory
+import erpnext_biotrack.biotrackthc.inventory as inventory
+import erpnext_biotrack.biotrackthc.inventory as vendor
 import manifest
 import qa_lab
 import qa_sample
