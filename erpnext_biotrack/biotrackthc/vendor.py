@@ -9,6 +9,7 @@ from frappe.utils.nestedset import get_root_of
 
 def sync():
 	success = 0
+	# frappe.flags.force_sync = True
 	for biotrack_customer in get_biotrack_vendors():
 		if create_or_update_customer(biotrack_customer):
 			success += 1
@@ -17,13 +18,16 @@ def sync():
 
 
 def create_or_update_customer(biotrack_customer):
-	try:
-		customer = frappe.get_doc('Customer', biotrack_customer.get("name"))
-		if not frappe.flags.force_sync or False and customer.get("external_transaction_id") == biotrack_customer.get(
+	test = frappe.db.get_value("Customer", biotrack_customer.get("name"), ["name", "external_transaction_id"])
+	if test:
+		name, external_transaction_id = test
+		if not frappe.flags.force_sync or False and external_transaction_id == biotrack_customer.get(
 				"transactionid"):
 			return False
 
-	except DoesNotExistError:
+		customer = frappe.get_doc('Customer', name)
+
+	else:
 		customer = frappe.get_doc({
 			"doctype": "Customer",
 			"customer_name": biotrack_customer.get("name"),
