@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import frappe
 from erpnext import get_default_company
 from erpnext_biotrack.config import default_stock_warehouse_name
-from client import get_data
+from .client import get_data
 
 
 @frappe.whitelist()

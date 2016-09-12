@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import frappe
-from erpnext_biotrack.sources.biotrack.client import get_data
+from .client import get_data
 from frappe import _
 from frappe.exceptions import DoesNotExistError
 from frappe.utils import cstr
@@ -9,7 +9,6 @@ from frappe.utils.nestedset import get_root_of
 
 def sync():
 	success = 0
-	# frappe.flags.force_sync = True
 	for biotrack_customer in get_biotrack_vendors():
 		if create_or_update_customer(biotrack_customer):
 			success += 1

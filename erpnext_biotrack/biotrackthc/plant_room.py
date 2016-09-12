@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import frappe
-from erpnext_biotrack.sources.biotrack.inventory_room import sync_warehouse
-from client import get_data
+from .inventory_room import sync_warehouse
+from .client import get_data
 
 @frappe.whitelist()
 def sync():

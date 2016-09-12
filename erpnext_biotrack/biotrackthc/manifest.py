@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 import frappe, datetime
-from client import get_data
+from .client import get_data
 from frappe import _
-from frappe.exceptions import DoesNotExistError
+from frappe.exceptions import DoesNotExistError, ValidationError
 from frappe.utils.data import get_datetime_str
 
 @frappe.whitelist()
@@ -54,6 +54,9 @@ def sync_manifest(data):
                         continue
 
                     item = frappe.get_doc("Item", item_barcode)
+                    if item.disabled:
+                        continue
+
                     dn_item = frappe.get_doc({
                         "doctype": "Delivery Note Item",
                         "item_code": item.item_code,
@@ -68,8 +71,11 @@ def sync_manifest(data):
                     if address:
                         doc.set("shipping_address_name", address.name)
 
-                    doc.save()
-                    docs.append(doc)
+                    try:
+                        doc.save()
+                        docs.append(doc)
+                    except ValidationError as e:
+                        pass
 
     doc_len = len(docs)
     if doc_len:

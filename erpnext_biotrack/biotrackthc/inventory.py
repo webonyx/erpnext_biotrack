@@ -4,7 +4,7 @@ from erpnext import get_default_company
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
 from erpnext_biotrack.item_utils import get_item_values
-from erpnext_biotrack.sources.biotrack.client import get_data
+from .client import get_data
 from erpnext_biotrack.config import get_default_stock_warehouse
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from frappe.utils.data import flt, nowdate, nowtime, now

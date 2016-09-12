@@ -35,7 +35,7 @@ def client_sync(doctype):
 
 def async_client_sync(doctype):
 	if doctype == "Plant":
-		from .sources.biotrack.plant import sync
+		from .biotrackthc.plant import sync
 		sync()
 	elif doctype == "Item":
 		from .biotrackthc.inventory import sync
@@ -47,22 +47,8 @@ def async_client_sync(doctype):
 	frappe.publish_realtime("list_update", {"doctype": doctype})
 
 def sync_all():
-	frappe.flags.mute_emails = True
-	frappe.flags.in_import = True
-
-	sources = ['biotrack']
-	make_log(title="Sync Job is started", status="Queued", method="sync_all", message="Started")
-	for s in sources:
-		sync_source(s)
-
-	make_log(title="Sync Completed", status="Success", method="sync_all", message="Completed")
-	frappe.flags.mute_emails = False
-	frappe.flags.in_import = False
-
-
-def sync_source(source):
-	script = "erpnext_biotrack.sources.%s" % source
-	frappe.get_attr(script + ".sync")()
+	from .biotrackthc import sync
+	sync()
 
 
 def hourly():

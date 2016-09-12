@@ -4,8 +4,7 @@ from datetime import date
 from frappe.exceptions import DoesNotExistError
 from frappe.defaults import get_defaults
 from erpnext_biotrack.utils import make_log
-from client import get_data
-
+from .client import get_data
 
 def sync():
 	biotrack_employee_list = []

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import frappe, datetime
-from client import get_data
+from .client import get_data
 from frappe.utils.data import get_datetime_str, now
 
 

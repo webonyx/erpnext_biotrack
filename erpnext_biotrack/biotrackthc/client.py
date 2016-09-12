@@ -1,5 +1,8 @@
-import json, frappe
+import os, json, frappe
+
+from frappe.modules.import_file import read_doc_from_file
 from frappe.utils import get_request_session, encode
+
 
 class BioTrackClientError(frappe.ValidationError):
 	http_status_code = 500
@@ -10,7 +13,9 @@ class BioTrackClientError(frappe.ValidationError):
 
 		super(frappe.ValidationError, self).__init__(*args, **kwargs)
 
+
 class BioTrackEmptyDataError(BioTrackClientError): pass
+
 
 class BioTrackClient:
 	__API__ = "4.0"
@@ -62,11 +67,20 @@ class BioTrackClient:
 	def login(self):
 		return self.post('login', {})
 
+
 def get_client(license_number, username, password, is_training=0):
 	"""
 	:return BioTrackClient:
 	"""
 	return BioTrackClient(license_number, username, password, is_training)
+
+
+def get_data(action, params=None, key=None):
+	result = post(action, data=params)
+	if key and key in result:
+		return result[key]
+
+	return result
 
 def post(action, data):
 	settings = frappe.get_doc("BioTrack Settings")
@@ -74,7 +88,33 @@ def post(action, data):
 		raise BioTrackClientError('BioTrackTHC integration is not enabled')
 
 	client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
+
+	def try_from_cache():
+		filename = action + '.json'
+		training_dir = '/training' if settings.is_training else ''
+		cache_dir = frappe.get_app_path("erpnext_biotrack",
+										"fixtures/offline_sync{training_dir}".format(training_dir=training_dir))
+
+		if not os.path.exists(cache_dir):
+			os.mkdir(cache_dir)
+
+		f = frappe.get_app_path("erpnext_biotrack", cache_dir, filename)
+
+		if os.path.exists(f):
+			result = read_doc_from_file(f)
+		else:
+			result = client.post(action, data)
+			with open(f, "w") as outfile:
+				outfile.write(frappe.as_json(result))
+
+		return result
+
+	offline_sync = frappe.conf.get('erpnext_biotrack.offline_sync') or 0
+	if action.startswith("sync_") and offline_sync:
+		return try_from_cache()
+
 	return client.post(action, data)
+
 
 def print_log(data, description=None):
 	if (frappe.conf.get("logging") or 0) > 0:
