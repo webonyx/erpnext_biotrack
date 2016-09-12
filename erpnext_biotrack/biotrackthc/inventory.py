@@ -4,6 +4,8 @@ from erpnext import get_default_company
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
 from erpnext_biotrack.item_utils import get_item_values
+from frappe.utils import get_fullname
+
 from .client import get_data
 from erpnext_biotrack.config import get_default_stock_warehouse
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
@@ -12,7 +14,6 @@ from frappe.utils.data import flt, nowdate, nowtime, now
 
 @frappe.whitelist()
 def sync():
-	frappe.flags.in_import = True
 	success = 0
 	sync_time = now()
 
@@ -21,7 +22,6 @@ def sync():
 			success += 1
 
 	disable_deleted_items(sync_time)
-	frappe.flags.in_import = False
 
 	return success, 0
 
@@ -101,6 +101,11 @@ def sync_item(biotrack_inventory):
 	if remaining_quantity == 0:
 		frappe.db.set_value("Item", item.name, "disabled", 1)
 
+	# Disable Usable Marijuana item does not have product name
+	if not biotrack_inventory.get("productname") and item_group.external_id == 28:
+		frappe.db.set_value("Item", item.name, "disabled", 1)
+		log_invalid_item(item)
+
 	frappe.db.commit()
 
 	return True
@@ -171,6 +176,26 @@ def disable_deleted_items(sync_time=None):
 		"update tabItem set `actual_qty` = 0, `disabled` = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
 		{"last_sync": sync_time})
 
+
+def log_invalid_item(item):
+	frappe.db.sql("""delete from `tabCommunication`
+					where
+						reference_doctype=%s and reference_name=%s
+						and communication_type='Comment'
+						and comment_type='Cancelled'""", ("Item", item.name))
+
+	frappe.get_doc({
+		"doctype": "Communication",
+		"communication_type": "Comment",
+		"comment_type": "Cancelled",
+		"reference_doctype": "Item",
+		"reference_name": item.name,
+		"subject": item.item_name,
+		"full_name": get_fullname(item.owner),
+		"reference_owner": item.owner,
+		# "link_doctype": "Item",
+		# "link_name": item.name
+	}).insert(ignore_permissions=True)
 
 def get_biotrack_inventories(active=1):
 	return get_data("sync_inventory", {"active": active}, 'inventory')
