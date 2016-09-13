@@ -12,6 +12,18 @@ from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 
+removal_reasons = {
+	0: 'Other',
+	1: 'Waste',
+	2: 'Unhealthy or Died',
+	3: 'Infestation',
+	4: 'Product Return',
+	5: 'Mistake',
+	6: 'Spoilage',
+	7: 'Quality Control'
+}
+
+
 class Plant(Document):
 	def before_insert(self):
 		self.biotrack_sync_up()
@@ -61,7 +73,7 @@ class Plant(Document):
 			properties["source"], properties["item_group"] = item_values
 
 		if not self.get("birthdate"):
-			if isinstance(self.get("creation"), basestring) :
+			if isinstance(self.get("creation"), basestring):
 				properties["birthdate"] = self.get("creation").split(" ")[0]
 			else:
 				properties["birthdate"] = self.get("creation").strftime(DATE_FORMAT)
@@ -80,19 +92,67 @@ class Plant(Document):
 		self.flags.ignore_mandatory = True
 		self.save(ignore_permissions=True)
 
-@frappe.whitelist()
-def plant_new_undo(name):
-	doc = frappe.get_doc("Plant", name)
-	biotrackthc_call("plant_new_undo", {
-		"barcodeid": [doc.name],
-	})
+	@Document.whitelist
+	def undo(self):
+		biotrackthc_call("plant_new_undo", {
+			"barcodeid": [self.name],
+		})
 
-	# Restore Item source balance
-	item = frappe.get_doc("Item", doc.get("source"))
-	make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=1)
-	doc.delete()
+		# Restore Item source balance
+		item = frappe.get_doc("Item", self.get("source"))
+		make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=1)
+		self.delete()
 
-	return {"ok": 1}
+	@Document.whitelist
+	def destroy_schedule(self, reason, reason_txt=None, override=None):
+		data = {
+			'barcodeid': [self.name],
+			'reason_extended': removal_reasons.keys()[removal_reasons.values().index(reason)],
+			'reason': reason_txt
+		}
+
+		if self.remove_scheduled and not override:
+			frappe.throw(
+				"Plant <strong>{}</strong> has already been scheduled for destruction. Check <strong>`Reset Scheduled time`</strong> to override.".format(
+					self.name))
+
+		if override:
+			data['override'] = 1
+
+		biotrackthc_call("plant_destroy_schedule", data)
+
+		self.remove_scheduled = 1
+		self.remove_reason = reason_txt or reason
+		self.remove_time = now()
+		self.save()
+
+	@Document.whitelist
+	def destroy_schedule_undo(self):
+		biotrackthc_call("plant_destroy_schedule_undo", {'barcodeid': [self.name]})
+		self.remove_scheduled = 0
+		self.remove_reason = None
+		self.remove_time = None
+		self.save()
+
+	@Document.whitelist
+	def harvest_schedule(self):
+		biotrackthc_call("plant_harvest_schedule", {'barcodeid': [self.name]})
+		self.harvest_scheduled = 1
+		self.harvest_schedule_time = now()
+		self.save()
+
+	@Document.whitelist
+	def harvest_schedule_undo(self):
+		biotrackthc_call("plant_harvest_schedule_undo", {'barcodeid': [self.name]})
+		self.harvest_scheduled = 0
+		self.harvest_schedule_time = None
+		self.save()
+
+	@Document.whitelist
+	def destroy(self):
+		biotrackthc_call("plant_destroy", {'barcodeid': [self.name]})
+		self.delete()
+
 
 def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 	fields = ["name", "strain"]
@@ -106,5 +166,5 @@ def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 		case when name like %s then 0 else 1 end,
 		case when strain like %s then 0 else 1 end,
 		name, strain limit %s, %s""".format(match_conditions=match_conditions) %
-		(", ".join(fields), searchfield, "%s", "%s", "%s", "%s", "%s", "%s"),
-		("%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, start, page_len))
+						 (", ".join(fields), searchfield, "%s", "%s", "%s", "%s", "%s", "%s"),
+						 ("%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, start, page_len))
