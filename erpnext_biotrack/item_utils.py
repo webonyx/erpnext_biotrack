@@ -50,6 +50,31 @@ def new_item(item_name, item_group, strain, actual_qty, default_warehouse, plant
 	return item
 
 
+def make_item(**args):
+	args = frappe._dict(args)
+
+	if args.barcode:
+		frappe.flags.in_import = True  # ignore custom validate and after_insert hooks
+
+	item = frappe.new_doc("Item")
+	properties = frappe._dict(args.properties) or frappe._dict()
+	properties['item_name'] = properties.item_name or " ".join(filter(None, [properties.strain, properties.item_group]))
+
+	if args.barcode:
+		properties['item_code'] = args.barcode
+		properties['barcode'] = args.barcode
+
+	item.update(properties)
+	item.insert()
+
+	if args.qty:
+		make_stock_entry(item_code=item.item_code, target=item.default_warehouse, qty=args.qty)
+
+	frappe.flags.in_import = False
+
+	return item
+
+
 @frappe.whitelist()
 def clone_item(item_code, qty, rate, default_warehouse):
 	data = biotrackthc_call("inventory_split", data={
@@ -140,6 +165,7 @@ def on_validate(item, method):
 		fields=", ".join((each for each in missing)),
 		doctype=item.doctype,
 		name=item.name))
+
 
 def after_insert(item, method):
 	if frappe.flags.in_import or frappe.flags.in_test:

@@ -83,6 +83,11 @@ def de_duplicate(warehouse_name):
 	return warehouse_name if count == 0 else "{0}-{1}".format(warehouse_name, count)
 
 
+def get_default_warehouse():
+	name = frappe.db.get_value('Warehouse', {'warehouse_name': default_stock_warehouse_name})
+	return frappe.get_doc("Warehouse", name)
+
+
 def get_biotrack_inventory_rooms(active=1):
 	data = get_data('sync_inventory_room', {"active": active})
 	return data.get('inventory_room') if bool(data.get('success')) else []

@@ -43,6 +43,11 @@ def async_client_sync(doctype):
 	elif doctype == "Customer":
 		from .biotrackthc.vendor import sync
 		sync()
+	elif doctype == "Warehouse":
+		from .biotrackthc.inventory_room import sync
+		from .biotrackthc.plant_room import sync as room_sync
+		sync()
+		room_sync()
 
 	frappe.publish_realtime("list_update", {"doctype": doctype})
 

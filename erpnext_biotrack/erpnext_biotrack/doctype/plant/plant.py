@@ -5,9 +5,11 @@
 from __future__ import unicode_literals
 import frappe, datetime
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
-from erpnext_biotrack.item_utils import get_item_values
+from erpnext_biotrack.biotrackthc.client import BioTrackClientError
+from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
+from erpnext_biotrack.item_utils import get_item_values, make_item
 from frappe.desk.reportview import build_match_conditions
-from frappe.utils.data import get_datetime_str, DATE_FORMAT, cint, now
+from frappe.utils.data import get_datetime_str, DATETIME_FORMAT, cint, now, flt
 from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
@@ -74,9 +76,9 @@ class Plant(Document):
 
 		if not self.get("birthdate"):
 			if isinstance(self.get("creation"), basestring):
-				properties["birthdate"] = self.get("creation").split(" ")[0]
+				properties["birthdate"] = self.get("creation")
 			else:
-				properties["birthdate"] = self.get("creation").strftime(DATE_FORMAT)
+				properties["birthdate"] = self.get("creation").strftime(DATETIME_FORMAT)
 
 		if properties["remove_scheduled"]:
 			remove_datetime = datetime.datetime.fromtimestamp(cint(data.get("removescheduletime")))
@@ -102,6 +104,129 @@ class Plant(Document):
 		item = frappe.get_doc("Item", self.get("source"))
 		make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=1)
 		self.delete()
+
+	@Document.whitelist
+	def harvest_cure(self, flower_amount, other_material_amount=None, waste_amount=None, additional_collection=None):
+		if self.disabled:
+			frappe.throw("Plant <strong>{}</strong> is not available for harvesting.")
+
+		if self.remove_scheduled:
+			frappe.throw("Plant <strong>{}</strong> is currently scheduled for destruction and cannot be harvested.")
+
+		amount_map = {
+			6: flt(flower_amount),
+			9: flt(other_material_amount),
+			27: flt(waste_amount),
+		}
+
+		weights = [
+			{
+				"amount": amount_map[6],
+				"invtype": 6,
+				"uom": "g"
+			}
+		]
+
+		if other_material_amount:
+			weights.append({
+					"amount": amount_map[9],
+					"invtype": 9,
+					"uom": "g"
+				})
+
+		if waste_amount:
+			weights.append({
+					"amount": amount_map[27],
+					"invtype": 27,
+					"uom": "g"
+				})
+
+		data = {
+			'barcodeid': self.name,
+			'collectadditional': cint(additional_collection),
+			'weights': weights
+		}
+
+		action = "plant_cure" if self.state == "Drying" else "plant_harvest"
+		flower_weight = amount_map[6]
+
+		if action == "plant_harvest":
+			self.wet_weight = flower_weight
+		else:
+			self.dry_weight = flt(self.dry_weight) + flower_weight
+			if self.dry_weight > self.wet_weight:
+				frappe.throw("The provided dry weight <strong>{0}</strong> exceeds the previous wet weight <strong>{1}</strong>.".
+							 format(self.dry_weight, self.wet_weight), title="Error")
+
+			data["location"] = frappe.get_value("BioTrack Settings", None, "location")
+
+		try:
+			res = biotrackthc_call(action, data)
+		except BioTrackClientError as ex:
+			frappe.local.message_log.pop()
+			frappe.throw(ex.message, title="Error") # response nicer error message
+
+		# sync derivatives
+		items = []
+		if res.get("derivatives"):
+			defaukt_warehouse = get_default_warehouse()
+
+			try:
+				for derivative in res.get("derivatives"):
+					item_group = frappe.get_doc("Item Group", {"external_id": derivative.get("barcode_type")})
+					qty = flt(amount_map[cint(derivative.get("barcode_type"))])
+
+					item = make_item(barcode=derivative.get("barcode_id"), properties={
+						"item_group": item_group.name,
+						"default_warehouse": defaukt_warehouse.name,
+						"strain": self.strain,
+						"stock_uom": "Gram",
+						"is_stock_item": 1,
+						"actual_qty": qty,
+						"plant": self.name,
+					}, qty=qty)
+
+					items.append(item.item_code)
+			except Exception as ex:
+				self.harvest_cure_undo({}, action, res.get("transactionid"))
+				raise
+
+		if self.state == "Growing":
+			self.state = "Drying"
+
+		# Remove from Cultivation
+		if self.dry_weight == self.wet_weight or (action == "plant_cure" and not additional_collection):
+			self.disabled = 1
+
+		self.transaction_id = res.get("transactionid")
+		self.save()
+
+		return {"items": items, "action": action, "transaction_id": res.get("transactionid")}
+
+	@Document.whitelist
+	def harvest_cure_undo(self, items, action, transaction_id):
+		action += "_undo"
+		res = biotrackthc_call(action, {'transactionid': transaction_id})
+
+		# cleanup items
+		if items:
+			for barcode in items:
+				item = frappe.get_doc("Item", {"barcode": barcode})
+				entries = frappe.get_list("Stock Entry", {"item_code": item.item_code})
+				for name in entries:
+					entry = frappe.get_doc("Stock Entry", name)
+					entry.cancel()
+					entry.delete()
+				item.delete()
+
+		if action == "plant_harvest":
+			self.state = "Growing"
+
+		if action == "plant_cure" and self.disabled:
+			self.disabled = 0
+
+		self.transaction_id = res.get("transactionid")
+		self.save()
 
 	@Document.whitelist
 	def destroy_schedule(self, reason, reason_txt=None, override=None):
@@ -134,6 +259,7 @@ class Plant(Document):
 		self.remove_time = None
 		self.save()
 
+
 	@Document.whitelist
 	def harvest_schedule(self):
 		biotrackthc_call("plant_harvest_schedule", {'barcodeid': [self.name]})
@@ -143,6 +269,9 @@ class Plant(Document):
 
 	@Document.whitelist
 	def harvest_schedule_undo(self):
+		if self.state == "Drying":
+			frappe.throw("Plant <strong>{}</strong> was already on harvesting process.".format(self.name))
+
 		biotrackthc_call("plant_harvest_schedule_undo", {'barcodeid': [self.name]})
 		self.harvest_scheduled = 0
 		self.harvest_schedule_time = None
@@ -152,6 +281,20 @@ class Plant(Document):
 	def destroy(self):
 		biotrackthc_call("plant_destroy", {'barcodeid': [self.name]})
 		self.delete()
+
+
+@frappe.whitelist()
+def harvest_cure_undo(name, items, action, transaction_id):
+	"""Alias to harvest_cure_undo method to avoid check_if_latest exception"""
+	plant = frappe.get_doc("Plant", name)
+
+	import json
+	try:
+		items = json.loads(items)
+	except ValueError:
+		items = []
+
+	return plant.harvest_cure_undo(items, action, transaction_id)
 
 
 def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
