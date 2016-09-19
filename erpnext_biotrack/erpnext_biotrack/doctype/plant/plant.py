@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 import frappe, datetime
+from erpnext.stock.utils import get_stock_balance
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
 from erpnext_biotrack.biotrackthc.client import BioTrackClientError
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
@@ -29,6 +30,13 @@ removal_reasons = {
 
 class Plant(Document):
 	def before_insert(self):
+		if self.qty:
+			item = frappe.get_doc("Item", self.source)
+			qty = get_stock_balance(item.item_code, item.default_warehouse)
+			if qty < self.qty:
+				frappe.throw("The provided quantity <strong>{0}</strong> exceeds stock balance. "
+							 "Stock balance remaining <strong>{1}</strong>".format(self.qty, qty))
+
 		if not self.barcode:
 			self.biotrack_sync_up()
 
