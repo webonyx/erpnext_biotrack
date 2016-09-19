@@ -5,6 +5,7 @@ frappe.provide("erpnext_biotrack.plant");
 frappe.ui.form.on('Plant', {
     refresh: function (frm) {
         var is_new = frm.is_new();
+        frm.toggle_display("qty", !is_new);
         frm.toggle_display("remove_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);
@@ -67,6 +68,10 @@ frappe.ui.form.on('Plant', {
                 filters: {"warehouse_type": 'Plant Room'}
             }
         };
+    },
+    bulk_add: function (frm) {
+        frm.toggle_display("qty", frm.doc.bulk_add);
+        frm.toggle_reqd("qty", frm.doc.bulk_add);
     }
 });
 

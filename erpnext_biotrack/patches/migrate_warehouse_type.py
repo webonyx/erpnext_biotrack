@@ -1,9 +1,6 @@
 from __future__ import unicode_literals
 
 import frappe
-from erpnext_biotrack.sources.biotrack.inventory_room import sync as sync_inventory_room
-from erpnext_biotrack.sources.biotrack.plant_room import sync as sync_plant_room
-from erpnext_biotrack.sources.biotrack.inventory import sync as sync_inventory
 from frappe.utils.fixtures import sync_fixtures
 
 def execute():

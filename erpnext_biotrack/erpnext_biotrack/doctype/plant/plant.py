@@ -13,6 +13,7 @@ from frappe.utils.data import get_datetime_str, DATETIME_FORMAT, cint, now, flt
 from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
+from frappe.utils.background_jobs import enqueue
 
 removal_reasons = {
 	0: 'Other',
@@ -28,7 +29,8 @@ removal_reasons = {
 
 class Plant(Document):
 	def before_insert(self):
-		self.biotrack_sync_up()
+		if not self.barcode:
+			self.biotrack_sync_up()
 
 	def after_insert(self):
 		if frappe.flags.in_import or frappe.flags.in_test:
@@ -36,6 +38,10 @@ class Plant(Document):
 
 		source_item = frappe.get_doc("Item", self.get("source"))
 		make_stock_entry(item_code=source_item.name, source=source_item.default_warehouse, qty=1)
+
+		if self.bulk_add and self.qty > 1:
+			frappe.db.commit()
+			enqueue(bulk_clone, name=self.name)
 
 	def biotrack_sync_up(self):
 		if frappe.flags.in_import or frappe.flags.in_test:
@@ -311,3 +317,39 @@ def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 		name, strain limit %s, %s""".format(match_conditions=match_conditions) %
 						 (", ".join(fields), searchfield, "%s", "%s", "%s", "%s", "%s", "%s"),
 						 ("%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, start, page_len))
+
+
+def bulk_clone(name):
+	source_plant = frappe.get_doc("Plant", name)
+
+	if source_plant.qty > 1:
+		warehouse = frappe.get_doc("Warehouse", source_plant.get("warehouse"))
+		location = frappe.get_value("BioTrack Settings", None, "location")
+		remaining_qty = source_plant.qty - 1
+
+		result = biotrackthc_call("plant_new", {
+			"room": warehouse.external_id,
+			"quantity": remaining_qty,
+			"strain": source_plant.strain,
+			"source": source_plant.source,
+			"mother": cint(source_plant.get("is_mother")),
+			"location": location
+		})
+
+		for barcode in result.get("barcode_id"):
+			plant = frappe.new_doc("Plant")
+			plant.update({
+				"barcode": barcode,
+				"item_group": source_plant.item_group,
+				"source": source_plant.source,
+				"strain": source_plant.strain,
+				"warehouse": source_plant.warehouse,
+				"state": source_plant.state,
+				"birthdate": now(),
+			})
+
+			plant.save()
+
+		# save directly with sql to avoid mistimestamp check
+		frappe.db.set_value("Plant", source_plant.name, "qty", 1, update_modified=False)
+		frappe.publish_realtime("list_update", {"doctype": "Plant"})
