@@ -34,7 +34,7 @@ def sync_plant(biotrack_plant):
 
 def disable_deleted_plants(sync_time):
 	return frappe.db.sql(
-		"update tabPlant set `disabled` = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
+		"update tabPlant set `disabled` = 1, remove_scheduled = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
 		{"last_sync": sync_time})
 
 

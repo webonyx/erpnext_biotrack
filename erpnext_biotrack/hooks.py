@@ -165,7 +165,8 @@ scheduler_events = {
 		"erpnext_biotrack.tasks.daily"
 	],
 	"hourly": [
-		"erpnext_biotrack.tasks.hourly"
+		"erpnext_biotrack.tasks.hourly",
+		"erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.destroy_scheduled_plants",
 	],
 	"weekly": [
 		"erpnext_biotrack.tasks.weekly"

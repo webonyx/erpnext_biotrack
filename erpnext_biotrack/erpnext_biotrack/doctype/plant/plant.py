@@ -10,7 +10,7 @@ from erpnext_biotrack.biotrackthc.client import BioTrackClientError
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
 from erpnext_biotrack.item_utils import get_item_values, make_item
 from frappe.desk.reportview import build_match_conditions
-from frappe.utils.data import get_datetime_str, DATETIME_FORMAT, cint, now, flt
+from frappe.utils.data import get_datetime_str, DATETIME_FORMAT, cint, now, flt, add_to_date
 from frappe.model.document import Document
 from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
@@ -51,9 +51,12 @@ class Plant(Document):
 			frappe.db.commit()
 			enqueue(bulk_clone, name=self.name)
 
-	def validate_trash(self):
-		if not self.disabled and not self.remove_scheduled:
-			frappe.throw(_("Plant can not be deleted directly. Please schedule for it destruction process"))
+	def on_trash(self):
+		if not self.remove_scheduled:
+			frappe.throw("Plant can not be deleted directly. Please schedule for destruction first")
+
+		if not self.disabled:
+			frappe.throw("Plant can only be deleted once destroyed")
 
 	def biotrack_sync_up(self):
 		if frappe.flags.in_import or frappe.flags.in_test:
@@ -365,3 +368,12 @@ def bulk_clone(name):
 		# save directly with sql to avoid mistimestamp check
 		frappe.db.set_value("Plant", source_plant.name, "qty", 1, update_modified=False)
 		frappe.publish_realtime("list_update", {"doctype": "Plant"})
+
+
+def destroy_scheduled_plants():
+	"""Destroy expired Plants"""
+	date = add_to_date(now(), days=-3)
+	for name in frappe.get_list("Plant", [["disabled", "=", 0],["remove_scheduled", "=", 1], ["remove_time", "<", date]]):
+		plant = frappe.get_doc("Plant", name)
+		plant.disabled = 1
+		plant.save()
