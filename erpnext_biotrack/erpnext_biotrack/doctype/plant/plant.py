@@ -51,6 +51,10 @@ class Plant(Document):
 			frappe.db.commit()
 			enqueue(bulk_clone, name=self.name)
 
+	def validate_trash(self):
+		if not self.disabled and not self.remove_scheduled:
+			frappe.throw(_("Plant can not be deleted directly. Please schedule for it destruction process"))
+
 	def biotrack_sync_up(self):
 		if frappe.flags.in_import or frappe.flags.in_test:
 			return

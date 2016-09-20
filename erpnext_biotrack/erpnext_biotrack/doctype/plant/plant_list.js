@@ -3,7 +3,7 @@ frappe.listview_settings['Plant'] = {
     filters: [["disabled", "=", "No"]],
     get_indicator: function (doc) {
         if (doc.disabled) {
-            return [__("Disabled"), "grey", "disabled,=,Yes"];
+            return [__("Destroyed"), "grey", "disabled,=,Yes"];
         } else if(doc.remove_scheduled){
             return [__("Destroy Scheduled"), "orange", "remove_scheduled,=,Yes"];
         } else {
