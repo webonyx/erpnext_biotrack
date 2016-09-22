@@ -299,6 +299,32 @@ class Plant(Document):
 		self.save()
 
 	@Document.whitelist
+	def move_to_inventory(self):
+		items = [self.name]
+		res = biotrackthc_call("plant_convert_to_inventory", {'barcodeid': [self.name]})
+		defaukt_warehouse = get_default_warehouse()
+		item_group = frappe.get_doc("Item Group", {"external_id": 12})  # Mature Plant
+		qty = 1
+
+		for barcode in items:
+			make_item(barcode=barcode, properties={
+				"item_group": item_group.name,
+				"default_warehouse": defaukt_warehouse.name,
+				"strain": self.strain,
+				"is_stock_item": 1,
+				"actual_qty": qty,
+				"plant": self.name,
+				"item_parent": self.source,
+			}, qty=qty)
+
+
+		# destroy plant as well
+		self.remove_scheduled = 1
+		self.disabled = 1
+		self.transaction_id = res.get("transactionid")
+		self.save()
+
+	@Document.whitelist
 	def destroy(self):
 		biotrackthc_call("plant_destroy", {'barcodeid': [self.name]})
 		self.delete()

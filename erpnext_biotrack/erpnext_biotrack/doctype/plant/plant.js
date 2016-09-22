@@ -44,11 +44,20 @@ frappe.ui.form.on('Plant', {
             return diff
         }
 
+
         if (frm.doc.remove_scheduled) {
-            frm.dashboard.add_comment(
-                __("This Plant is scheduled for destruction. <strong>{0}</strong>", [cal_remaining_time(frm.doc.remove_time)]),
-                true
-            );
+            if (frm.doc.disabled) {
+                frm.dashboard.add_comment(
+                    __("The Plant had been destroyed"),
+                    true
+                );
+            } else {
+                frm.dashboard.add_comment(
+                    __("This Plant is scheduled for destruction. <strong>{0}</strong>", [cal_remaining_time(frm.doc.remove_time)]),
+                    true
+                );
+            }
+
         }
 
         frm.fields_dict['source'].get_query = function (doc, cdt, cdn) {
@@ -98,6 +107,12 @@ $.extend(erpnext_biotrack.plant, {
                 frm.page.set_secondary_action('Harvest/Cure', function () {
                     erpnext_biotrack.plant.harvest(frm);
                 });
+
+                if (frm.doc.state == 'Growing') {
+                    frm.page.add_action_item(__('Move To Inventory'), function () {
+                        erpnext_biotrack.plant.move_to_inventory(frm);
+                    })
+                }
 
                 if (frm.doc.harvest_scheduled) {
                     if (frm.doc.state == 'Growing') {
@@ -261,6 +276,36 @@ $.extend(erpnext_biotrack.plant, {
                     } else {
                         dialog.hide();
                     }
+                }
+            });
+        });
+
+        dialog.show();
+    },
+    move_to_inventory: function (frm) {
+        var doc = frm.doc,
+            fields = [
+                {
+                    fieldname: 'name', label: 'Plant', fieldtype: 'Data', read_only: 1, default: doc.name
+                },
+                {
+                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, default: doc.strain
+                }
+            ],
+            dialog;
+
+        dialog = new frappe.ui.Dialog({
+            title: __('Move to Inventory'),
+            fields: fields
+        });
+
+        dialog.set_primary_action(__('Submit'), function () {
+            frappe.call({
+                doc: doc,
+                method: 'move_to_inventory',
+                callback: function (data) {
+                    dialog.hide();
+                    frappe.set_route('List', 'Plant');
                 }
             });
         });
