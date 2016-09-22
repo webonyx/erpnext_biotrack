@@ -77,7 +77,7 @@ class Plant(Document):
 		self.set("barcode", result.get("barcode_id")[0])
 
 	def biotrack_sync_down(self, data):
-		if not frappe.flags.force_sync or False and self.get("transaction_id") == data.get("transactionid"):
+		if not (frappe.flags.force_sync or False) and self.get("transaction_id") == data.get("transactionid"):
 			frappe.db.set_value("Plant", self.name, "last_sync", now(), update_modified=False)
 			return
 

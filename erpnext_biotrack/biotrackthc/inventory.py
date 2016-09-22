@@ -34,7 +34,7 @@ def sync_item(biotrack_inventory):
 	item_values = get_item_values(barcode, ["name", "transaction_id"])
 	if item_values:
 		name, transaction_id = item_values
-		if not frappe.flags.force_sync or False and transaction_id == biotrack_inventory.get("transactionid"):
+		if not (frappe.flags.force_sync or False) and transaction_id == biotrack_inventory.get("transactionid"):
 			frappe.db.set_value("Item", name, "last_sync", now(), update_modified=False)
 			return False
 

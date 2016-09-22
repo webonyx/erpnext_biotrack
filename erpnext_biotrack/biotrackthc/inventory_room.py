@@ -39,7 +39,7 @@ def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
 
 	if name:
 		warehouse = frappe.get_doc('Warehouse', name)
-		if not frappe.flags.force_sync or False and warehouse.external_transaction_id == biotrack_data.get("transactionid"):
+		if not (frappe.flags.force_sync or False) and warehouse.external_transaction_id == biotrack_data.get("transactionid"):
 			return False
 
 	else:

@@ -20,7 +20,7 @@ def create_or_update_customer(biotrack_customer):
 	test = frappe.db.get_value("Customer", biotrack_customer.get("name"), ["name", "external_transaction_id"])
 	if test:
 		name, external_transaction_id = test
-		if not frappe.flags.force_sync or False and external_transaction_id == biotrack_customer.get(
+		if not (frappe.flags.force_sync or False) and external_transaction_id == biotrack_customer.get(
 				"transactionid"):
 			return False
 

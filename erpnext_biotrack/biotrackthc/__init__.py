@@ -31,8 +31,7 @@ def sync(resources=None, force_sync=False, verbose=False):
 			"qa_sample",
 		]
 
-	if force_sync:
-		frappe.flags.force_sync = True
+	frappe.flags.force_sync = force_sync
 	frappe.flags.in_import = True
 
 	make_log(title="BioTrackTHC: Sync started...", status="Queued", method="sync", message="Started")
