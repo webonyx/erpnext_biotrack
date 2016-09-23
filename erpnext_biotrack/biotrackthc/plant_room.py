@@ -3,6 +3,7 @@ import frappe
 from .inventory_room import sync_warehouse
 from .client import get_data
 
+
 @frappe.whitelist()
 def sync():
     synced_list = []

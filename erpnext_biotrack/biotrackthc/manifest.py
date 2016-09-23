@@ -5,6 +5,7 @@ from frappe import _
 from frappe.exceptions import DoesNotExistError, ValidationError
 from frappe.utils.data import get_datetime_str
 
+
 @frappe.whitelist()
 def sync():
     synced_manifests = []
@@ -36,8 +37,10 @@ def sync_manifest(data):
                         "creation": get_datetime_str(posting_datetime),
                         "posting_date": posting_date,
                         "posting_time": posting_time,
-                        "arrive_datetime": get_datetime_str(datetime.datetime.fromtimestamp(int(stop.get("arrive_time")))),
-                        "depart_datetime": get_datetime_str(datetime.datetime.fromtimestamp(int(stop.get("depart_time")))),
+                        "arrive_datetime": get_datetime_str(
+                            datetime.datetime.fromtimestamp(int(stop.get("arrive_time")))),
+                        "depart_datetime": get_datetime_str(
+                            datetime.datetime.fromtimestamp(int(stop.get("depart_time")))),
                         "customer": customer.name,
                         "instructions": stop.get("travel_route"),
                         "transporter_name": data.get("transporter_name"),
@@ -83,6 +86,7 @@ def sync_manifest(data):
 
     return doc_len
 
+
 def map_address(customer, data):
     address1 = str(data.get("street")).strip()
     if address1 == '':
@@ -115,6 +119,7 @@ def map_address(customer, data):
     address.save()
     return address
 
+
 def get_biotrack_manifests(active=1):
     data = get_data('sync_manifest', {'active': active})
     manifests = {}
@@ -125,11 +130,11 @@ def get_biotrack_manifests(active=1):
             if stop_data.get("manifestid") == manifest.get("manifestid"):
                 items = []
                 for item in data.get("manifest_stop_items"):
-                    if item.get("stopnumber") == stop_data.get("stopnumber") and stop_data.get("manifestid") == item.get("manifestid"):
+                    if item.get("stopnumber") == stop_data.get("stopnumber") and stop_data.get(
+                            "manifestid") == item.get("manifestid"):
                         items.append(item)
                 stop_data["items"] = items
                 stops.append(stop_data)
-
 
         manifest["stops"] = stops
         manifests[manifest.get("manifestid")] = manifest
