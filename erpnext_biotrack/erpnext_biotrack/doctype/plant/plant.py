@@ -93,6 +93,7 @@ class Plant(Document):
             "remove_scheduled": cint(data.get("removescheduled")),
             "transaction_id": cint(data.get("transactionid")),
             "last_sync": now(),
+            "disabled": 0,
         }
 
         item_values = get_item_values(data.get("parentid"), ["name", "item_group"])
