@@ -52,6 +52,10 @@ class Plant(Document):
 			enqueue(bulk_clone, name=self.name)
 
 	def on_trash(self):
+		# able to delete new Plants
+		if self.state == "Growing" or not self.harvest_scheduled:
+			return
+
 		if not self.remove_scheduled:
 			frappe.throw("Plant can not be deleted directly. Please schedule for destruction first")
 
