@@ -22,9 +22,13 @@ fixtures = [
 				"Item-item_parent",
 				"Item-plant",
 				"Item-sub_items",
+				"Item-is_sample",
+				"Item-test_result",
+				"Item-sample",
 				"Item-is_marijuana_item",
 				"Item-last_sync",
 				"Item-transaction_id",
+				"Item-linking_data",
 
 				# Item Group
 				"Item Group-external_id",
@@ -53,7 +57,7 @@ fixtures = [
 				# Supplier
 				"Supplier-license_no",
 
-				"Quality Inspection-external_id",
+				"Quality Inspection-sample_code",
 				"Quality Inspection-qa_lab",
 				"Quality Inspection-test_result",
 			)]
@@ -103,6 +107,7 @@ doctype_list_js = {
 	"Customer": "custom_scripts/customer_list.js",
 	"Employee": "custom_scripts/employee_list.js",
 	"Supplier": "custom_scripts/supplier_list.js",
+	"Quality Inspection": "custom_scripts/quality_inspection_list.js",
 	"Warehouse": "custom_scripts/warehouse_list.js"
 }
 

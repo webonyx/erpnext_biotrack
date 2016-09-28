@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import frappe
-from erpnext_biotrack.sources.biotrack.inventory import get_biotrack_inventories
+from erpnext_biotrack.biotrackthc.inventory import get_biotrack_inventories
 
 
 def execute():
