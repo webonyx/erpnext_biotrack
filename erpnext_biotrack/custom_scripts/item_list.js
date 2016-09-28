@@ -4,21 +4,16 @@ $.extend(frappe.listview_settings['Item'], {
 	filters: [["disabled", "=", "0"]],
 
 	get_indicator: function(doc) {
-        var test_result;
-        if (doc.test_result) {
-            test_result = ' - ' + __(doc.test_result)
-        }
-
 		if(doc.total_projected_qty < 0) {
-			return [__("Shortage") + test_result, "red", "total_projected_qty,<,0"];
+			return [__("Shortage"), "red", "total_projected_qty,<,0"];
 		} else if (doc.disabled) {
-			return [__("Disabled") + test_result, "grey", "disabled,=,Yes"];
+			return [__("Disabled"), "grey", "disabled,=,Yes"];
 		} else if (doc.end_of_life && doc.end_of_life < frappe.datetime.get_today()) {
-			return [__("Expired") + test_result, "grey", "end_of_life,<,Today"];
+			return [__("Expired"), "grey", "end_of_life,<,Today"];
 		} else if (doc.has_variants) {
-			return [__("Template") + test_result, "blue", "has_variants,=,Yes"];
+			return [__("Template"), "blue", "has_variants,=,Yes"];
 		} else if (doc.variant_of) {
-			return [__("Variant") + test_result, "green", "variant_of,=," + doc.variant_of];
+			return [__("Variant"), "green", "variant_of,=," + doc.variant_of];
 		} else if (doc.test_result){
             var indicators = {
                 'Failed': 'red',
