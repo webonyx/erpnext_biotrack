@@ -42,6 +42,9 @@ def async_client_sync(doctype):
     elif doctype == "Customer":
         from .biotrackthc.vendor import sync
         sync()
+    elif doctype == "Employee":
+        from .biotrackthc.employee import sync
+        sync()
     elif doctype == "Warehouse":
         from .biotrackthc.inventory_room import sync
         from .biotrackthc.plant_room import sync as room_sync

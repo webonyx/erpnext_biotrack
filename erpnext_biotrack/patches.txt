@@ -12,3 +12,4 @@ execute:frappe.delete_doc_if_exists("DocType", "Stock Status")
 erpnext_biotrack.patches.migrate_warehouse_type
 execute:frappe.delete_doc_if_exists("Custom Field", "Warehouse-wa_state_compliance_sync")
 execute:frappe.db.sql("""UPDATE `tabStock Reconciliation Item` s INNER JOIN `tabItem` i ON s.item_code = i.item_code SET s.item_name = i.item_name WHERE s.item_name IS NULL""")
+execute:frappe.delete_doc_if_exists("Custom Field", "Employee-wa_state_compliance_sync")

@@ -17,19 +17,23 @@ def sync():
 
 
 def create_or_update_customer(biotrack_customer):
+    name = biotrack_customer.get("name")
+    ubi = biotrack_customer.get("ubi")
+    location = biotrack_customer.get("location")
+    transactionid = biotrack_customer.get("transactionid")
+
     test = frappe.db.get_value("Customer", biotrack_customer.get("name"), ["name", "external_transaction_id"])
     if test:
-        name, external_transaction_id = test
-        if not (frappe.flags.force_sync or False) and external_transaction_id == biotrack_customer.get(
-                "transactionid"):
+        name_test, external_transaction_id = test
+        if not (frappe.flags.force_sync or False) and external_transaction_id == transactionid:
             return False
 
-        customer = frappe.get_doc('Customer', name)
+        customer = frappe.get_doc('Customer', name_test)
 
     else:
         customer = frappe.get_doc({
             "doctype": "Customer",
-            "customer_name": biotrack_customer.get("name"),
+            "customer_name": name,
             "territory": get_root_of("Territory"),
             "customer_type": _("Company")
         })
@@ -38,9 +42,9 @@ def create_or_update_customer(biotrack_customer):
     customer.update({
         "customer_group": customer_group.name if customer_group else None,
         "territory": get_root_of("Territory"),
-        "ubi": biotrack_customer.get("ubi"),
-        "license_no": biotrack_customer.get("location"),
-        "external_transaction_id": biotrack_customer.get("transactionid")
+        "ubi": ubi,
+        "license_no": location,
+        "external_transaction_id": transactionid
     })
 
     customer.flags.ignore_mandatory = True
