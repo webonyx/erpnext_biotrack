@@ -28,6 +28,25 @@ def update(context):
 	frappe.destroy()
 
 
+@click.command('set-training-mode')
+@click.option('--site', help='site name')
+@click.argument('state', type=click.Choice(['on', 'off']))
+@pass_context
+def set_training_mode(context, state, site=None):
+	if not site:
+		site = get_site(context)
+
+	try:
+		frappe.init(site=site)
+		frappe.connect()
+		frappe.db.set_value("BioTrack Settings", None, "is_training", 1 if (state == 'on') else 0)
+		frappe.db.commit()
+		print "Training mode set for site {}".format(site)
+	finally:
+		frappe.destroy()
+
+
 commands = [
-	update
+	update,
+	set_training_mode,
 ]

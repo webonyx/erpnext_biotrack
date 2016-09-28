@@ -13,9 +13,18 @@ frappe.ui.form.on('BioTrack Settings', {
 			)
 		}
 
+		if (frm.doc.is_training) {
+			cur_frm.set_intro('Training mode is enabled')
+		}
+
 		cur_frm.add_custom_button('<span class="octicon octicon-info" aria-hidden="true"></span> ' + __("Sync Log"), function() {
 			frappe.set_route("List", "BioTrack Log");
 		});
+
+		$('<a class="btn btn-link btn-xs"' +
+			' href="https://github.com/webonyx/erpnext_biotrack#erpnext-biotrack"' +
+			' target="_blank" style="margin-left: 10px;"><span class="octicon octicon-question" aria-hidden="true"></span> ' + __("Help") + '</a>')
+			.appendTo(cur_frm.page.inner_toolbar);
 	},
 
 	enable_biotrack: function(frm) {

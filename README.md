@@ -11,8 +11,6 @@ BioTrack connector for ERPNext
 
  Desktop > Explore > Setup > Integrations > WA State Compliance Settings
  
-> Training Mode for development thought
-
 #### Doctype Mapping
 
 |ERPNext | BioTrack | New |
@@ -24,6 +22,11 @@ BioTrack connector for ERPNext
 | Customer | Vendor | |
 | Warehouse | Room | |
 | Delivery Note | Manifest | |
+
+
+#### Enable BioTrack training mode
+
+> bench erpnext_biotrack set-training-mode on|off --site site_name
 
 
 #### License
