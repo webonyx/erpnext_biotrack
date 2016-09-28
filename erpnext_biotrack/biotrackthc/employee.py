@@ -48,9 +48,9 @@ def sync_employee(biotrack_employee, company, biotrack_employee_list):
 		employee.update({
 			"naming_series": naming_series,
 			"employee_name": employee_name,
+			"status": "Active",
 			"external_id": employee_id,
 			"external_transaction_id": transactionid,
-			"wa_state_compliance_sync": 1,
 			"company": company,
 			"date_of_birth": date_of_birth,
 			"date_of_joining": date_of_joining,
