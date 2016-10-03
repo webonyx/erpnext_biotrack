@@ -29,6 +29,7 @@ fixtures = [
 				"Item-last_sync",
 				"Item-transaction_id",
 				"Item-linking_data",
+				"Item-certificate",
 
 				# Item Group
 				"Item Group-external_id",
