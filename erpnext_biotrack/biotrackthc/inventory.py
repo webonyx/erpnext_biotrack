@@ -49,16 +49,17 @@ def sync_item(biotrack_inventory):
     else:
         item_name = " ".join(filter(None, [biotrack_inventory.get("strain"), item_group.name]))
 
+    is_sample = cint(biotrack_inventory.get("is_sample"))
+
     if not name:
-        is_sample = cint(biotrack_inventory.get("is_sample"))
         item_code = make_autoname("SAMP-" + '.#####') if is_sample else barcode
         item = frappe.get_doc({
             "doctype": "Item",
             "item_code": item_code,
             "item_name": item_name,
             "barcode": barcode,
-            "is_stock_item": 1,
-            "is_sample": cint(biotrack_inventory.get("is_sample")),
+            "is_stock_item": 1 if not is_sample else 0,
+            "is_sample": is_sample,
             "stock_uom": "Gram",
             "item_group": item_group.name,
             "default_warehouse": warehouse.name,
@@ -104,7 +105,8 @@ def sync_item(biotrack_inventory):
     #             })
     #             parent.save()
 
-    adjust_stock(item, remaining_quantity)
+    if item.is_stock_item:
+        adjust_stock(item, remaining_quantity)
 
     if remaining_quantity == 0:
         frappe.db.set_value("Item", item.name, "disabled", 1)

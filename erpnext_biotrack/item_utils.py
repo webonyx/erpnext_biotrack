@@ -198,6 +198,14 @@ def after_insert(item, method):
 	make_stock_entry(item_code=item.item_code, target=item.default_warehouse, qty=item.actual_qty)
 	item.save()
 
+
+def remove_certificate_on_trash_file(file, method):
+	if file.attached_to_name and file.attached_to_doctype == "Item":
+		item = frappe.get_doc("Item", file.attached_to_name)
+		if (item.certificate == file.file_url):
+			item.certificate = None
+			item.save()
+
 def test_insert():
 	item = frappe.get_doc({
 		"doctype": "Item",

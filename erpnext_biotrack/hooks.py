@@ -156,6 +156,9 @@ doc_events = {
 	"Item": {
 		"validate": "erpnext_biotrack.item_utils.on_validate",
 		"after_insert": "erpnext_biotrack.item_utils.after_insert",
+	},
+	"File": {
+		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",
 	}
 }
 

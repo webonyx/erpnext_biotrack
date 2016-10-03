@@ -1,4 +1,3 @@
-
 frappe.ui.form.on("Item", {
     onload: function (frm) {
 
@@ -17,8 +16,34 @@ frappe.ui.form.on("Item", {
     },
 
     refresh: function (frm) {
-        if (!frm.doc.__islocal && frm.doc.is_stock_item) {
-            var $btn = frm.add_custom_button(__("Sub Lot/Batch"), function () {
+        if (!frm.is_new()) {
+            // Download certificate button
+            if (frm.doc.certificate) {
+                var file_url = frm.attachments.get_file_url({file_url: frm.doc.certificate});
+                file_url = frappe.urllib.get_full_url(file_url);
+                $('<a class="btn btn-default btn-xs"' +
+                    ' href="'+ file_url +'"' +
+                    ' target="_blank" style="margin-left: 10px;">' +
+                    '<span class="text-muted octicon octicon-file-pdf" aria-hidden="true"></span> ' + __("Download Certificate") + '</a>')
+                    .appendTo(frm.page.inner_toolbar);
+            }
+
+            frm.add_custom_button(__("Attach Certificate"), function () {
+                frappe.ui.get_upload_dialog({
+                    args: {
+                        from_form: 1,
+                        doctype: frm.doctype,
+                        docname: frm.docname
+                    },
+                    callback: function (attachment, r) {
+                        frm.set_value('certificate', attachment.file_url);
+                        frm.save('Save');
+                    }
+                })
+            });
+
+            if (frm.doc.is_stock_item) {
+                var $btn = frm.add_custom_button(__("Sub Lot/Batch"), function () {
                 frappe.call({
                     method: 'erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_stock_balance_for',
                     args: {
@@ -45,8 +70,8 @@ frappe.ui.form.on("Item", {
                 });
 
             })
+            }
         }
-
 
         erpnext.item.toggle_marijuana_attributes(frm);
 
@@ -71,10 +96,13 @@ $.extend(erpnext.item, {
                 },
 
                 {
-                    fieldname: 'qty', label: __('Quantity'), reqd: 1,
-                    fieldtype: 'Float', description: __('Default Unit of Measure <strong>{0}</strong>. Available <strong>{1}</strong>', [doc.stock_uom, actual_qty])
+                    fieldname: 'qty',
+                    label: __('Quantity'),
+                    reqd: 1,
+                    fieldtype: 'Float',
+                    description: __('Default Unit of Measure <strong>{0}</strong>. Available <strong>{1}</strong>', [doc.stock_uom, actual_qty])
                 },
-                { fieldname: 'rate', label: __('Valuation Rate'), fieldtype: 'Currency', reqd: 1 }
+                {fieldname: 'rate', label: __('Valuation Rate'), fieldtype: 'Currency', reqd: 1}
             ]
         });
         dialog.show();
@@ -112,10 +140,10 @@ $.extend(erpnext.item, {
         });
 
         $('<div class="text-muted small" style="padding-top: 15px; padding-left: 5px">' +
-                '<strong><em>Please be considerate!</em></strong> This action will synchronize with BioTrackTCH database.' +
+            '<strong><em>Please be considerate!</em></strong> This action will synchronize with BioTrackTCH database.' +
             '</div>').appendTo(dialog.body);
     },
-    toggle_marijuana_attributes: function(frm) {
+    toggle_marijuana_attributes: function (frm) {
         if (frm.doc.__islocal && frm.doc.is_marijuana_item) {
             frm.set_value("stock_uom", 'Gram');
         }
