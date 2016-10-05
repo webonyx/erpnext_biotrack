@@ -56,7 +56,7 @@ def sync_item(biotrack_inventory):
         item = frappe.get_doc({
             "doctype": "Item",
             "item_code": item_code,
-            "item_name": item_name,
+            "item_name": item_name + (' Sample' if is_sample else ''),
             "barcode": barcode,
             "is_stock_item": 1 if not is_sample else 0,
             "is_sample": is_sample,
@@ -70,14 +70,6 @@ def sync_item(biotrack_inventory):
     strain = ""
     if biotrack_inventory.get("strain"):
         strain = find_strain(biotrack_inventory.get("strain"))
-
-    # Plant: will link later
-    # plant = ""
-    # if biotrack_inventory.get("plantid"):
-    # 	if frappe.db.exists("Plant", {"barcode": biotrack_inventory.get("plantid")}):
-    # 		plant = biotrack_inventory.get("plantid")
-    #
-    # properties["plant"] = plant
 
     parent_ids = biotrack_inventory.get("parentid")
     plant_ids = biotrack_inventory.get("plantid")
@@ -93,17 +85,6 @@ def sync_item(biotrack_inventory):
     })
 
     item.save()
-
-    # Parents: will link later
-    # if parent_ids:
-    #     for parent_name in biotrack_inventory.get("parentid"):
-    #         if parent_name != item.item_parent and frappe.db.exists("Item", parent_name):
-    #             parent = frappe.get_doc("Item", parent_name)
-    #             parent.append("sub_items", {
-    #                 "item_code": barcode,
-    #                 "qty": remaining_quantity
-    #             })
-    #             parent.save()
 
     if item.is_stock_item:
         adjust_stock(item, remaining_quantity)

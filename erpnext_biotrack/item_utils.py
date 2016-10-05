@@ -3,6 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+import json
 import frappe
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from frappe.utils.data import flt
@@ -94,7 +95,7 @@ def clone_item(item_code, qty, rate, default_warehouse):
 		"item_name": barcode,
 		"item_code": barcode,
 		"barcode": barcode,
-		"item_parent": parent.name,
+		"parent_item": parent.name,
 		"item_group": parent.item_group,
 		"default_warehouse": default_warehouse,
 		"strain": parent.strain,
@@ -205,6 +206,34 @@ def remove_certificate_on_trash_file(file, method):
 		if (item.certificate == file.file_url):
 			item.certificate = None
 			item.save()
+
+
+def item_linking_correction():
+	for name in frappe.get_all("Item", filters=["linking_data IS NOT NULL"]):
+		item = frappe.get_doc("Item", name)
+		linking_data = json.loads(item.linking_data)
+
+		if linking_data.get("parent_ids"):
+			parent_name = linking_data.get("parent_ids")[0]
+
+			# consider to not make circular linking
+			# parent = frappe.get_doc("Item", parent_name)
+			# parent.append("sub_items", {
+			# 	"item_code": parent_name,
+			# 	"qty": item.actual_qty
+			# })
+			# parent.save()
+
+			if frappe.db.exists("Item", parent_name):
+				frappe.db.set_value("Item", item.name, "parent_item", parent_name)
+
+		if linking_data.get("plant_ids"):
+			plant_name = linking_data.get("plant_ids")[0]
+			if frappe.db.exists("Plant", plant_name):
+				frappe.db.set_value("Item", item.name, "plant", plant_name)
+
+		frappe.db.set_value("Item", item.name, "linking_data", None)
+
 
 def test_insert():
 	item = frappe.get_doc({

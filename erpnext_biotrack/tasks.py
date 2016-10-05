@@ -38,6 +38,8 @@ def async_client_sync(doctype):
 		sync()
 	elif doctype == "Item":
 		from .biotrackthc.inventory import sync
+		from .biotrackthc.plant import sync as sync_plant # need to sync plant as well
+		sync_plant()
 		sync()
 	elif doctype == "Customer":
 		from .biotrackthc.vendor import sync
@@ -54,12 +56,14 @@ def async_client_sync(doctype):
 		sync()
 		room_sync()
 
+	run_hooks()
 	frappe.publish_realtime("list_update", {"doctype": doctype})
 
 
 def sync_all():
 	from .biotrackthc import sync
 	sync()
+	run_hooks()
 
 
 def hourly():
@@ -78,3 +82,9 @@ def sync_if(frequency, default='Daily'):
 	settings = frappe.get_doc("BioTrack Settings")
 	if settings.is_sync_enabled() and (settings.schedule_in or default) == frequency:
 		sync_all()
+
+def run_hooks():
+	hooks = frappe.get_hooks(hook="biotrack_after_sync")
+	for hook in hooks or []:
+		frappe.get_attr(hook)()
+

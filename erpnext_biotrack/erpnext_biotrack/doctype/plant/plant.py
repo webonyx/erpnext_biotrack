@@ -319,7 +319,7 @@ class Plant(Document):
                 "is_stock_item": 1,
                 "actual_qty": qty,
                 "plant": self.name,
-                "item_parent": self.source,
+                "parent_item": self.source,
             }, qty=qty)
 
         # destroy plant as well

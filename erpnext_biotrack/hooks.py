@@ -19,7 +19,7 @@ fixtures = [
 				"Item-strain",
 				"Item-actual_qty",
 				"Item-sub_lot_sec",
-				"Item-item_parent",
+				"Item-parent_item",
 				"Item-plant",
 				"Item-sub_items",
 				"Item-is_sample",
@@ -130,6 +130,8 @@ standard_queries = {
 
 # before_install = "erpnext_biotrack.install.before_install"
 after_install = "erpnext_biotrack.install.after_install"
+
+biotrack_after_sync = "erpnext_biotrack.item_utils.item_linking_correction"
 
 # Desk Notifications
 # ------------------
