@@ -22,54 +22,60 @@ frappe.ui.form.on("Item", {
                 var file_url = frm.attachments.get_file_url({file_url: frm.doc.certificate});
                 file_url = frappe.urllib.get_full_url(file_url);
                 $('<a class="btn btn-default btn-xs"' +
-                    ' href="'+ file_url +'"' +
+                    ' href="' + file_url + '"' +
                     ' target="_blank" style="margin-left: 10px;">' +
                     '<span class="text-muted octicon octicon-file-pdf" aria-hidden="true"></span> ' + __("Download Certificate") + '</a>')
                     .appendTo(frm.page.inner_toolbar);
             }
 
-            frm.add_custom_button(__("Attach Certificate"), function () {
-                frappe.ui.get_upload_dialog({
-                    args: {
-                        from_form: 1,
-                        doctype: frm.doctype,
-                        docname: frm.docname
-                    },
-                    callback: function (attachment, r) {
-                        frm.set_value('certificate', attachment.file_url);
-                        frm.save('Save');
-                    }
-                })
-            });
+            // Only Attach Certificate to parent Item
+            if (!frm.doc.parent_item) {
+                frm.add_custom_button(__("Attach Certificate"), function () {
+                    var dialog = frappe.ui.get_upload_dialog({
+                        args: {
+                            from_form: 1,
+                            doctype: frm.doctype,
+                            docname: frm.docname
+                        },
+                        callback: function (attachment, r) {
+                            frm.set_value('certificate', attachment.file_url);
+                            frm.save('Save');
+                        }
+                    })
+
+                    dialog.set_title(__('Attach Certificate'));
+                });
+            }
+
 
             if (frm.doc.is_stock_item) {
                 var $btn = frm.add_custom_button(__("Sub Lot/Batch"), function () {
-                frappe.call({
-                    method: 'erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_stock_balance_for',
-                    args: {
-                        item_code: frm.doc['item_code'],
-                        warehouse: frm.doc['default_warehouse'],
-                        posting_date: null,
-                        posting_time: null
-                    },
-                    callback: function (r) {
-                        var actual_qty = r.message.qty;
-                        if (actual_qty) {
-                            erpnext.item.clone_item(frm.doc, actual_qty, r.message.rate)
-                        } else {
-                            frappe.msgprint(
-                                {
-                                    message: __("Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>. <br><br>Available qty is <strong>0</strong>", [frm.doc['item_name'], frm.doc['default_warehouse']]),
-                                    title: "Insufficient Stock",
-                                    indicator: 'red'
-                                }
-                            );
-                            $btn.prop('disabled', true);
+                    frappe.call({
+                        method: 'erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_stock_balance_for',
+                        args: {
+                            item_code: frm.doc['item_code'],
+                            warehouse: frm.doc['default_warehouse'],
+                            posting_date: null,
+                            posting_time: null
+                        },
+                        callback: function (r) {
+                            var actual_qty = r.message.qty;
+                            if (actual_qty) {
+                                erpnext.item.clone_item(frm.doc, actual_qty, r.message.rate)
+                            } else {
+                                frappe.msgprint(
+                                    {
+                                        message: __("Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>. <br><br>Available qty is <strong>0</strong>", [frm.doc['item_name'], frm.doc['default_warehouse']]),
+                                        title: "Insufficient Stock",
+                                        indicator: 'red'
+                                    }
+                                );
+                                $btn.prop('disabled', true);
+                            }
                         }
-                    }
-                });
+                    });
 
-            })
+                })
             }
         }
 
