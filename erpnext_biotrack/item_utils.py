@@ -266,6 +266,8 @@ def qa_result_pull(name):
 
 	item.inspection_required = 1
 	item.save()
+	frappe.db.commit()
+
 
 def delete_item(name):
 	"""Permanently Item and related Stock entries"""

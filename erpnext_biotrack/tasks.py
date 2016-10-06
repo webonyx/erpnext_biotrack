@@ -15,7 +15,7 @@ def sync():
 		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Sync Error', indicator='red')
 		return
 
-	enqueue(sync_all)
+	enqueue(sync_all, queue="long")
 
 	frappe.msgprint("Queued for syncing. It may take a few minutes to an hour.")
 
