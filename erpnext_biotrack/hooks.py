@@ -58,7 +58,7 @@ fixtures = [
 				# Supplier
 				"Supplier-license_no",
 
-				"Quality Inspection-sample_code",
+				"Quality Inspection-barcode",
 				"Quality Inspection-qa_lab",
 				"Quality Inspection-test_result",
 			)]
