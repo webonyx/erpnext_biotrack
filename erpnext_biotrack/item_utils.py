@@ -209,6 +209,8 @@ def remove_certificate_on_trash_file(file, method):
 
 
 def item_linking_correction():
+	"""For biotrack_after_sync Hook"""
+
 	for name in frappe.get_all("Item", filters=["linking_data IS NOT NULL"]):
 		item = frappe.get_doc("Item", name)
 		linking_data = json.loads(item.linking_data)
@@ -234,6 +236,25 @@ def item_linking_correction():
 
 		frappe.db.set_value("Item", item.name, "linking_data", None)
 
+
+def delete_item(name):
+	"""Permanently Item and related Stock entries"""
+	item = frappe.get_doc("Item", name)
+
+	for name in frappe.get_list("Stock Entry", {"item_code": item.item_code}):
+		doc = frappe.get_doc("Stock Entry", name)
+		if doc.docstatus == 1:
+			doc.cancel()
+
+		doc.delete()
+
+	for name in frappe.get_all("Delivery Note", {"item_code": item.item_code}):
+		doc = frappe.get_doc("Delivery Note", name)
+		if doc.docstatus == 1:
+			doc.cancel()
+		doc.delete()
+
+	item.delete()
 
 def test_insert():
 	item = frappe.get_doc({

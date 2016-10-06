@@ -3,6 +3,7 @@ import frappe, json
 from erpnext import get_default_company
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
+from erpnext_biotrack.biotrackthc.plant import get_normalized as get_normalized_plants
 from erpnext_biotrack.biotrackthc.qa_sample import make_sample
 from erpnext_biotrack.item_utils import get_item_values
 from frappe.utils import get_fullname
@@ -15,16 +16,47 @@ from frappe.utils.data import flt, nowdate, nowtime, now, cint
 
 @frappe.whitelist()
 def sync():
+	"""Manual execute: bench execute erpnext_biotrack.biotrackthc.inventory.sync"""
 	success = 0
 	sync_time = now()
 	samples = []
 
-	for biotrack_inventory in get_biotrack_inventories():
-		if biotrack_inventory.get("is_sample"):
-			samples.append(biotrack_inventory)
+	data = normalize(get_biotrack_inventories())
+	plant_data = get_normalized_plants()
+
+	for _, inventory in data.items():
+		# filter to keep available parent only
+		ids = inventory.get("parentid") or []
+		parent_ids = []
+		if ids:
+			for key in (inventory.get("parentid") or []):
+				if key in data:
+					parent_ids.append(key)
+
+			# lookup again database
+			if not parent_ids:
+				parent_ids = [r[0] for r in frappe.get_list("Item", filters=[["barcode", "in", ids]], as_list=True)]
+
+		# plants filter
+		ids = inventory.get("plantid") or []
+		plant_ids = []
+		if ids:
+			for key in (inventory.get("plantid") or []):
+				if key in plant_data:
+					plant_ids.append(key)
+
+			# lookup again database
+			if not plant_ids:
+				plant_ids = [r[0] for r in frappe.get_list("Plant", filters=[["name", "in", ids]], as_list=True)]
+
+		inventory["parentid"] = parent_ids
+		inventory["plantid"] = plant_ids
+
+		if inventory.get("is_sample"):
+			samples.append(inventory)
 			continue
 
-		if sync_item(biotrack_inventory):
+		if sync_item(inventory):
 			success += 1
 
 	disable_deleted_items(sync_time)
@@ -86,15 +118,13 @@ def sync_item(biotrack_inventory):
 		"actual_qty": remaining_quantity,
 		"transaction_id": biotrack_inventory.get("transactionid"),
 		"last_sync": now(),
+		"disabled": 1 if remaining_quantity == 0 else 0,
 	})
 
 	item.save()
 
-	if item.is_stock_item:
+	if remaining_quantity and item.is_stock_item:
 		adjust_stock(item, remaining_quantity)
-
-	if remaining_quantity == 0:
-		frappe.db.set_value("Item", item.name, "disabled", 1)
 
 	# Disable Usable Marijuana item does not have product name
 	if not biotrack_inventory.get("productname") and item_group.external_id == 28:
@@ -215,6 +245,14 @@ def log_invalid_item(item):
 		# "link_doctype": "Item",
 		# "link_name": item.name
 	}).insert(ignore_permissions=True)
+
+
+def normalize(data):
+	normalized = {}
+	for inventory in data:
+		normalized[inventory.get("id")] = inventory
+
+	return normalized
 
 
 def get_biotrack_inventories(active=1):

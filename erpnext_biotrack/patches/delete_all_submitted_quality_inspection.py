@@ -7,11 +7,9 @@ def execute():
 
 	# Disable feed update
 	frappe.flags.in_patch = True
-	i = 0
 
 	for name in frappe.get_all("Quality Inspection"):
 		doc = frappe.get_doc("Quality Inspection", name)
-		i += 1
 		print "Deleting " + doc.name
 
 		if doc.docstatus == 1:

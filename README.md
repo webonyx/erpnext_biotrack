@@ -16,6 +16,7 @@ BioTrack connector for ERPNext
 |ERPNext | BioTrack | New |
 | --- | --- | --- |
 | Item | Inventory | |
+| Sample | Quality Inspection | |
 | Item Group | Inventory Type | |
 | Strain | Strain | Yes |
 | Plant | Plant | Yes |
