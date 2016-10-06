@@ -52,7 +52,7 @@ def sync():
 		inventory["parentid"] = parent_ids
 		inventory["plantid"] = plant_ids
 
-		if inventory.get("is_sample"):
+		if inventory.get("is_sample") and parent_ids:
 			samples.append(inventory)
 			continue
 
@@ -158,7 +158,11 @@ def adjust_stock(item, remaining_quantity):
 
 def syn_samples(samples):
 	for inventory in samples:
-		item_code = inventory.get("parentid")[0]
+		parent_ids = inventory.get("parentid") or []
+		if not parent_ids:
+			continue
+
+		item_code = parent_ids[0]
 		values = get_item_values(item_code, ["name", "test_result"])
 		if values:
 			name, test_result = values
