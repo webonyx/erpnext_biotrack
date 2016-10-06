@@ -21,7 +21,11 @@ $(document).on("autocompletesearch", '[data-fieldname="item_code"]', function (e
         }
 
         // do not want to hack server queries, last part is item_name
-        var html = "<strong>" + __(d.description.split(',').pop()) + "</strong>";
+        var parts = d.description.split(',').filter(function (part) {
+            return $.trim(part) != ''
+        });
+
+        var html = "<strong>" + __(parts.pop()) + "</strong>";
         html += '<br><span class="small">' + __(d.value) + '</span>';
 
         return $('<li></li>')
