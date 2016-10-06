@@ -163,20 +163,20 @@ def syn_samples(samples):
 			continue
 
 		item_code = parent_ids[0]
-		values = get_item_values(item_code, ["name", "test_result"])
+		values = get_item_values(item_code, ["name", "test_result", "item_name"])
 		if values:
-			name, test_result = values
+			name, test_result, item_name = values
 			if test_result:
 				continue # already synced
 
 			item = frappe.get_doc("Item", name)
-			quality_inspection = make_sample(item, {
-				"sample_id": inventory.get("barcode"),
-				"quantity": inventory.get("remaining_quantity")
-			})
+			item.sample_id = inventory.get("barcode")
+			item.save()
 
+			quality_inspection = make_sample(item, inventory.get("remaining_quantity"))
 			quality_inspection.flags.ignore_mandatory = True
 			quality_inspection.save()
+
 			frappe.db.commit()
 
 		else:

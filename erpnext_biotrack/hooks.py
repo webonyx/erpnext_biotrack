@@ -23,6 +23,7 @@ fixtures = [
 				"Item-plant",
 				"Item-sub_items",
 				"Item-test_result",
+				"Item-sample_id",
 				"Item-is_marijuana_item",
 				"Item-last_sync",
 				"Item-transaction_id",
@@ -129,7 +130,10 @@ standard_queries = {
 # before_install = "erpnext_biotrack.install.before_install"
 after_install = "erpnext_biotrack.install.after_install"
 
-biotrack_after_sync = "erpnext_biotrack.item_utils.item_linking_correction"
+biotrack_after_sync = [
+	"erpnext_biotrack.item_utils.item_linking_correction",
+	"erpnext_biotrack.item_utils.qa_result_population"
+]
 
 # Desk Notifications
 # ------------------

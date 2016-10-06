@@ -21,7 +21,6 @@ def sync_qa_sample(biotrack_item):
 	item_code = biotrack_item.get("parentid")
 
 	sample_id = biotrack_item.get("inventoryid")
-	quantity = biotrack_item.get("quantity")
 	lab_license = biotrack_item.get("lab_license")
 	result = biotrack_item.get("result")
 
@@ -33,10 +32,13 @@ def sync_qa_sample(biotrack_item):
 		return False
 
 	item = frappe.get_doc("Item", item_code)
+	item.sample_id = sample_id
+
 	if item.test_result:
 		return False
 
-	doc = make_sample(item, {"sample_id": sample_id, "quantity": quantity})
+	item.save()
+	doc = make_sample(item, biotrack_item.get("quantity"))
 
 	result_map = {-1: "Failed", 0: "Pending", 1: "Passed", 2: "Rejected"}
 	doc.update({
@@ -45,7 +47,7 @@ def sync_qa_sample(biotrack_item):
 		"qa_lab": supplier_name,
 	})
 
-	doc.submit()
+	doc.save()
 
 	# Update item
 	frappe.db.set_value("Item", item_code, "test_result", doc.test_result)
@@ -54,9 +56,7 @@ def sync_qa_sample(biotrack_item):
 	return True
 
 
-def make_sample(item, inventory):
-	barcode = inventory.get("sample_id")
-	quantity = flt(inventory.get("quantity"))
+def make_sample(item, sample_size):
 
 	if frappe.db.exists("Quality Inspection", {"item_code": item.item_code}):
 		doc = frappe.get_doc("Quality Inspection", {"item_code": item.item_code})
@@ -67,9 +67,9 @@ def make_sample(item, inventory):
 		"item_code": item.item_code,
 		"item_name": item.item_name,
 		"inspection_type": _("In Process"),
-		"sample_size": quantity,
+		"sample_size": flt(sample_size),
 		"inspected_by": "Administrator",
-		"barcode": barcode
+		"barcode": item.sample_id
 	})
 
 	return doc

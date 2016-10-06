@@ -237,6 +237,36 @@ def item_linking_correction():
 		frappe.db.set_value("Item", item.name, "linking_data", None)
 
 
+def qa_result_population():
+	"""Call from biotrack_after_sync"""
+	for name in frappe.get_all("Item", filters={"test_result": "Passed", "inspection_required": 0}):
+		qa_result_pull(name)
+
+
+def qa_result_pull(name):
+	item = frappe.get_doc("Item", name)
+	data = biotrackthc_call("inventory_qa_check", {"sample_id": item.sample_id})
+
+	if data.get("result") != 1:
+		result_map = {-1: "Failed", 0: "Pending", 1: "Passed", 2: "Rejected"}
+		frappe.db.set_value("Item", name, "test_result", result_map[data.get("result")])
+		return False # Failed
+
+	for d in data.get("test") or []:
+		for key, val in d.items():
+			if key == 'type':
+				continue
+
+			item.get("quality_parameters").append(frappe.get_doc({
+				"doctype": "Item Quality Inspection Parameter",
+				"parentfield": 'quality_parameters',
+				"specification": key,
+				"value": val
+			}))
+
+	item.inspection_required = 1
+	item.save()
+
 def delete_item(name):
 	"""Permanently Item and related Stock entries"""
 	item = frappe.get_doc("Item", name)

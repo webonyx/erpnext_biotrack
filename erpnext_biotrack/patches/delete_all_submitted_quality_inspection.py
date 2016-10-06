@@ -16,8 +16,10 @@ def execute():
 			doc.cancel()
 
 		doc.delete()
-
 		frappe.db.commit()
 
+
+	frappe.db.sql("UPDATE tabItem SET test_result = NULL")
+	frappe.db.commit()
 
 	frappe.flags.in_patch = False
