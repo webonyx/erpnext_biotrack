@@ -289,8 +289,8 @@ def item_test_result_lookup(name):
 		for parameter in item.get("quality_parameters") or []:
 			data[parameter.specification] = parameter.value
 
-		if data["Total"] or None:
-			data["potency"] = data["Total"]
+		if data.get("Total") or None:
+			data["potency"] = data.get("Total")
 
 		return data
 
