@@ -8,9 +8,10 @@ frappe.form.link_formatters['Item'] = function (value, doc) {
         text = erpnext_item_link_formatter(value, doc);
     }
 
-    if (doc.test_result) {
+    if (doc && doc.test_result) {
         text += ' - ' + doc.test_result
     }
+
     return text;
 };
 
