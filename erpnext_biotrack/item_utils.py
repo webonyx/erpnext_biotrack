@@ -267,6 +267,14 @@ def qa_result_pull(name):
 
 	item.inspection_required = 1
 	item.save()
+
+	# Submit Quality Inspection
+	for qa in frappe.get_all("Quality Inspection", {"barcode": item.sample_id}):
+		doc = frappe.get_doc("Quality Inspection", qa)
+		if doc.docstatus == 0:
+			doc.get_item_specification_details()
+			doc.submit()
+
 	frappe.db.commit()
 
 
