@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import json
 import frappe
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
+from erpnext.stock.get_item_details import get_item_details as base_get_item_details
 from frappe.utils.data import flt
 
 from .biotrackthc import call as biotrackthc_call
@@ -267,6 +268,39 @@ def qa_result_pull(name):
 	item.inspection_required = 1
 	item.save()
 	frappe.db.commit()
+
+
+def item_test_result_lookup(name):
+	item = frappe.get_doc("Item", name)
+
+	if not item.parent_item or item.test_result:
+		data = {
+			"test_result": item.test_result
+		}
+
+		for parameter in item.get("quality_parameters") or []:
+			data[parameter.specification] = parameter.value
+
+		if data["Total"] or None:
+			data["potency"] = data["Total"]
+
+		return data
+
+	if item.parent_item:
+		return item_test_result_lookup({"name": item.parent_item})
+
+
+@frappe.whitelist()
+def get_item_details(args):
+	base_details = base_get_item_details(args)
+
+	# includes test result
+	if base_details.get("doctype") == "Quotation" :
+		base_details.update(item_test_result_lookup({
+			"item_code": base_details.item_code
+		}))
+
+	return base_details
 
 
 def delete_item(name):

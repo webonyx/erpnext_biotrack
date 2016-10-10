@@ -60,6 +60,10 @@ fixtures = [
 				"Quality Inspection-barcode",
 				"Quality Inspection-qa_lab",
 				"Quality Inspection-test_result",
+
+				"Quotation Item-test_result",
+				"Quotation Item-potency",
+				"Quotation Item-thca",
 			)]
 		]
 	},
@@ -99,6 +103,7 @@ doctype_js = {
 	"Production Order": "custom_scripts/production_order.js",
 	"Purchase Invoice": "custom_scripts/purchase_invoice.js",
 	"Purchase Order": "custom_scripts/purchase_order.js",
+	"Quotation": "custom_scripts/quotation.js",
 }
 
 # List custom scripts
@@ -197,6 +202,6 @@ scheduler_events = {
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "erpnext_biotrack.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.stock.get_item_details.get_item_details": "erpnext_biotrack.item_utils.get_item_details"
+}

@@ -1,11 +1,17 @@
 var erpnext_item_link_formatter = frappe.form.link_formatters['Item'];
 
 frappe.form.link_formatters['Item'] = function (value, doc) {
+    var text;
     if (!value || value.length == 16) {
-        return doc && doc.item_name ? doc.item_name : value;
+        text = doc && doc.item_name ? doc.item_name : value;
+    } else {
+        text = erpnext_item_link_formatter(value, doc);
     }
 
-    return erpnext_item_link_formatter(value, doc);
+    if (doc.test_result) {
+        text += ' - ' + doc.test_result
+    }
+    return text;
 };
 
 $(document).on("autocompletesearch", '[data-fieldname="item_code"]', function (event, ui) {
