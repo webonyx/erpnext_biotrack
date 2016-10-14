@@ -54,6 +54,10 @@ fixtures = [
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
 
+				"Stock Entry-conversation",
+				"Stock Entry-conversation_type",
+				"Stock Entry-lot_type",
+
 				# Supplier
 				"Supplier-license_no",
 

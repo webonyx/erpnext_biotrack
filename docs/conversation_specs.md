@@ -1,10 +1,10 @@
 Lot Products
 -------------
 
-| Source Type            | Target Type
-| :--------------------- | :------------------|
-| Flower                 | Flower Lot
-| Other Material         | Other Material Lot
+| Source Type            | Target Type | Allow Mixing Strain |
+| :--------------------- | :------------------| -------------:|
+| Flower                 | Flower Lot         | No  |
+| Other Material         | Other Material Lot | Yes |
 
 
 
@@ -46,6 +46,7 @@ Intermediate Products
  <tr>
   <td>Marijuana Mix</td>
  </tr>
+ </table>
  
  
  End Products
@@ -61,28 +62,28 @@ Intermediate Products
   <td>
   	Hydrocarbon Wax <br>
   	Food Grade Solvent Extract <br>
-  	CO2 Hash Oil (*)
+  	CO2 Hash Oil (1)
   </td>
   <td>Capsule</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Liquid Marijuana Infused Edible</td>
   <td>Yes</td>
  </tr>
  <tr>
- <td>(*)</td>
+ <td>(1)</td>
   <td>Marijuana Extract for Inhalation</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Marijuana Infused Topicals</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*) + Flower Lot</td>
+  <td>(1) + Flower Lot</td>
   <td>Marijuana Mix Infused</td>
   <td>Yes</td>
  </tr>
@@ -92,22 +93,22 @@ Intermediate Products
   <td>No</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Solid Marijuana Infused Edible</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Suppository</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Tincture</td>
   <td>Yes</td>
  </tr>
  <tr>
-  <td>(*)</td>
+  <td>(1)</td>
   <td>Transdermal Patch</td>
   <td>Yes</td>
  </tr>
@@ -116,3 +117,4 @@ Intermediate Products
   <td>Usable Marijuana</td>
   <td>Yes</td>
  </tr>
+</table>
