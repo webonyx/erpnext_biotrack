@@ -29,11 +29,11 @@ $.extend(frappe.listview_settings['Item'], {
         DocListView.listview.stats.push("test_result");
         DocListView.listview.stats.push("item_group");
 
-        DocListView.page.add_action_item(__("New Lot"), function () {
+        DocListView.page.add_action_item(__("Create Lot"), function () {
             var doc = frappe.model.get_new_doc("Stock Entry");
             doc.purpose = "Material Issue";
-            doc.conversation = 1;
-            doc.conversation_type = 'New Lot';
+            doc.convert = 1;
+            doc.convert_type = 'New Lot';
             doc.posting_date = frappe.datetime.get_today();
             doc.posting_time = frappe.datetime.now_time();
             frappe.set_route("Form", "Stock Entry", doc.name);

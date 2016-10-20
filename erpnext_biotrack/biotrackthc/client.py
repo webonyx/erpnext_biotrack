@@ -117,6 +117,10 @@ def post(action, data):
     return client.post(action, data)
 
 
+def create_lot(data):
+    return post("inventory_create_lot", data)
+
+
 def print_log(data, description=None):
     if (frappe.conf.get("logging") or 0) > 0:
         frappe.log("<<<< BioTrackTHC{description}".format(description=description))

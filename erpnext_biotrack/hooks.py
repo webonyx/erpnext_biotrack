@@ -19,6 +19,7 @@ fixtures = [
 				"Item-strain",
 				"Item-actual_qty",
 				"Item-sub_lot_sec",
+				"Item-is_lot_item",
 				"Item-parent_item",
 				"Item-plant",
 				"Item-sub_items",
@@ -54,9 +55,12 @@ fixtures = [
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
 
-				"Stock Entry-conversation",
-				"Stock Entry-conversation_type",
-				"Stock Entry-lot_type",
+				"Stock Entry-convert",
+				"Stock Entry-convert_type",
+				"Stock Entry-lot_group",
+				"Stock Entry-lot_id",
+
+				"Stock Entry Detail-strain",
 
 				# Supplier
 				"Supplier-license_no",
@@ -108,6 +112,7 @@ doctype_js = {
 	"Purchase Invoice": "custom_scripts/purchase_invoice.js",
 	"Purchase Order": "custom_scripts/purchase_order.js",
 	"Quotation": "custom_scripts/quotation.js",
+	"Stock Entry": "custom_scripts/stock_entry.js",
 }
 
 # List custom scripts
@@ -170,6 +175,10 @@ doc_events = {
 	"Item": {
 		"validate": "erpnext_biotrack.item_utils.on_validate",
 		"after_insert": "erpnext_biotrack.item_utils.after_insert",
+	},
+	"Stock Entry": {
+		"on_submit": "erpnext_biotrack.stock_entry.on_submit",
+		"get_item_details": "erpnext_biotrack.stock_entry.get_item_details",
 	},
 	"File": {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",

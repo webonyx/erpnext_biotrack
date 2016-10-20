@@ -2,6 +2,11 @@ var erpnext_item_link_formatter = frappe.form.link_formatters['Item'];
 
 frappe.form.link_formatters['Item'] = function (value, doc) {
     var text;
+
+    if (doc && doc.item_code !== value) {
+        doc = null
+    }
+
     if (!value || value.length == 16) {
         text = doc && doc.item_name ? doc.item_name : value;
     } else {

@@ -109,7 +109,7 @@ def sync_item(biotrack_inventory):
 	# Post task will do on biotrack_after_sync hook
 	parent_ids = biotrack_inventory.get("parentid")
 	plant_ids = biotrack_inventory.get("plantid")
-	if parent_ids or plant_ids:
+	if not item.is_lot_item and (parent_ids or plant_ids):
 		item.set("linking_data", json.dumps({"parent_ids": parent_ids, "plant_ids": plant_ids}))
 
 	item.update({

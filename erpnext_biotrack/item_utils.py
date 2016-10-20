@@ -60,11 +60,17 @@ def make_item(**args):
 
 	item = frappe.new_doc("Item")
 	properties = frappe._dict(args.properties) or frappe._dict()
-	properties['item_name'] = properties.item_name or " ".join(filter(None, [properties.strain, properties.item_group]))
+
+	properties.item_name = properties.item_name or " ".join(filter(None, [properties.strain, properties.item_group]))
+	properties.is_stock_item = properties.is_stock_item or 1
 
 	if args.barcode:
-		properties['item_code'] = args.barcode
-		properties['barcode'] = args.barcode
+		properties.item_code = args.barcode
+		properties.barcode = args.barcode
+
+	# todo consider to remove actual_qty
+	if args.qty:
+		properties.actual_qty = args.qty
 
 	item.update(properties)
 	item.insert()
@@ -75,6 +81,12 @@ def make_item(**args):
 	frappe.flags.in_import = False
 
 	return item
+
+
+def make_lot_item(properties, qty):
+	properties["is_lot_item"] = 1
+
+	return make_item(properties=properties, qty=qty)
 
 
 @frappe.whitelist()
