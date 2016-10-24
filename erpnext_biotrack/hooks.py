@@ -55,10 +55,18 @@ fixtures = [
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
 
-				"Stock Entry-convert",
-				"Stock Entry-convert_type",
+				"Stock Entry-conversion",
+				"Stock Entry-conversion_sec",
+				"Stock Entry-product_group",
+				"Stock Entry-product_name",
+				"Stock Entry-product_item",
+				"Stock Entry-waste_item",
 				"Stock Entry-lot_group",
-				"Stock Entry-lot_id",
+				"Stock Entry-lot_item",
+				"Stock Entry-conversion_cb",
+				"Stock Entry-product_qty",
+				"Stock Entry-product_waste",
+				"Stock Entry-product_usable",
 
 				"Stock Entry Detail-strain",
 

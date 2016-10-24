@@ -4,7 +4,7 @@ Lot Products
 | Source Type            | Target Type | Allow Mixing Strain |
 | :--------------------- | :------------------| -------------:|
 | Flower                 | Flower Lot         | No  |
-| Other Material         | Other Material Lot | Yes |
+| Other Plant Material   | Other Plant Material Lot | Yes |
 
 
 

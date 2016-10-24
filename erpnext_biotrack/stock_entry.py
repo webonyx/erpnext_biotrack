@@ -5,42 +5,15 @@
 from __future__ import unicode_literals
 import frappe
 
-from .item_utils import make_lot_item
-from .biotrackthc.client import create_lot
-from frappe import _
-
-
 def on_submit(doc, method):
-	if not doc.convert:
-		return doc
-
 	if frappe.flags.in_import or frappe.flags.in_test:
 		return
 
-	qty = 0
-	if doc.convert_type == _("New Lot"):
-		data = []
-		for entry in doc.get("items"):
-			data.append({
-				"barcodeid": entry.item_code,
-				"remove_quantity": entry.qty,
-			})
-			qty += entry.qty
-
-		res = create_lot({"data": data})
-
-		# new lot item
-		strain = frappe.get_value("Item", doc.get("items")[0].item_code, "strain")
-		item = make_lot_item({
-			"item_code": res.get("barcode_id"),
-			"barcode": res.get("barcode_id"),
-			"item_group": doc.lot_group,
-			"default_warehouse": doc.from_warehouse,
-			"strain": strain,
-		}, qty)
-
-		doc.lot_id = item.item_code
-		doc.save()
+	from .biotrackthc.client import create_lot, create_product
+	if doc.conversion == 'Create Lot':
+		create_lot(doc)
+	elif doc.conversion == 'Create Product':
+		create_product(doc)
 
 
 def get_item_details(doc, method, args=None, for_update=False):

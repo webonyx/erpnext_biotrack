@@ -32,20 +32,20 @@ $.extend(frappe.listview_settings['Item'], {
         DocListView.page.add_action_item(__("Create Lot"), function () {
             var doc = frappe.model.get_new_doc("Stock Entry");
             doc.purpose = "Material Issue";
-            doc.convert = 1;
-            doc.convert_type = 'New Lot';
+            doc.conversion = 'Create Lot';
             doc.posting_date = frappe.datetime.get_today();
             doc.posting_time = frappe.datetime.now_time();
             frappe.set_route("Form", "Stock Entry", doc.name);
         });
 
-        DocListView.page.add_action_item(__("New Marijuana Item"), function () {
-            var doc = frappe.model.get_new_doc(doctype, null, null, true);
-            doc.is_marijuana_item = true;
-
-            // Use full page form instead
-            frappe.set_route("Form", "Item", doc.name);
-        }, "octicon octicon-sync");
+        DocListView.page.add_action_item(__("Create Product"), function () {
+            var doc = frappe.model.get_new_doc("Stock Entry");
+            doc.purpose = "Material Issue";
+            doc.conversion = 'Create Product';
+            doc.posting_date = frappe.datetime.get_today();
+            doc.posting_time = frappe.datetime.now_time();
+            frappe.set_route("Form", "Stock Entry", doc.name);
+        });
 
         DocListView.page.add_action_item(__("Synchronization"), function () {
             frappe.call({
