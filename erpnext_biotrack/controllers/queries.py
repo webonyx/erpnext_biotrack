@@ -18,8 +18,14 @@ def available_products():
 	available_groups = []
 
 	def get_item_count(filters):
-		filters.update({"is_stock_item": 1, "disabled": 0, "end_of_life": [">=", today()]})
-		return frappe.db.count("Item", filters)
+		filters.update({"is_stock_item": 1, "disabled": 0})
+		conditions, values = frappe.db.build_conditions(filters)
+
+		end_of_life = """(tabItem.end_of_life > %(today)s or ifnull(tabItem.end_of_life, '0000-00-00')='0000-00-00')""" % {"today": today()}
+		return frappe.db.sql("""select count(*)
+						from `tabItem`
+						where %s and %s"""
+							 % (end_of_life, conditions), values)[0][0]
 
 	if get_item_count({"item_group": ["in", inter_product_sources]}):
 		available_groups += inter_products
