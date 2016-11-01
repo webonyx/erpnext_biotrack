@@ -224,5 +224,6 @@ scheduler_events = {
 # ------------------------------
 #
 override_whitelisted_methods = {
-	"erpnext.stock.get_item_details.get_item_details": "erpnext_biotrack.item_utils.get_item_details"
+	"erpnext.stock.get_item_details.get_item_details": "erpnext_biotrack.item_utils.get_item_details",
+	"frappe.desk.reportview.get_stats": "erpnext_biotrack.whitelist_methods.get_stats"
 }
