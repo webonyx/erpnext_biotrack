@@ -1,11 +1,8 @@
 var available_products;
-var ccscript = $.extend({}, cur_frm.cscript);
+var ccscript = $.extend({}, {}, cur_frm.cscript);
 
 var ste_listeners = {
     refresh: function (frm) {
-        // set doc.company and hide
-        erpnext.hide_company();
-
         // ste.toggle_related_fields(frm);
         ste.set_warehouse_query(frm);
         ste.set_items_query(frm);

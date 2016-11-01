@@ -1,19 +1,17 @@
-$.extend(frappe.listview_settings['Item'], {
-    add_fields: ["item_name", "stock_uom", "item_group", "image", "variant_of",
-		"has_variants", "end_of_life", "disabled", "total_projected_qty", "test_result"],
-	filters: [["disabled", "=", "0"]],
+var settings = $.extend({}, {}, frappe.listview_settings['Item']);
+if (settings.add_fields.indexOf('test_result') === -1) {
+    settings.add_fields.push('test_result');
+}
 
+frappe.listview_settings['Item'] = $.extend({}, settings, {
 	get_indicator: function(doc) {
-		if(doc.total_projected_qty < 0) {
-			return [__("Shortage"), "red", "total_projected_qty,<,0"];
-		} else if (doc.disabled) {
-			return [__("Disabled"), "grey", "disabled,=,Yes"];
-		} else if (doc.end_of_life && doc.end_of_life < frappe.datetime.get_today()) {
-			return [__("Expired"), "grey", "end_of_life,<,Today"];
-		} else if (doc.has_variants) {
-			return [__("Template"), "blue", "has_variants,=,Yes"];
-		} else if (doc.variant_of) {
-			return [__("Variant"), "green", "variant_of,=," + doc.variant_of];
+        var indicator;
+        if (settings.get_indicator) {
+            indicator = settings.get_indicator(doc);
+        }
+
+		if(indicator) {
+			return indicator;
 		} else if (doc.test_result){
             var indicators = {
                 'Failed': 'red',
@@ -25,29 +23,37 @@ $.extend(frappe.listview_settings['Item'], {
         }
 	},
 
-    onload: function (DocListView) {
-        DocListView.listview.stats.push("test_result");
-        DocListView.listview.stats.push("item_group");
+    onload: function (list) {
+        if (settings.onload) {
+            settings.onload(list);
+        }
 
-        DocListView.page.add_action_item(__("Create Lot"), function () {
+        list.listview.stats.push("test_result");
+        list.listview.stats.push("item_group");
+
+        list.page.add_action_item(__("Create Lot"), function () {
             var doc = frappe.model.get_new_doc("Stock Entry");
             doc.purpose = "Material Issue";
             doc.conversion = 'Create Lot';
             doc.posting_date = frappe.datetime.get_today();
             doc.posting_time = frappe.datetime.now_time();
+            doc.company = frappe.defaults.get_user_default('company');
+
             frappe.set_route("Form", "Stock Entry", doc.name);
         });
 
-        DocListView.page.add_action_item(__("Create Product"), function () {
+        list.page.add_action_item(__("Create Product"), function () {
             var doc = frappe.model.get_new_doc("Stock Entry");
             doc.purpose = "Material Issue";
             doc.conversion = 'Create Product';
             doc.posting_date = frappe.datetime.get_today();
             doc.posting_time = frappe.datetime.now_time();
+            doc.company = frappe.defaults.get_user_default('company');
+
             frappe.set_route("Form", "Stock Entry", doc.name);
         });
 
-        DocListView.page.add_action_item(__("Synchronization"), function () {
+        list.page.add_action_item(__("Synchronization"), function () {
             frappe.call({
                 method: "erpnext_biotrack.tasks.client_sync",
                 args: {"doctype": "Item"}
