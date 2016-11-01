@@ -1,7 +1,11 @@
-var available_products;
+var available_products = [];
 var ccscript = $.extend({}, {}, cur_frm.cscript);
 
 var ste_listeners = {
+    onload: function (frm) {
+        // readonly for product_group: do not show Create New or Advance Search
+        frm.set_df_property("product_group", "only_select", true);
+    },
     refresh: function (frm) {
         // ste.toggle_related_fields(frm);
         ste.set_warehouse_query(frm);
@@ -14,12 +18,23 @@ var ste_listeners = {
         ste.toggle_related_fields(frm);
 
         if (frm.doc.conversion === 'Create Product') {
-            if (!available_products) {
+            if (!available_products.length) {
                 frappe.call({
                     method: 'erpnext_biotrack.controllers.queries.available_products',
                     callback: function (r) {
-                        available_products = r.message;
+                        available_products = r.message || [];
                         ste.set_product_query(frm);
+
+                        if (!available_products.length) {
+                            frappe.msgprint({
+                                    title: __('No Product Available'),
+                                    message: __('There is not products can be made from your current inventory'),
+                                    indicator: 'red'
+                                }
+                            );
+
+                            frm.set_value('conversion', '')
+                        }
                     }
                 });
             }
@@ -31,7 +46,7 @@ var ste_listeners = {
             args: {product: frm.doc.product_group},
             callback: function (r) {
                 ste.reset_items(frm);
-                ste.item_filters.item_group = ['item_group', 'in', r.message];
+                ste.item_filters.item_group = ['item_group', 'in', r.message || []];
                 ste.set_items_query(frm);
             }
         });
@@ -83,7 +98,12 @@ var ste = {
         item_group: null
     },
     toggle_related_fields: function (frm) {
-        frm.toggle_reqd('from_warehouse', frm.doc.conversion);
+        frm.toggle_display("lot_group", frm.doc.conversion == 'Create Lot');
+        frm.toggle_display(
+            ["product_group", "product_name", "product_qty", "product_usable", "product_waste"],
+            frm.doc.conversion == 'Create Product'
+        );
+
         frm.toggle_reqd('product_group', frm.doc.conversion === 'Create Product');
         frm.toggle_reqd('product_qty', frm.doc.conversion === 'Create Product');
         frm.toggle_reqd('lot_group', frm.doc.conversion === 'Create Lot');
@@ -91,8 +111,9 @@ var ste = {
     reset_items: function (frm) {
         if (frm.is_new()) {
             frm.doc['items'] = [];
-            refresh_field("items");
         }
+
+        refresh_field("items");
     },
     set_warehouse_query: function (frm) {
         var filters = frm.fields_dict.from_warehouse.get_query().filters, i, is_filtered = false;
@@ -143,19 +164,35 @@ var ste = {
 
     set_items_query: function (frm) {
         var filters = [{is_stock_item: 1}];
+        var conditions = {
+            conversion: {
+                'Create Lot': {
+                    'Flower Lot': {
+                        item_group: 'Flower'
+                    },
+                    'Other Plant Material Lot': {
+                        item_group: 'Other Plant Material'
+                    }
+                },
+            }
+        };
 
-        if (ste.item_filters.strain) {
+        if (ste.item_filters.strain && Object.keys(ste.item_filters.strain).length > 0) {
             filters.push(ste.item_filters.strain);
         }
 
-        if (frm.doc.conversion === 'Create Lot') {
-            if (frm.doc.lot_group === 'Flower Lot') {
-                filters.push({item_group: 'Flower'})
-            } else if (frm.doc.lot_group === 'Other Plant Material Lot') {
-                filters.push({item_group: 'Other Plant Material'});
+        if (frm.doc.conversion) {
+            var cond = conditions.conversion[frm.doc.conversion];
+            if (cond) {
+                cond = cond[frm.doc.lot_group];
+                if (cond) {
+                    filters.push(cond)
+                }
             }
-        } else if (frm.doc.conversion === 'Create Product' && ste.item_filters.item_group) {
-            filters.push(ste.item_filters.item_group);
+
+            if (frm.doc.conversion === 'Create Product' && ste.item_filters.item_group) {
+                filters.push(ste.item_filters.item_group);
+            }
         }
 
         if (frm.doc.from_warehouse) {
