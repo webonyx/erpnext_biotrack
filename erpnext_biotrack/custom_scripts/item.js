@@ -1,18 +1,10 @@
 frappe.ui.form.on("Item", {
     onload: function (frm) {
-
-        frm.fields_dict['default_warehouse'].get_query = function (doc, cdt, cdn) {
-            return {
-                filters: {"is_group": 0, "warehouse_type": 'Inventory Room'}
-            }
-        };
-
         frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
             return {
                 filters: {'parent_item_group': 'WA State Classifications'}
             }
         };
-
     },
 
     refresh: function (frm) {

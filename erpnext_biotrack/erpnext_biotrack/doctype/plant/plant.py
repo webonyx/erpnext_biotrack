@@ -85,10 +85,10 @@ class Plant(Document):
             frappe.db.set_value("Plant", self.name, "last_sync", now(), update_modified=False)
             return
 
-        warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("room"), "warehouse_type": 'Plant Room'})
+        plant_room = frappe.get_doc("Plant Room", {"external_id": data.get("room")})
         properties = {
             "strain": find_strain(data.get("strain")),
-            "warehouse": warehouse.name,
+            "warehouse": plant_room.get("name") if plant_room else "",
             "is_mother_plant": cint(data.get("mother")),
             "remove_scheduled": cint(data.get("removescheduled")),
             "transaction_id": cint(data.get("transactionid")),

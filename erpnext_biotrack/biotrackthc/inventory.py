@@ -206,8 +206,8 @@ def find_warehouse(data):
 	if not data.get("currentroom"):
 		warehouse = get_default_stock_warehouse()
 	else:
-		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("currentroom"),
-												 "warehouse_type": 'Inventory Room'})
+		warehouse = frappe.get_doc("Warehouse", {"external_id": data.get("currentroom")})
+
 	return warehouse
 
 

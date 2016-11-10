@@ -8,8 +8,7 @@ from .client import get_data
 
 def sync():
 	biotrack_employee_list = []
-	biotrack_settings = frappe.get_doc("BioTrack Settings")
-	company = biotrack_settings.custom_company or get_defaults().get("company")
+	company = get_defaults().get("company")
 
 	for biotrack_employee in get_biotrack_employees():
 		sync_employee(biotrack_employee, company, biotrack_employee_list)

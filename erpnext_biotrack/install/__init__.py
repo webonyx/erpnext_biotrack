@@ -50,21 +50,8 @@ def install_fixtures():
     frappe.db.commit()
 
     company = get_default_company()
-    if not frappe.db.exists("Account", {"account_name": "Plant Room Assets", "company": company}):
-        parent_account = frappe.get_value("Account", {"company": company, "account_name": "Current Assets"})
-        doc = frappe.get_doc({
-            "doctype": "Account",
-            "account_name": "Plant Room Assets",
-            "company": company,
-            "is_group": 1,
-            "root_type": "Asset",
-            "parent_account": parent_account,
-        })
-        doc.insert(ignore_permissions=True)
 
     bio_settings = frappe.get_doc("BioTrack Settings")
-    bio_settings.plant_room_parent_account = frappe.get_value("Account",
-                                                              {"company": company, "account_name": "Plant Room Assets"})
     bio_settings.inventory_room_parent_account = frappe.get_value("Account",
                                                                   {"company": company, "account_name": "Stock Assets"})
 

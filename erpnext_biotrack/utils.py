@@ -78,10 +78,6 @@ def make_log(title=None, status="Queued", method="sync", message=None, exception
         frappe.db.commit()
 
 
-def get_default_company():
-    return frappe.get_value("BioTrack Settings", None, 'custom_company') or get_defaults().get("company")
-
-
 def add_tag(doctype, name, tag):
     DocTags(doctype).add(name, tag)
 

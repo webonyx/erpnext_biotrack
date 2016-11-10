@@ -20,8 +20,9 @@ BioTrack connector for ERPNext
 | Item Group | Inventory Type | |
 | Strain | Strain | Yes |
 | Plant | Plant | Yes |
+| Plant Room | Plant Room | Yes |
 | Customer | Vendor | |
-| Warehouse | Room | |
+| Warehouse | Inventory Room | |
 | Delivery Note | Manifest | |
 
 

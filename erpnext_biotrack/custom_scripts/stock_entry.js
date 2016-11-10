@@ -8,7 +8,6 @@ var ste_listeners = {
     },
     refresh: function (frm) {
         // ste.toggle_related_fields(frm);
-        ste.set_warehouse_query(frm);
         ste.set_items_query(frm);
 
         ste_listeners.conversion(frm);
@@ -114,45 +113,6 @@ var ste = {
         }
 
         refresh_field("items");
-    },
-    set_warehouse_query: function (frm) {
-        var filters = frm.fields_dict.from_warehouse.get_query().filters, i, is_filtered = false;
-        for (i = 0; i < filters.length; i++) {
-            is_filtered = is_filtered || (filters[i][1] == "warehouse_type");
-        }
-
-        if (!is_filtered) {
-            filters.push([
-                "Warehouse",
-                "warehouse_type",
-                "=",
-                "Inventory Room"
-            ]);
-
-            frm.fields_dict.from_warehouse.get_query = function () {
-                return {
-                    filters: filters
-                }
-            };
-
-            frm.fields_dict.to_warehouse.get_query = function () {
-                return {
-                    filters: filters
-                }
-            };
-
-            frm.fields_dict.items.grid.get_field('s_warehouse').get_query = function () {
-                return {
-                    filters: filters
-                }
-            };
-
-            frm.fields_dict.items.grid.get_field('f_warehouse').get_query = function () {
-                return {
-                    filters: filters
-                }
-            }
-        }
     },
     set_product_query: function (frm) {
         frm.fields_dict.product_group.get_query = function () {

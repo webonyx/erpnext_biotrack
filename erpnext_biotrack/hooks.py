@@ -43,7 +43,6 @@ fixtures = [
 				"Warehouse-external_id",
 				"Warehouse-external_transaction_id",
 				"Warehouse-quarentine",
-				"Warehouse-warehouse_type",
 
 				# Customer
 				"Customer-external_transaction_id",

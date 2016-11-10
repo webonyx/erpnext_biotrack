@@ -9,7 +9,7 @@ from .client import get_data
 def sync():
     synced_list = []
     for biotrack_room in get_biotrack_inventory_rooms():
-        if sync_warehouse(biotrack_room, warehouse_type='Inventory Room'):
+        if sync_warehouse(biotrack_room):
             synced_list.append(biotrack_room)
 
     # Bulk Inventory room
@@ -19,8 +19,7 @@ def sync():
             'doctype': 'Warehouse',
             'company': get_default_company(),
             'warehouse_name': default_stock_warehouse_name,
-            'create_account_under': under_account,
-            'warehouse_type': 'Inventory Room'
+            'create_account_under': under_account
         })
 
         warehouse.insert(ignore_permissions=True)
@@ -29,11 +28,10 @@ def sync():
     return len(synced_list)
 
 
-def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
+def sync_warehouse(biotrack_data):
     name = frappe.get_value(
         'Warehouse', {
-            'external_id': biotrack_data.get('roomid'),
-            'warehouse_type': warehouse_type
+            'external_id': biotrack_data.get('roomid')
         }
     )
 
@@ -45,13 +43,9 @@ def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
 
     else:
         warehouse = frappe.new_doc('Warehouse')
-        account = frappe.get_value("BioTrack Settings", None,
-                                   'plant_room_parent_account' if warehouse_type == 'Plant Room' else 'inventory_room_parent_account')
-        warehouse_name = de_duplicate(biotrack_data.get("name"))
+        account = frappe.get_value("BioTrack Settings", None, "inventory_room_parent_account")
         warehouse.update({
-            "warehouse_name": warehouse_name,
             'company': get_default_company(),
-            'warehouse_type': warehouse_type,
             "create_account_under": account,
             'external_id': biotrack_data.get('roomid'),
         })
@@ -66,22 +60,6 @@ def sync_warehouse(biotrack_data, warehouse_type='Plant Room'):
     warehouse.save(ignore_permissions=True)
     frappe.db.commit()
     return True
-
-
-def de_duplicate(warehouse_name):
-    suffix = " - " + frappe.db.get_value("Company", get_default_company(), "abbr")
-    name = warehouse_name + suffix
-    original_name = name
-
-    count = 0
-    while True:
-        if frappe.db.exists("Warehouse", name):
-            count += 1
-            name = "{0}-{1}".format(original_name, count) + suffix
-        else:
-            break
-
-    return warehouse_name if count == 0 else "{0}-{1}".format(warehouse_name, count)
 
 
 def get_default_warehouse():

@@ -71,12 +71,6 @@ frappe.ui.form.on('Plant', {
                 }
             }
         };
-
-        frm.fields_dict['warehouse'].get_query = function (doc, cdt, cdn) {
-            return {
-                filters: {"warehouse_type": 'Plant Room'}
-            }
-        };
     },
     bulk_add: function (frm) {
         frm.toggle_display("qty", frm.doc.bulk_add);

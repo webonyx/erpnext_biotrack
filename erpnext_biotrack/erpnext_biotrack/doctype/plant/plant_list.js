@@ -13,7 +13,7 @@ frappe.listview_settings['Plant'] = {
 
     onload: function (DocListView) {
         DocListView.listview.stats.push("state");
-        DocListView.listview.stats.push("warehouse");
+        DocListView.listview.stats.push("plant_room");
 
         DocListView.page.add_action_item(__("Synchronization"), function () {
             frappe.call({
