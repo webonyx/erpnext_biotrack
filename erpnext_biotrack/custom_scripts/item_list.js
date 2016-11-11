@@ -32,25 +32,11 @@ frappe.listview_settings['Item'] = $.extend({}, settings, {
         list.listview.stats.push("item_group");
 
         list.page.add_action_item(__("Create Lot"), function () {
-            var doc = frappe.model.get_new_doc("Stock Entry");
-            doc.purpose = "Material Issue";
-            doc.conversion = 'Create Lot';
-            doc.posting_date = frappe.datetime.get_today();
-            doc.posting_time = frappe.datetime.now_time();
-            doc.company = frappe.defaults.get_user_default('company');
-
-            frappe.set_route("Form", "Stock Entry", doc.name);
+            new_stock_entry('Create Lot');
         });
 
         list.page.add_action_item(__("Create Product"), function () {
-            var doc = frappe.model.get_new_doc("Stock Entry");
-            doc.purpose = "Material Issue";
-            doc.conversion = 'Create Product';
-            doc.posting_date = frappe.datetime.get_today();
-            doc.posting_time = frappe.datetime.now_time();
-            doc.company = frappe.defaults.get_user_default('company');
-
-            frappe.set_route("Form", "Stock Entry", doc.name);
+            new_stock_entry('Create Product');
         });
 
         list.page.add_action_item(__("Synchronization"), function () {
@@ -62,3 +48,11 @@ frappe.listview_settings['Item'] = $.extend({}, settings, {
     }
 });
 
+function new_stock_entry(conversion) {
+    frappe.model.with_doctype('Stock Entry', function () {
+        var doc = frappe.model.get_new_doc('Stock Entry');
+        doc.purpose = "Material Issue";
+        doc.conversion = conversion;
+        frappe.set_route('Form', doc.doctype, doc.name);
+    })
+}

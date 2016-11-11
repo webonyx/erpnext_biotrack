@@ -9,6 +9,10 @@ def get_data():
             "items": [
                 {
                     "type": "doctype",
+                    "name": "Item",
+                },
+				{
+                    "type": "doctype",
                     "name": "Plant",
                 },
                 {
