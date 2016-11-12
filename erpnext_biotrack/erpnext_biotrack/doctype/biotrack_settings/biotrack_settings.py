@@ -28,5 +28,10 @@ class BioTrackSettings(Document):
 		except AttributeError:
 			return self.get(fieldname)
 
+
+	def is_enabled(self):
+		return cint(self.enable_biotrack)
+
+
 	def is_sync_enabled(self):
 		return cint(self.enable_biotrack) and cint(self.sync_enabled)

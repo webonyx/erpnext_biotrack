@@ -17,6 +17,26 @@ def on_submit(doc, method):
 	elif doc.conversion == 'Create Product':
 		create_product(doc)
 
+def on_validate(doc, method):
+	if frappe.flags.in_import or frappe.flags.in_test:
+		return
+
+	if not doc.conversion:
+		return
+
+	missing = []
+	if not doc.lot_group:
+		missing.append("lot_group")
+
+	if not missing:
+		return
+
+	raise frappe.MandatoryError('[{doctype}, {name}]: {fields}'.format(
+		fields=", ".join((each for each in missing)),
+		doctype=doc.doctype,
+		name=doc.name))
+
+
 
 def get_item_details(doc, method, args=None, for_update=False):
 	""" Modify original method data to attach qty and strain """

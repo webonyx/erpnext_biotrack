@@ -16,3 +16,4 @@ execute:frappe.delete_doc_if_exists("Custom Field", "Item-item_parent")
 execute:frappe.delete_doc_if_exists("Custom Field", "Quality Inspection-sample_code")
 execute:frappe.db.sql("""UPDATE tabItem set test_result = NULL""")
 erpnext_biotrack.patches.migrate_plant_room
+erpnext_biotrack.patches.v0_2.mirror_plant_to_traceability_system

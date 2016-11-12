@@ -9,10 +9,8 @@ frappe.ui.form.on('Plant', {
         frm.toggle_display("remove_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);
-        frm.toggle_display("barcode", !is_new);
-        frm.toggle_reqd("barcode", !is_new);
         frm.toggle_reqd("item_group", is_new);
-        frm.toggle_reqd("source", is_new);
+        frm.toggle_reqd("item_code", is_new);
 
         erpnext_biotrack.plant.setup_actions(frm);
 
@@ -60,7 +58,7 @@ frappe.ui.form.on('Plant', {
 
         }
 
-        frm.fields_dict['source'].get_query = function (doc, cdt, cdn) {
+        frm.fields_dict['item_code'].get_query = function (doc, cdt, cdn) {
             if (frm.doc.item_group) {
                 return {
                     filters: {'item_group': frm.doc.item_group}
@@ -81,74 +79,81 @@ frappe.ui.form.on('Plant', {
 $.extend(erpnext_biotrack.plant, {
     setup_actions: function (frm) {
         frm.page.clear_actions_menu();
-        frm.page.clear_secondary_action();
-        frm.page.btn_secondary
-            .removeClass('btn-primary')
-            .addClass('btn-default');
+        // frm.page.btn_secondary
+        //     .removeClass('btn-primary')
+        //     .addClass('btn-default');
 
         if (!frm.is_new()) {
             frm.add_custom_button('Related Items', function () {
                 frappe.set_route("List", "Item", {plant: frm.doc.name});
-            })
+            });
         }
 
-        if (frm.doc.disabled) {
+        if (frm.is_new() || frm.doc.disabled || frm.doc.docstatus != 1) {
             return;
         }
 
-        if (!frm.is_new()) {
-            if (!frm.doc.remove_scheduled) {
-                frm.page.set_secondary_action('Harvest/Cure', function () {
-                    erpnext_biotrack.plant.harvest(frm);
-                });
-
-                if (frm.doc.state == 'Growing') {
-                    frm.page.add_action_item(__('Move To Inventory'), function () {
-                        erpnext_biotrack.plant.move_to_inventory(frm);
-                    })
-                }
-
-                if (frm.doc.harvest_scheduled) {
-                    if (frm.doc.state == 'Growing') {
-                        frm.page.add_action_item(__("Undo Scheduled Harvest"), function () {
-                            erpnext_biotrack.plant.harvest_schedule_undo(frm);
-                        })
+        if (frm.doc.state == "Drying") {
+            var $btn = frm.add_custom_button('Undo Harvest', function () {
+                $btn.prop('disabled', true);
+                frappe.call({
+                    doc: frm.doc,
+                    method: 'harvest_undo',
+                    callback: function (data) {
+                        cur_frm.reload_doc();
                     }
-                } else {
+                });
+            })
+        }
 
-                    frm.page.add_action_item(__("Destroy Schedule"), function () {
-                        erpnext_biotrack.plant.destroy_schedule(frm);
-                    });
-
-                    frm.page.add_action_item(__("Permanently Delete"), function () {
-                        frappe.confirm(
-                            "System will permanently remove this plant and restore it's source balance to inventory.",
-                            function () {
-                                frm.validate_form_action("Delete");
-                                erpnext_biotrack.plant.plant_new_undo(frm.doc);
-                            },
-                            function () {
-                            }
-                        )
-                    });
-                }
-
-
-            } else {
-                frm.page.add_action_item(__("Undo Scheduled Destruction"), function () {
-                    erpnext_biotrack.plant.destroy_schedule_undo(frm);
+        if (!frm.doc.remove_scheduled) {
+            if (frm.doc.state == 'Growing') {
+                frm.page.add_action_item(__('Harvest'), function () {
+                    erpnext_biotrack.plant.harvest_cure(frm);
                 });
 
-                frm.page.add_action_item(__("Re-Schedule Destruction"), function () {
-                    erpnext_biotrack.plant.destroy_schedule(frm);
+                frm.page.add_action_item(__('Move To Inventory'), function () {
+                    erpnext_biotrack.plant.move_to_inventory(frm);
+                })
+            } else if (frm.doc.state == 'Drying') {
+                frm.page.add_action_item(__('Cure'), function () {
+                    erpnext_biotrack.plant.harvest_cure(frm);
                 });
             }
 
             if (frm.doc.harvest_scheduled) {
-                frm.page.btn_secondary
-                    .removeClass('btn-default')
-                    .addClass('btn-primary');
+                if (frm.doc.state == 'Growing') {
+                    frm.page.add_action_item(__("Undo Scheduled Harvest"), function () {
+                        erpnext_biotrack.plant.harvest_schedule_undo(frm);
+                    })
+                }
+            } else {
+
+                frm.page.add_action_item(__("Destroy Schedule"), function () {
+                    erpnext_biotrack.plant.destroy_schedule(frm);
+                });
+
+                // frm.page.add_action_item(__("Permanently Delete"), function () {
+                //     frappe.confirm(
+                //         "System will permanently remove this plant and restore it's source balance to inventory.",
+                //         function () {
+                //             frm.validate_form_action("Delete");
+                //             erpnext_biotrack.plant.plant_new_undo(frm.doc);
+                //         },
+                //         function () {
+                //         }
+                //     )
+                // });
             }
+
+        } else {
+            frm.page.add_action_item(__("Undo Scheduled Destruction"), function () {
+                erpnext_biotrack.plant.destroy_schedule_undo(frm);
+            });
+
+            frm.page.add_action_item(__("Re-Schedule Destruction"), function () {
+                erpnext_biotrack.plant.destroy_schedule(frm);
+            });
         }
     },
     plant_new_undo: function (doc) {
@@ -160,7 +165,7 @@ $.extend(erpnext_biotrack.plant, {
             }
         });
     },
-    harvest: function (frm) {
+    harvest_cure: function (frm) {
         if (!frm.doc.harvest_scheduled) {
             var cf_dialog = frappe.msgprint({
                 title: 'Harvest Schedule',
@@ -176,7 +181,6 @@ $.extend(erpnext_biotrack.plant, {
                     callback: function (data) {
                         cur_frm.reload_doc();
                         cf_dialog.hide();
-                        msg_dialog = null;
                     }
                 });
             });
@@ -187,25 +191,25 @@ $.extend(erpnext_biotrack.plant, {
         var doc = frm.doc,
             fields = [
                 {
-                    fieldname: 'name', label: 'Barcode', fieldtype: 'Data', read_only: 1, default: doc.name
+                    fieldname: 'name', label: 'Plant', fieldtype: 'Data', read_only: 1, 'default': doc.name
                 },
                 {
-                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, default: doc.strain
+                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
                 },
                 {
-                    fieldname: 'uom', label: 'Unit of Measure', fieldtype: 'Select', options: ['Gram'], default: 'Gram'
+                    fieldname: 'uom', label: 'UOM', fieldtype: 'Select', read_only: 1, options: ['Gram'], 'default': 'Gram'
                 },
                 {
-                    fieldname: 'flower_amount',
+                    fieldname: 'flower',
                     label: __('Flower {0} Weight', [doc.state == 'Growing' ? 'Wet' : 'Dry']),
                     fieldtype: 'Float',
                     reqd: 1
                 },
                 {
-                    fieldname: 'other_material_amount', label: 'Other Plant Material', fieldtype: 'Float'
+                    fieldname: 'other_material', label: 'Other Plant Material Weight', fieldtype: 'Float', 'default': 0.00
                 },
                 {
-                    fieldname: 'waste_amount', label: 'Waste', fieldtype: 'Float'
+                    fieldname: 'waste', label: 'Waste Weight', fieldtype: 'Float', 'default': 0.00
                 }
             ],
             dialog;
@@ -219,7 +223,7 @@ $.extend(erpnext_biotrack.plant, {
         }
 
         dialog = new frappe.ui.Dialog({
-            title: 'Plant ' + (doc.state == 'Growing' ? 'Harvest' : 'Cure'),
+            title: (doc.state == 'Growing' ? 'Harvest' : 'Cure'),
             fields: fields,
             onhide: function () {
                 cur_frm.reload_doc();
@@ -238,38 +242,10 @@ $.extend(erpnext_biotrack.plant, {
 
             frappe.call({
                 doc: doc,
-                method: 'harvest_cure',
+                method: (doc.state == 'Growing' ? 'harvest' : 'cure'),
                 args: values,
                 callback: function (data) {
-                    if (data.message && data.message.transaction_id) {
-                        var confirm_dialog = frappe.msgprint({
-                            title: 'Success',
-                            message: __(
-                                'Plant {0} successfully. If you think this was an accidentally action, click <strong>Undo</strong>',
-                                [(doc.state == 'Growing' ? 'harvested' : 'cured')]
-                            )
-                        });
-
-                        confirm_dialog.set_primary_action(__('Undo'), function () {
-                            frappe.call({
-                                // doc: frm.doc,
-                                // method: 'harvest_cure_undo',
-                                // args: data.message,
-                                method: 'erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.harvest_cure_undo',
-                                args: $.extend({name: doc.name}, data.message),
-                                callback: function (data) {
-                                    confirm_dialog.hide();
-                                    msg_dialog = null
-                                }
-                            });
-                        });
-
-                        confirm_dialog.custom_onhide = function () {
-                            dialog.hide();
-                        };
-                    } else {
-                        dialog.hide();
-                    }
+                    dialog.hide();
                 }
             });
         });
@@ -293,10 +269,10 @@ $.extend(erpnext_biotrack.plant, {
             fields: fields
         });
 
-        dialog.set_primary_action(__('Submit'), function () {
+        dialog.set_primary_action(__('Move'), function () {
             frappe.call({
                 doc: doc,
-                method: 'move_to_inventory',
+                method: 'convert_to_inventory',
                 callback: function (data) {
                     dialog.hide();
                     frappe.set_route('List', 'Plant');

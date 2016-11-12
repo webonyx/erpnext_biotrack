@@ -54,6 +54,7 @@ fixtures = [
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
 
+				"Stock Entry-plant",
 				"Stock Entry-conversion",
 				"Stock Entry-conversion_sec",
 				"Stock Entry-product_group",
@@ -189,6 +190,19 @@ doc_events = {
 	},
 	"File": {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",
+	},
+	"Plant": {
+		"on_submit": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"on_cancel": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"on_trash": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_schedule_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_destroy_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_destroy_schedule_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_convert_to_inventory": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_harvest": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_cure": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 	}
 }
 

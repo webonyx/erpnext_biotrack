@@ -56,7 +56,9 @@ def make_item(**args):
 	args = frappe._dict(args)
 
 	if args.barcode:
-		frappe.flags.in_import = True  # ignore custom validate and after_insert hooks
+		# ignore custom validate and after_insert hooks
+		frappe.flags.ignore_external_sync = True
+		frappe.flags.in_import = True
 
 	item = frappe.new_doc("Item")
 	properties = frappe._dict(args.properties) or frappe._dict()
@@ -157,7 +159,7 @@ def get_item_values(barcode, fields="name"):
 
 
 def on_validate(item, method):
-	if frappe.flags.in_import or frappe.flags.in_test:
+	if frappe.flags.ignore_external_sync or frappe.flags.in_import or frappe.flags.in_test:
 		return
 
 	if not item.is_marijuana_item:
@@ -182,7 +184,7 @@ def on_validate(item, method):
 
 
 def after_insert(item, method):
-	if frappe.flags.in_import or frappe.flags.in_test:
+	if frappe.flags.ignore_external_sync or frappe.flags.in_import or frappe.flags.in_test:
 		return
 
 	if not item.is_marijuana_item:
@@ -341,6 +343,11 @@ def delete_item(name):
 		doc.delete()
 
 	item.delete()
+
+def generate_item_code(naming_series):
+	from frappe.model.naming import make_autoname
+	return make_autoname(naming_series + '.#####')
+
 
 def test_insert():
 	item = frappe.get_doc({
