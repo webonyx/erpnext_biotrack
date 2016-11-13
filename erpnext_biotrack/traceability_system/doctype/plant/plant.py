@@ -6,13 +6,11 @@ from __future__ import unicode_literals
 import frappe, datetime
 from erpnext.stock.utils import get_stock_balance
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
-from erpnext_biotrack.biotrackthc.client import BioTrackClientError
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
 from erpnext_biotrack.item_utils import get_item_values, make_item, generate_item_code
 from frappe.desk.reportview import build_match_conditions
-from frappe.utils.data import get_datetime_str, DATETIME_FORMAT, cint, now, flt, add_to_date
+from frappe.utils.data import cint, now, flt, add_to_date
 from frappe.model.document import Document
-from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from frappe.utils.background_jobs import enqueue
 
@@ -33,10 +31,16 @@ class Plant(Document):
 		if frappe.flags.in_import or frappe.flags.in_test:
 			return
 
+		if self.flags.ignore_stock_update:
+			return
+
 		self.validate_item_balance()
 		self.make_stock_entry()
 
 	def on_cancel(self):
+		if self.flags.ignore_stock_update:
+			return
+
 		self.make_stock_entry_cancel()
 
 	def on_trash(self):
@@ -44,7 +48,7 @@ class Plant(Document):
 		if self.state == "Growing" or not self.harvest_scheduled:
 			return
 
-		if not self.remove_scheduled:
+		if not self.destroy_scheduled:
 			frappe.throw("Plant can not be deleted directly. Please schedule for destruction first")
 
 		if not self.disabled:
@@ -97,57 +101,16 @@ class Plant(Document):
 				ste.delete()
 			item.delete()
 
-	def biotrack_sync_down(self, data):
-		if not (frappe.flags.force_sync or False) and self.get("transaction_id") == data.get("transactionid"):
-			frappe.db.set_value("Plant", self.name, "last_sync", now(), update_modified=False)
-			return
-
-		plant_room = frappe.get_doc("Plant Room", {"external_id": data.get("room")})
-		properties = {
-			"strain": find_strain(data.get("strain")),
-			"warehouse": plant_room.get("name") if plant_room else "",
-			"is_mother_plant": cint(data.get("mother")),
-			"remove_scheduled": cint(data.get("removescheduled")),
-			"transaction_id": cint(data.get("transactionid")),
-			"last_sync": now(),
-			"disabled": 0,
-		}
-
-		item_values = get_item_values(data.get("parentid"), ["name", "item_group"])
-		if item_values:
-			properties["source"], properties["item_group"] = item_values
-
-		if not self.get("birthdate"):
-			if isinstance(self.get("creation"), basestring):
-				properties["birthdate"] = self.get("creation")
-			else:
-				properties["birthdate"] = self.get("creation").strftime(DATETIME_FORMAT)
-
-		if properties["remove_scheduled"]:
-			remove_datetime = datetime.datetime.fromtimestamp(cint(data.get("removescheduletime")))
-			properties["remove_time"] = get_datetime_str(remove_datetime)
-
-			if data.get("removereason"):
-				properties["remove_reason"] = data.get("removereason")
-
-		state = int(data.get("state"))
-		properties["state"] = "Drying" if state == 1 else ("Cured" if state == 2 else "Growing")
-
-		self.update(properties)
-		self.flags.ignore_mandatory = True
-		self.save(ignore_permissions=True)
-
-
 	@Document.whitelist
 	def cure(self, flower, other_material=None, waste=None, additional_collection=None):
 		if self.disabled:
 			frappe.throw("Plant <strong>{}</strong> is not available for harvesting.")
 
-		if self.remove_scheduled:
+		if self.destroy_scheduled:
 			frappe.throw("Plant <strong>{}</strong> is currently scheduled for destruction and cannot be harvested.")
 
 		self.dry_weight = flt(self.dry_weight) + flt(flower)
-		if self.dry_weight > self.wet_weight:
+		if self.wet_weight and self.dry_weight > self.wet_weight:
 			frappe.throw(
 				"The provided dry weight <strong>{0}</strong> exceeds the previous wet weight <strong>{1}</strong>.".
 					format(self.dry_weight, self.wet_weight), title="Error")
@@ -172,6 +135,7 @@ class Plant(Document):
 		if not additional_collection or self.dry_weight == self.wet_weight:
 			self.disabled = 1
 
+		self.cure_collect = self.cure_collect + 1
 		self.flags.ignore_validate_update_after_submit = True
 		self.save()
 
@@ -190,15 +154,16 @@ class Plant(Document):
 		# self.delete_related_items()
 
 		self.disabled = 0
+		self.cure_collect = self.cure_collect - 1 if self.cure_collect > 0 else 0
 		self.flags.ignore_validate_update_after_submit = True
 		self.save()
 
 	@Document.whitelist
-	def harvest(self, flower, other_material=None, waste=None):
+	def harvest(self, flower, other_material=None, waste=None, additional_collection=None):
 		if self.disabled:
 			frappe.throw("Plant <strong>{}</strong> is not available for harvesting.")
 
-		if self.remove_scheduled:
+		if self.destroy_scheduled:
 			frappe.throw("Plant <strong>{}</strong> is currently scheduled for destruction and cannot be harvested.")
 
 		items = []
@@ -211,13 +176,18 @@ class Plant(Document):
 			item_group = frappe.get_doc("Item Group", {"external_id": 27})
 			items.append(self.collect_item(item_group, waste))
 
-		self.wet_weight = flower
-		self.state = "Drying"
+		self.wet_weight = flt(self.wet_weight) + flt(flower)
+		if not additional_collection:
+			self.state = "Drying"
 
+		# Reset harvest_scheduled status
+		self.harvest_scheduled = 0
+		self.harvest_schedule_time = None
+		self.harvest_collect = self.harvest_collect + 1
 		self.flags.ignore_validate_update_after_submit = True
 		self.save()
 
-		self.run_method("after_harvest", items=items, flower=flower, other_material=other_material, waste=waste)
+		self.run_method("after_harvest", items=items, flower=flower, other_material=other_material, waste=waste, additional_collection=additional_collection)
 
 		return {"items": items}
 
@@ -232,6 +202,7 @@ class Plant(Document):
 
 		self.wet_weight = 0
 		self.dry_weight = 0
+		self.harvest_collect = self.harvest_collect - 1 if self.harvest_collect > 0 else 0
 		self.state = "Growing"
 
 		self.flags.ignore_validate_update_after_submit = True
@@ -239,7 +210,7 @@ class Plant(Document):
 
 	@Document.whitelist
 	def destroy_schedule(self, reason, reason_txt=None, override=None):
-		if self.remove_scheduled and not override:
+		if self.destroy_scheduled and not override:
 			frappe.throw(
 				"Plant <strong>{}</strong> has already been scheduled for destruction. Check <strong>`Reset Scheduled time`</strong> to reschedule.".format(
 					self.name))
@@ -247,7 +218,7 @@ class Plant(Document):
 		reason_key = removal_reasons.keys()[removal_reasons.values().index(reason)]
 		self.run_method("before_destroy_schedule", reason_key=reason_key, reason=reason_txt, override=override)
 
-		self.remove_scheduled = 1
+		self.destroy_scheduled = 1
 		self.remove_reason = reason_txt or reason
 		self.remove_time = now()
 		self.flags.ignore_validate_update_after_submit = True
@@ -255,12 +226,12 @@ class Plant(Document):
 
 	@Document.whitelist
 	def destroy_schedule_undo(self):
-		if not self.remove_scheduled:
+		if not self.destroy_scheduled:
 			return
 
 		self.run_method("before_destroy_schedule_undo")
 		self.flags.ignore_validate_update_after_submit = True
-		self.remove_scheduled = 0
+		self.destroy_scheduled = 0
 		self.remove_reason = None
 		self.remove_time = None
 		self.save()
@@ -295,50 +266,19 @@ class Plant(Document):
 
 	@Document.whitelist
 	def convert_to_inventory(self):
-		# items = [self.name]
-		# res = biotrackthc_call("plant_convert_to_inventory", {'barcodeid': [self.name]})
-		# defaukt_warehouse = get_default_warehouse()
-		# item_group = frappe.get_doc("Item Group", {"external_id": 12})  # Mature Plant
-		# qty = 1
-		#
-		# for barcode in items:
-		# 	make_item(barcode=barcode, properties={
-		# 		"item_group": item_group.name,
-		# 		"default_warehouse": defaukt_warehouse.name,
-		# 		"strain": self.strain,
-		# 		"is_stock_item": 1,
-		# 		"actual_qty": qty,
-		# 		"plant": self.name,
-		# 		"parent_item": self.item_code,
-		# 	}, qty=qty)
-		# self.transaction_id = res.get("transactionid")
+		item_group = frappe.get_doc("Item Group", {"external_id": 12})  # Mature Plant
+		qty = 1
+		item = self.collect_item(item_group, qty)
 
 		# destroy plant as well
-		self.run_method('before_convert_to_inventory')
-		self.remove_scheduled = 1
+		self.destroy_scheduled = 1
+		self.remove_time = now()
 		self.disabled = 1
+
+		self.flags.ignore_validate_update_after_submit = True
 		self.save()
 
-		self.run_method('after_convert_to_inventory')
-
-	@Document.whitelist
-	def destroy(self):
-		biotrackthc_call("plant_destroy", {'barcodeid': [self.name]})
-		self.delete()
-
-
-@frappe.whitelist()
-def harvest_cure_undo(name, items, action, transaction_id):
-	"""Alias to harvest_cure_undo method to avoid check_if_latest exception"""
-	plant = frappe.get_doc("Plant", name)
-
-	import json
-	try:
-		items = json.loads(items)
-	except ValueError:
-		items = []
-
-	return plant.harvest_cure_undo(items, action, transaction_id)
+		self.run_method('after_convert_to_inventory', item=item)
 
 
 def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
@@ -397,7 +337,8 @@ def destroy_scheduled_plants():
 	"""Destroy expired Plants"""
 	date = add_to_date(now(), days=-3)
 	for name in frappe.get_list("Plant",
-								[["disabled", "=", 0], ["remove_scheduled", "=", 1], ["remove_time", "<", date]]):
+								[["disabled", "=", 0], ["destroy_scheduled", "=", 1], ["remove_time", "<", date]]):
 		plant = frappe.get_doc("Plant", name)
 		plant.disabled = 1
+		plant.remove_time = now()
 		plant.save()

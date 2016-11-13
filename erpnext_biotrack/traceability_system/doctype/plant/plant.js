@@ -93,7 +93,7 @@ $.extend(erpnext_biotrack.plant, {
             return;
         }
 
-        if (frm.doc.state == "Drying") {
+        if (frm.doc.wet_weight && !frm.doc.dry_weight) {
             var $btn = frm.add_custom_button('Undo Harvest', function () {
                 $btn.prop('disabled', true);
                 frappe.call({
@@ -106,11 +106,18 @@ $.extend(erpnext_biotrack.plant, {
             })
         }
 
-        if (!frm.doc.remove_scheduled) {
+        if (!frm.doc.destroy_scheduled) {
             if (frm.doc.state == 'Growing') {
-                frm.page.add_action_item(__('Harvest'), function () {
-                    erpnext_biotrack.plant.harvest_cure(frm);
-                });
+                if (!frm.doc.harvest_scheduled) {
+                    frm.page.add_action_item(__('Schedule for Harvesting'), function () {
+                        erpnext_biotrack.plant.harvest_schedule(frm);
+                    });
+                } else {
+                    frm.page.add_action_item(__('Harvest'), function () {
+                        erpnext_biotrack.plant.harvest_cure(frm);
+                    });
+                }
+
 
                 frm.page.add_action_item(__('Move To Inventory'), function () {
                     erpnext_biotrack.plant.move_to_inventory(frm);
@@ -129,7 +136,7 @@ $.extend(erpnext_biotrack.plant, {
                 }
             } else {
 
-                frm.page.add_action_item(__("Destroy Schedule"), function () {
+                frm.page.add_action_item(__("Schedule for Destruction"), function () {
                     erpnext_biotrack.plant.destroy_schedule(frm);
                 });
 
@@ -147,11 +154,11 @@ $.extend(erpnext_biotrack.plant, {
             }
 
         } else {
-            frm.page.add_action_item(__("Undo Scheduled Destruction"), function () {
+            frm.add_custom_button('Undo Scheduled Destruction', function () {
                 erpnext_biotrack.plant.destroy_schedule_undo(frm);
             });
 
-            frm.page.add_action_item(__("Re-Schedule Destruction"), function () {
+            frm.add_custom_button('Override Scheduled Destruction', function () {
                 erpnext_biotrack.plant.destroy_schedule(frm);
             });
         }
@@ -165,29 +172,16 @@ $.extend(erpnext_biotrack.plant, {
             }
         });
     },
+    harvest_schedule: function (frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: 'harvest_schedule',
+            callback: function (data) {
+                cur_frm.reload_doc();
+            }
+        });
+    },
     harvest_cure: function (frm) {
-        if (!frm.doc.harvest_scheduled) {
-            var cf_dialog = frappe.msgprint({
-                title: 'Harvest Schedule',
-                message: 'You will need to initiate harvest notification before beginning the harvest process. Would you like to' +
-                ' do so now?'
-            });
-
-            cf_dialog.set_primary_action(__('Yes'), function () {
-                cf_dialog.show_loading();
-                frappe.call({
-                    doc: frm.doc,
-                    method: 'harvest_schedule',
-                    callback: function (data) {
-                        cur_frm.reload_doc();
-                        cf_dialog.hide();
-                    }
-                });
-            });
-
-            return;
-        }
-
         var doc = frm.doc,
             fields = [
                 {
@@ -214,13 +208,11 @@ $.extend(erpnext_biotrack.plant, {
             ],
             dialog;
 
-        if (doc.state == "Drying") {
-            fields.push(
-                {
-                    fieldname: 'additional_collection', label: 'Additional Collections', fieldtype: 'Check'
-                }
-            )
-        }
+        fields.push(
+            {
+                fieldname: 'additional_collection', label: 'Additional Collections', fieldtype: 'Check'
+            }
+        );
 
         dialog = new frappe.ui.Dialog({
             title: (doc.state == 'Growing' ? 'Harvest' : 'Cure'),
@@ -305,7 +297,7 @@ $.extend(erpnext_biotrack.plant, {
             ],
             dialog;
 
-        if (doc.remove_scheduled) {
+        if (doc.destroy_scheduled) {
             fields.push({
                 fieldname: 'override', label: __('Reset Scheduled time'),
                 fieldtype: 'Check'
@@ -317,7 +309,7 @@ $.extend(erpnext_biotrack.plant, {
             fields: fields
         });
 
-        if (doc.remove_scheduled) {
+        if (doc.destroy_scheduled) {
             dialog.get_field('override').set_input(1);
         }
 

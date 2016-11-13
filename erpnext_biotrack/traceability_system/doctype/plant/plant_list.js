@@ -1,13 +1,13 @@
 frappe.listview_settings['Plant'] = {
-    add_fields: ['disabled', 'birthdate', 'remove_scheduled'],
+    add_fields: ['disabled', 'posting_date', 'destroy_scheduled'],
     filters: [["disabled", "=", "No"]],
     get_indicator: function (doc) {
         if (doc.disabled) {
             return [__("Destroyed"), "grey", "disabled,=,Yes"];
-        } else if(doc.remove_scheduled){
+        } else if(doc.destroy_scheduled){
             return [__("Destroy Scheduled"), "orange", "remove_scheduled,=,Yes"];
         } else {
-            return [this.calculate_time_in_room(doc.birthdate), "green", "disabled,=,No"];
+            return [this.calculate_time_in_room(doc.posting_date), "green", "disabled,=,No"];
         }
     },
 
@@ -22,10 +22,10 @@ frappe.listview_settings['Plant'] = {
             })
         })
     },
-    calculate_time_in_room: function (birthdate) {
-        var diff = frappe.datetime.get_diff(frappe.datetime.get_today(), birthdate.split(' ')[0]);
+    calculate_time_in_room: function (posting_date) {
+        var diff = frappe.datetime.get_diff(frappe.datetime.get_today(), posting_date);
         if (diff == 0) {
-            return comment_when(birthdate);
+            return comment_when(posting_date);
         }
 
         if (diff == 1) {

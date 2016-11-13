@@ -39,12 +39,21 @@ def on_cancel(plant, method):
 	if not is_bio_plant(plant):
 		return
 
+	# Barcode 9160883599199700 is no longer in a state where it can be un-done.
 	call("plant_new_undo", {
 		"barcodeid": [plant.bio_barcode],
 	})
 
 def on_trash(plant, method):
-	pass
+	if not is_bio_plant(plant):
+		return
+
+	try:
+		call("plant_destroy", {
+			"barcodeid": [plant.bio_barcode],
+		})
+	except Exception as e:
+		frappe.local.message_log.pop()
 
 def before_harvest_schedule(plant, method):
 	if not is_bio_plant(plant):
@@ -64,6 +73,7 @@ def before_harvest_schedule_undo(plant, method):
 			"barcodeid": [plant.bio_barcode],
 		})
 	except Exception as e:
+		frappe.local.message_log.pop()
 		# ignore error
 		pass
 
@@ -85,19 +95,24 @@ def before_destroy_schedule_undo(plant, method):
 	if not is_bio_plant(plant):
 		return
 
-	call("plant_destroy_schedule_undo", {
-		"barcodeid": [plant.bio_barcode],
-	})
+	try:
+		call("plant_destroy_schedule_undo", {
+			"barcodeid": [plant.bio_barcode],
+		})
+	except Exception as e:
+		frappe.local.message_log.pop()
+		# ignore error
+		pass
 
-
-def after_harvest(plant, method, items, flower, other_material=None, waste=None):
+def after_harvest(plant, method, items, flower, other_material=None, waste=None, additional_collection=None):
 	if not is_bio_plant(plant):
 		return
 
 	res = call("plant_harvest", {
 		"barcodeid": plant.bio_barcode,
 		"location": get_location(),
-		"weights": make_weights_data(flower, other_material, waste)
+		"weights": make_weights_data(flower, other_material, waste),
+		"collectadditional": cint(additional_collection),
 	})
 
 	map_item_derivatives(items, res.get("derivatives", []))
@@ -118,6 +133,7 @@ def before_harvest_undo(plant, method):
 			"transactionid": plant.get("bio_transaction_id"),
 		})
 	except Exception as e:
+		frappe.local.message_log.pop()
 		# ignore error
 		pass
 
@@ -142,6 +158,17 @@ def after_cure(plant, method, items, flower, other_material=None, waste=None, ad
 	plant.flags.ignore_validate_update_after_submit = True
 	plant.save()
 
+def after_convert_to_inventory(plant, method, item):
+	if not is_bio_plant(plant):
+		return
+
+	res = call("plant_convert_to_inventory", {
+		"barcodeid": plant.bio_barcode
+	})
+
+	plant.set("bio_transaction_id", res.get("transactionid"))
+	plant.flags.ignore_validate_update_after_submit = True
+	plant.save()
 
 def make_weights_data(flower, other_material=None, waste=None):
 	amount_map = {
