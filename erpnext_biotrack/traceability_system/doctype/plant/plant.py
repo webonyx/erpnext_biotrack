@@ -78,11 +78,9 @@ class Plant(Document):
 
 	def collect_item(self, item_group, qty):
 		default_warehouse = get_default_warehouse()
-		naming_series = frappe.get_meta("Item").get_options("naming_series") or "ITEM-"
-
 		return make_item(properties={
 			"item_name": item_group.item_group_name,
-			"item_code": generate_item_code(naming_series),
+			"item_code": generate_item_code(),
 			"item_group": item_group.name,
 			"default_warehouse": default_warehouse.name,
 			"strain": self.get("strain"),

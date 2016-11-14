@@ -79,22 +79,13 @@ frappe.ui.form.on('Plant', {
 $.extend(erpnext_biotrack.plant, {
     setup_actions: function (frm) {
         frm.page.clear_actions_menu();
-        // frm.page.btn_secondary
-        //     .removeClass('btn-primary')
-        //     .addClass('btn-default');
-
-        if (!frm.is_new()) {
-            frm.add_custom_button('Related Items', function () {
-                frappe.set_route("List", "Item", {plant: frm.doc.name});
-            });
-        }
 
         if (frm.is_new() || frm.doc.disabled || frm.doc.docstatus != 1) {
             return;
         }
 
         if (frm.doc.wet_weight && !frm.doc.dry_weight) {
-            var $btn = frm.add_custom_button('Undo Harvest', function () {
+            var $btn = frm.add_custom_button(__('Undo Harvest'), function () {
                 $btn.prop('disabled', true);
                 frappe.call({
                     doc: frm.doc,
@@ -139,18 +130,6 @@ $.extend(erpnext_biotrack.plant, {
                 frm.page.add_action_item(__("Schedule for Destruction"), function () {
                     erpnext_biotrack.plant.destroy_schedule(frm);
                 });
-
-                // frm.page.add_action_item(__("Permanently Delete"), function () {
-                //     frappe.confirm(
-                //         "System will permanently remove this plant and restore it's source balance to inventory.",
-                //         function () {
-                //             frm.validate_form_action("Delete");
-                //             erpnext_biotrack.plant.plant_new_undo(frm.doc);
-                //         },
-                //         function () {
-                //         }
-                //     )
-                // });
             }
 
         } else {

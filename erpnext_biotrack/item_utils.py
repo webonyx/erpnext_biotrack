@@ -54,21 +54,23 @@ def new_item(item_name, item_group, strain, actual_qty, default_warehouse, plant
 
 def make_item(**args):
 	args = frappe._dict(args)
+	item = frappe.new_doc("Item")
+	properties = frappe._dict(args.properties) or frappe._dict()
 
 	if args.barcode:
 		# ignore custom validate and after_insert hooks
 		frappe.flags.ignore_external_sync = True
 		frappe.flags.in_import = True
 
-	item = frappe.new_doc("Item")
-	properties = frappe._dict(args.properties) or frappe._dict()
+		properties.item_code = args.barcode
+		properties.barcode = args.barcode
+
+
+	if not properties.item_code:
+		properties.item_code = generate_item_code()
 
 	properties.item_name = properties.item_name or " ".join(filter(None, [properties.strain, properties.item_group]))
 	properties.is_stock_item = properties.is_stock_item or 1
-
-	if args.barcode:
-		properties.item_code = args.barcode
-		properties.barcode = args.barcode
 
 	# todo consider to remove actual_qty
 	if args.qty:
@@ -344,7 +346,10 @@ def delete_item(name):
 
 	item.delete()
 
-def generate_item_code(naming_series):
+def generate_item_code(naming_series = None):
+	if not naming_series:
+		naming_series = frappe.get_meta("Item").get_options("naming_series") or "ITEM-"
+
 	from frappe.model.naming import make_autoname
 	return make_autoname(naming_series + '.#####')
 

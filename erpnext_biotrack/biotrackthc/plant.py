@@ -19,7 +19,7 @@ def sync():
 	for biotrack_plant in biotrack_plants:
 		sync_plant(biotrack_plant)
 
-	# disable_deleted_plants(sync_time)
+	disable_deleted_plants(sync_time)
 	frappe.flags.in_import = False
 
 	return len(biotrack_plants)
