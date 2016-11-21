@@ -6,9 +6,10 @@ frappe.ui.form.on('Plant', {
     refresh: function (frm) {
         var is_new = frm.is_new();
         frm.toggle_display("qty", !is_new);
-        frm.toggle_display("remove_scheduled", !is_new);
+        frm.toggle_display("destroy_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);
+        frm.toggle_display("disabled", !is_new);
         frm.toggle_reqd("item_group", is_new);
         frm.toggle_reqd("item_code", is_new);
 
@@ -110,7 +111,7 @@ $.extend(erpnext_biotrack.plant, {
                 }
 
 
-                frm.page.add_action_item(__('Move To Inventory'), function () {
+                frm.page.add_action_item(__('Convert to Mature Plant'), function () {
                     erpnext_biotrack.plant.move_to_inventory(frm);
                 })
             } else if (frm.doc.state == 'Drying') {
@@ -133,11 +134,11 @@ $.extend(erpnext_biotrack.plant, {
             }
 
         } else {
-            frm.add_custom_button('Undo Scheduled Destruction', function () {
+            frm.add_custom_button('Undo Destruction Notification', function () {
                 erpnext_biotrack.plant.destroy_schedule_undo(frm);
             });
 
-            frm.add_custom_button('Override Scheduled Destruction', function () {
+            frm.add_custom_button('Override Destruction Notification', function () {
                 erpnext_biotrack.plant.destroy_schedule(frm);
             });
         }
@@ -164,7 +165,7 @@ $.extend(erpnext_biotrack.plant, {
         var doc = frm.doc,
             fields = [
                 {
-                    fieldname: 'name', label: 'Plant', fieldtype: 'Data', read_only: 1, 'default': doc.name
+                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, 'default': doc.name
                 },
                 {
                     fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
@@ -194,7 +195,7 @@ $.extend(erpnext_biotrack.plant, {
         );
 
         dialog = new frappe.ui.Dialog({
-            title: (doc.state == 'Growing' ? 'Harvest' : 'Cure'),
+            title: __((doc.state == 'Growing' ? 'Harvest' : 'Cure') + ' Plant'),
             fields: fields,
             onhide: function () {
                 cur_frm.reload_doc();
@@ -227,7 +228,7 @@ $.extend(erpnext_biotrack.plant, {
         var doc = frm.doc,
             fields = [
                 {
-                    fieldname: 'name', label: 'Plant', fieldtype: 'Data', read_only: 1, default: doc.name
+                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, default: doc.name
                 },
                 {
                     fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, default: doc.strain
@@ -236,7 +237,7 @@ $.extend(erpnext_biotrack.plant, {
             dialog;
 
         dialog = new frappe.ui.Dialog({
-            title: __('Move to Inventory'),
+            title: __('Convert to Mature Plant'),
             fields: fields
         });
 
@@ -284,7 +285,7 @@ $.extend(erpnext_biotrack.plant, {
         }
 
         dialog = new frappe.ui.Dialog({
-            title: __('Destruction Schedule'),
+            title: __('Destruction Notification'),
             fields: fields
         });
 
@@ -337,7 +338,7 @@ $.extend(erpnext_biotrack.plant, {
 
     destroy_schedule_undo: function (frm) {
         frappe.confirm(
-            'Please confirm this action',
+            'You are going to cancel destruction notification?',
             function () {
                 frappe.call({
                     doc: frm.doc,

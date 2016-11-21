@@ -6,11 +6,10 @@ from __future__ import unicode_literals
 import frappe
 from erpnext_biotrack.biotrackthc.client import get_client, BioTrackClientError
 from frappe.model.document import Document
-from frappe.utils.data import cint
 
 class BioTrackSettings(Document):
 	def validate(self):
-		if self.enable_biotrack == 1:
+		if self.enabled:
 			self.validate_access()
 
 	def validate_access(self):
@@ -21,17 +20,12 @@ class BioTrackSettings(Document):
 			frappe.local.message_log = []
 			frappe.msgprint(ex.message, indicator='red', title='Access Error')
 
-	def get_password(self, fieldname='password', raise_exception=True):
-		""" This fix because master branch is still storing raw password in database """
-		try:
-			return super(Document, self).get_password(fieldname, raise_exception)
-		except AttributeError:
-			return self.get(fieldname)
-
-
 	def is_enabled(self):
-		return cint(self.enable_biotrack)
+		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Up") else False
+
+	def is_sync_up_enabled(self):
+		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Up") else False
 
 
 	def is_sync_enabled(self):
-		return cint(self.enable_biotrack) and cint(self.sync_enabled)
+		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Down") else False

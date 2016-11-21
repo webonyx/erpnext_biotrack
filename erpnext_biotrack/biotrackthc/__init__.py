@@ -6,9 +6,12 @@ from .client import post
 import frappe
 
 
-def is_enabled():
+def sync_up_enabled():
+	if frappe.flags.in_import or frappe.flags.in_test:
+		return False
+
 	settings = frappe.get_doc("BioTrack Settings")
-	return settings.is_enabled()
+	return settings.is_sync_up_enabled()
 
 def get_location():
 	return frappe.get_value("BioTrack Settings", None, "location")

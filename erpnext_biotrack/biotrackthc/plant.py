@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 
 import frappe, datetime
-from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
+from erpnext_biotrack.traceability_system.doctype.strain import find_strain
 from erpnext_biotrack.item_utils import get_item_values
 
 from .client import get_data

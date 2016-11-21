@@ -9,7 +9,6 @@ def get_data():
             "color": "green",
             "icon": "icon-leaf",
             "type": "module",
-            "system_manager": 1,
             "hidden": 1
         },
     ]

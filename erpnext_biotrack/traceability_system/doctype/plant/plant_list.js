@@ -5,7 +5,7 @@ frappe.listview_settings['Plant'] = {
         if (doc.disabled) {
             return [__("Destroyed"), "grey", "disabled,=,Yes"];
         } else if(doc.destroy_scheduled){
-            return [__("Destroy Scheduled"), "orange", "remove_scheduled,=,Yes"];
+            return [__("Destroy Scheduled"), "orange", "destroy_scheduled,=,Yes"];
         } else {
             return [this.calculate_time_in_room(doc.posting_date), "green", "disabled,=,No"];
         }

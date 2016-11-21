@@ -24,7 +24,7 @@ def sync():
 def client_sync(doctype):
 	"Enqueue longjob for syncing biotrack."
 	settings = frappe.get_doc("BioTrack Settings")
-	if not settings.enable_biotrack:
+	if not settings.is_sync_enabled():
 		frappe.msgprint('BioTrackTHC is not enabled.', title='Error', indicator='red')
 		return
 

@@ -8,52 +8,55 @@ from erpnext.stock.doctype.stock_entry.stock_entry import get_warehouse_details
 from .item_utils import make_lot_item, make_item
 
 def on_submit(doc, method):
+	"""Item conversion such as Lot creation or Product Conversion"""
 	if frappe.flags.in_import or frappe.flags.in_test:
 		return
 
 	frappe.flags.ignore_external_sync = True
 
+	if not doc.conversion:
+		return
+
+	strain = frappe.get_value("Item", doc.get("items")[0].item_code, "strain")
 	if doc.conversion == 'Create Lot':
-		item = _create_lot(doc)
+		qty = 0
+		for entry in doc.get("items"):
+			qty += entry.qty
+
+		item = make_lot_item({
+			"item_group": doc.lot_group,
+			"strain": strain,
+			"default_warehouse": doc.from_warehouse
+		}, qty)
+
 		doc.lot_item = item.name
 
 	elif doc.conversion == 'Create Product':
 		if doc.product_waste:
-			waste = make_item(properties={
-				"item_name": "Waste",
+			item = make_item(properties={
 				"item_group": "Waste",
+				"strain": strain,
 				"default_warehouse": doc.from_warehouse,
 			}, qty=doc.product_waste)
 
-			doc.waste_item = waste.name
+			doc.waste_item = item.name
 
-		product = make_item(properties={
+		item = make_item(properties={
 			"item_name": doc.product_name or doc.product_group,
 			"item_group": doc.product_group,
+			"strain": strain,
 			"default_warehouse": doc.from_warehouse,
 		}, qty=doc.product_qty)
 
-		doc.product_item = product.name
+		doc.product_item = item.name
 
 	doc.flags.ignore_validate_update_after_submit = True
 	doc.save()
 
+	# pass the ball to external adapters such as biotrackthc
 	doc.run_method('after_conversion')
 
 	frappe.flags.ignore_external_sync = False
-
-def _create_lot(doc):
-	qty = 0
-	for entry in doc.get("items"):
-		qty += entry.qty
-
-	strain = frappe.get_value("Item", doc.get("items")[0].item_code, "strain")
-	return make_lot_item({
-		"item_group": doc.lot_group,
-		"default_warehouse": doc.from_warehouse,
-		"strain": strain,
-	}, qty)
-
 
 def on_validate(doc, method):
 	if frappe.flags.in_import or frappe.flags.in_test:

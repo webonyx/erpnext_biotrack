@@ -72,10 +72,6 @@ def make_item(**args):
 	properties.item_name = properties.item_name or " ".join(filter(None, [properties.strain, properties.item_group]))
 	properties.is_stock_item = properties.is_stock_item or 1
 
-	# todo consider to remove actual_qty
-	if args.qty:
-		properties.actual_qty = args.qty
-
 	item.update(properties)
 	item.insert()
 
@@ -95,6 +91,7 @@ def make_lot_item(properties, qty):
 
 @frappe.whitelist()
 def clone_item(item_code, qty, rate, default_warehouse):
+	# todo
 	data = biotrackthc_call("inventory_split", data={
 		"data": [
 			{
@@ -154,7 +151,7 @@ def get_item_values(barcode, fields="name"):
 		fl = ", ".join(fl)
 
 	result = frappe.db.sql(
-		"select {0} from tabItem where `name` = %(barcode)s or `barcode` =  %(barcode)s".format(fl),
+		"select {0} from tabItem where `bio_barcode` =  %(barcode)s or `name` = %(barcode)s or `barcode` = %(barcode)s".format(fl),
 		{"barcode": barcode}, as_list=True)
 
 	return result[0] if result else None
@@ -165,16 +162,13 @@ def on_validate(item, method):
 		return
 
 	if not item.is_marijuana_item:
-		return item
+		return
 
 	missing = []
 	marijuana_req_fields = ["strain", "item_group"]
 	for field in marijuana_req_fields:
 		if item.get(field) is None:
 			missing.append(field)
-
-	if flt(item.get("actual_qty")) == 0:
-		missing.append("actual_qty")
 
 	if not missing:
 		return
@@ -183,38 +177,6 @@ def on_validate(item, method):
 		fields=", ".join((each for each in missing)),
 		doctype=item.doctype,
 		name=item.name))
-
-
-def after_insert(item, method):
-	if frappe.flags.ignore_external_sync or frappe.flags.in_import or frappe.flags.in_test:
-		return
-
-	if not item.is_marijuana_item:
-		return item
-
-	item_group = frappe.get_doc("Item Group", item.item_group)
-	location = frappe.get_value("BioTrack Settings", None, "location")
-
-	call_data = {
-		"invtype": item_group.external_id,
-		"quantity": item.actual_qty,
-		"strain": item.strain,
-	}
-
-	if item.plant:
-		call_data["source_id"] = item.plant
-
-	data = biotrackthc_call("inventory_new", data={
-		"data": call_data,
-		"location": location
-	})
-
-	item.update({
-		"barcode": data['barcode_id'][0]
-	})
-
-	make_stock_entry(item_code=item.item_code, target=item.default_warehouse, qty=item.actual_qty)
-	item.save()
 
 
 def remove_certificate_on_trash_file(file, method):
@@ -353,29 +315,3 @@ def generate_item_code(naming_series = None):
 	from frappe.model.naming import make_autoname
 	return make_autoname(naming_series + '.#####')
 
-
-def test_insert():
-	item = frappe.get_doc({
-		"doctype": "Item",
-		"item_name": "_Test Item",
-		"item_code": "_Test Item",
-		"item_group": "Usable Marijuana",
-		"strain": "Pineapple",
-		"stock_uom": "Gram",
-		"actual_qty": 50,
-		"default_warehouse": "Bulk Inventory room - EV",
-		"is_marijuana_item": 1,
-	})
-
-	item.save()
-
-	# success and tear down
-	entries = frappe.get_list("Stock Entry", {"item_code": item.item_code})
-	for name in entries:
-		entry = frappe.get_doc("Stock Entry", name)
-		entry.cancel()
-		entry.delete()
-
-	item.delete()
-
-	return item.as_dict()

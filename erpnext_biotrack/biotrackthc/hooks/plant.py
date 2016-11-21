@@ -1,14 +1,11 @@
 import sys
 import frappe
-from erpnext_biotrack.biotrackthc import is_enabled, get_location, call
+from erpnext_biotrack.biotrackthc import sync_up_enabled, get_location, call
 from frappe.utils.data import cstr, cint, flt
 
 
 def call_hook(plant, method, *args, **kwargs):
-	if frappe.flags.in_import or frappe.flags.in_test:
-		return
-
-	if not is_enabled():
+	if not sync_up_enabled():
 		return
 
 	return getattr(sys.modules[__name__], method)(plant, method, *args, **kwargs)
@@ -154,9 +151,7 @@ def after_cure(plant, method, items, flower, other_material=None, waste=None, ad
 	})
 
 	map_item_derivatives(items, res.get("derivatives", []))
-	plant.set("bio_transaction_id", res.get("transactionid"))
-	plant.flags.ignore_validate_update_after_submit = True
-	plant.save()
+	frappe.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
 def after_convert_to_inventory(plant, method, item):
 	if not is_bio_plant(plant):
@@ -166,9 +161,8 @@ def after_convert_to_inventory(plant, method, item):
 		"barcodeid": plant.bio_barcode
 	})
 
-	plant.set("bio_transaction_id", res.get("transactionid"))
-	plant.flags.ignore_validate_update_after_submit = True
-	plant.save()
+	frappe.set_value("Item", item.name, "bio_barcode", plant.bio_barcode)
+	frappe.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
 def make_weights_data(flower, other_material=None, waste=None):
 	amount_map = {

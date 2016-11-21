@@ -17,16 +17,15 @@ fixtures = [
 			["name", "in", (
 				# Item
 				"Item-strain",
-				"Item-actual_qty",
-				"Item-sub_lot_sec",
 				"Item-is_lot_item",
 				"Item-parent_item",
 				"Item-plant",
-				"Item-sub_items",
 				"Item-test_result",
 				"Item-sample_id",
 				"Item-is_marijuana_item",
-				"Item-last_sync",
+				"Item-bio_last_sync",
+				"Item-bio_barcode",
+				"Item-bio_remaining_quantity",
 				"Item-transaction_id",
 				"Item-linking_data",
 				"Item-certificate",
@@ -181,12 +180,15 @@ biotrack_after_sync = [
 
 doc_events = {
 	"Item": {
-		"validate": "erpnext_biotrack.item_utils.on_validate",
-		"after_insert": "erpnext_biotrack.item_utils.after_insert",
+		"validate": "erpnext_biotrack.item_utils.on_validate"
 	},
 	"Stock Entry": {
-		"on_submit": "erpnext_biotrack.stock_entry.on_submit",
+		"on_submit": [
+			"erpnext_biotrack.stock_entry.on_submit", # for conversion handler
+			"erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook", # for new_inventory sync up
+		],
 		"get_item_details": "erpnext_biotrack.stock_entry.get_item_details",
+		"after_conversion": "erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",
 	},
 	"File": {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",

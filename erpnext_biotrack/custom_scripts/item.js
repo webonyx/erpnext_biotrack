@@ -1,12 +1,4 @@
 frappe.ui.form.on("Item", {
-    onload: function (frm) {
-        frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
-            return {
-                filters: {'parent_item_group': 'WA State Classifications'}
-            }
-        };
-    },
-
     refresh: function (frm) {
         if (!frm.is_new()) {
             // Download certificate button
@@ -51,7 +43,7 @@ frappe.ui.form.on("Item", {
 
     },
     is_marijuana_item: function (frm) {
-        erpnext.item.toggle_marijuana_attributes(frm)
+        erpnext.item.toggle_marijuana_attributes(frm);
     }
 });
 
@@ -101,10 +93,18 @@ $.extend(erpnext.item, {
 
                         },
                         {
-                            fieldname: 'qty', label: __('Quantity'), reqd: 1, fieldtype: 'Float', depends_on: 'warehouse'
+                            fieldname: 'qty',
+                            label: __('Quantity'),
+                            reqd: 1,
+                            fieldtype: 'Float',
+                            depends_on: 'warehouse'
                         },
                         {
-                            fieldname: 'rate', label: __('Valuation Rate'), fieldtype: 'Currency', reqd: 1, depends_on: 'warehouse'
+                            fieldname: 'rate',
+                            label: __('Valuation Rate'),
+                            fieldtype: 'Currency',
+                            reqd: 1,
+                            depends_on: 'warehouse'
                         }
                     ]
                 });
@@ -255,11 +255,20 @@ $.extend(erpnext.item, {
 
         frm.toggle_display("is_marijuana_item", frm.doc.__islocal);
         frm.toggle_reqd("strain", frm.doc.is_marijuana_item);
-        frm.toggle_reqd("default_warehouse", frm.doc.is_marijuana_item);
+        // frm.toggle_reqd("default_warehouse", frm.doc.is_marijuana_item);
 
-        frm.toggle_display("actual_qty", frm.doc.is_marijuana_item);
-        frm.toggle_reqd("actual_qty", frm.doc.is_marijuana_item);
-        frm.toggle_display("barcode", !frm.doc.__islocal || (frm.doc.__islocal && !frm.doc.is_marijuana_item));
-
+        if (frm.doc.is_marijuana_item || frm.doc.bio_barcode) {
+            frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
+                return {
+                    filters: [["Item Group","docstatus","!=",2], ["Item Group","parent_item_group","=","WA State Classifications"]]
+                }
+            };
+        } else {
+            frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
+                return {
+                    filters: [["Item Group","docstatus","!=",2]]
+                }
+            };
+        }
     }
 });

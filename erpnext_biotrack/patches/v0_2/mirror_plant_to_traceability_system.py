@@ -5,7 +5,7 @@ import frappe
 def execute():
 	frappe.db.sql("UPDATE tabDocType SET `module` = 'Traceability System' WHERE `name` = 'Plant'")
 	frappe.reload_doc('traceability_system', 'doctype', 'plant')
-	frappe.db.sql("UPDATE tabPlant SET `title` = `strain` WHERE title IS NULL")
+	frappe.db.sql("UPDATE tabPlant SET `title` = `strain` WHERE title = '{strain}' or title IS NULL")
 	frappe.db.sql("UPDATE tabPlant SET `naming_series` = 'PLANT-' WHERE naming_series IS NULL")
 	frappe.db.sql("UPDATE tabPlant SET `docstatus` = 1 WHERE docstatus = 0")
 	frappe.db.sql("UPDATE tabPlant SET `item_code` = `source` WHERE source IS NOT NULL")

@@ -85,7 +85,7 @@ def get_data(action, params=None, key=None):
 
 def post(action, data):
     settings = frappe.get_doc("BioTrack Settings")
-    if not settings.enable_biotrack:
+    if not settings.enabled:
         raise BioTrackClientError('BioTrackTHC integration is not enabled')
 
     client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
@@ -115,119 +115,6 @@ def post(action, data):
         return try_from_cache()
 
     return client.post(action, data)
-
-
-def create_lot(stock_entry):
-    qty = 0
-    data = []
-    for entry in stock_entry.get("items"):
-        data.append({
-            "barcodeid": entry.item_code,
-            "remove_quantity": entry.qty,
-            "remove_quantity_uom": "g",
-        })
-        qty += entry.qty
-
-    response = {}
-    try:
-        response = post("inventory_create_lot", {"data": data})
-    except BioTrackClientError as ex:
-        frappe.local.message_log.pop()
-        frappe.throw(ex.message, title="BioTrack Request Failed")
-
-    try:
-        from ..item_utils import make_lot_item
-        strain = frappe.get_value("Item", stock_entry.get("items")[0].item_code, "strain")
-        item = make_lot_item({
-            "item_code": response.get("barcode_id"),
-            "barcode": response.get("barcode_id"),
-            "item_group": stock_entry.lot_group,
-            "default_warehouse": stock_entry.from_warehouse,
-            "strain": strain,
-        }, qty)
-
-        stock_entry.lot_item = item.item_code
-        stock_entry.save()
-    except Exception:
-        post("inventory_convert_undo", {"barcodeid": [response.get("barcode_id")]})
-        raise
-
-def create_product(stock_entry):
-    conversion_type = frappe.get_value("Item Group", stock_entry.product_group, "external_id")
-
-    if not conversion_type:
-        frappe.throw("Inventory Type not found")
-
-    qty = 0
-    data = []
-    request_data = {}
-
-    for entry in stock_entry.get("items"):
-        data.append({
-            "barcodeid": entry.item_code,
-            "remove_quantity": flt(entry.qty),
-            "remove_quantity_uom": "g",
-        })
-        qty += entry.qty
-
-    request_data["data"] = data
-    request_data["derivative_type"] = cint(conversion_type)
-    request_data["derivative_quantity"] = flt(stock_entry.product_qty)
-    request_data["derivative_quantity_uom"] = "g"
-    request_data["waste"] = flt(stock_entry.product_waste)
-    request_data["waste_uom"] = "g"
-
-    product_usable = flt(stock_entry.product_usable)
-    if product_usable:
-        request_data["derivative_usable"] = product_usable
-
-    if stock_entry.product_name:
-        request_data["derivative_product"] = stock_entry.product_name
-
-    response = {}
-    try:
-        response = post("inventory_convert", request_data)
-    except BioTrackClientError as ex:
-        frappe.local.message_log.pop()
-        frappe.throw(ex.message, title="BioTrack Request Failed")
-
-    derivatives = response.get("derivatives", [])
-    try:
-        from ..item_utils import make_item
-        for derivative in derivatives:
-            item_type = derivative.get("barcode_type")
-            barcode = derivative.get("barcode_id")
-
-            # Waste
-            if item_type == 27:
-                make_item(properties={
-                    "item_name": "Waste",
-                    "item_code": barcode,
-                    "barcode": barcode,
-                    "item_group": "Waste",
-                    "default_warehouse": stock_entry.from_warehouse,
-                }, qty=stock_entry.product_waste)
-                stock_entry.waste_item = barcode
-
-            if item_type == conversion_type:
-                make_item(properties={
-                    "item_name": stock_entry.product_name or stock_entry.product_group,
-                    "item_code": barcode,
-                    "barcode": barcode,
-                    "item_group": stock_entry.product_group,
-                    "default_warehouse": stock_entry.from_warehouse,
-                }, qty=stock_entry.product_qty)
-
-                stock_entry.product_item = barcode
-
-        stock_entry.save()
-
-    except Exception:
-        barcodeid = []
-        for derivative in derivatives:
-            barcodeid.append(derivative.get("barcode_id"))
-        post("inventory_convert_undo", {"barcodeid": barcodeid})
-        raise
 
 
 def print_log(data, description=None):
