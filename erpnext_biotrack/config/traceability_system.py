@@ -5,12 +5,8 @@ from frappe import _
 def get_data():
     return [
         {
-            "label": _("Traceability System"),
+            "label": _("Cultivation"),
             "items": [
-                {
-                    "type": "doctype",
-                    "name": "Item",
-                },
 				{
                     "type": "doctype",
                     "name": "Plant",
@@ -22,6 +18,15 @@ def get_data():
                 {
                     "type": "doctype",
                     "name": "Strain",
+                }
+            ]
+        },
+		{
+            "label": _("Inventory"),
+            "items": [
+                {
+                    "type": "doctype",
+                    "name": "Item",
                 }
             ]
         },

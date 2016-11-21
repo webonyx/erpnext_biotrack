@@ -2,6 +2,14 @@
 Configuration for docs
 """
 
+source_link = "https://github.com/webonyx/erpnext_biotrack"
+docs_base_url = "https://webonyx.github.io/erpnext_biotrack"
+headline = "ERPNext Canabis"
+sub_heading = "ERPNext solution for Cannabis Industry"
+long_description = """ A very long description """
+
+docs_version = "1.x.x"
+splash_light_background = True
 
 # source_link = "https://github.com/[org_name]/erpnext_biotrack"
 # docs_base_url = "https://[org_name].github.io/erpnext_biotrack"
@@ -9,4 +17,5 @@ Configuration for docs
 # sub_heading = "Yes, you got that right the first time, everything"
 
 def get_context(context):
-    context.brand_html = "ERPNext BioTrack"
+	context.brand_html = "ERPNext Canabis"
+	context.app.splash_light_background = True
