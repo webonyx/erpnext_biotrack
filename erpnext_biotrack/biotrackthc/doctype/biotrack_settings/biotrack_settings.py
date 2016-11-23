@@ -20,12 +20,8 @@ class BioTrackSettings(Document):
 			frappe.local.message_log = []
 			frappe.msgprint(ex.message, indicator='red', title='Access Error')
 
-	def is_enabled(self):
-		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Up") else False
+	def is_sync_down_enabled(self):
+		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Down") else False
 
 	def is_sync_up_enabled(self):
 		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Up") else False
-
-
-	def is_sync_enabled(self):
-		return True if self.enabled and (self.synchronization == "All" or self.synchronization == "Down") else False

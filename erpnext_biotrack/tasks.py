@@ -11,7 +11,7 @@ from frappe.utils.background_jobs import enqueue
 def sync():
 	"Enqueue longjob for syncing biotrack."
 	settings = frappe.get_doc("BioTrack Settings")
-	if not settings.is_sync_enabled():
+	if not settings.is_sync_down_enabled():
 		frappe.msgprint('BioTrackTHC Background Syncing is not enabled.', title='Sync Error', indicator='red')
 		return
 
@@ -24,7 +24,7 @@ def sync():
 def client_sync(doctype):
 	"Enqueue longjob for syncing biotrack."
 	settings = frappe.get_doc("BioTrack Settings")
-	if not settings.is_sync_enabled():
+	if not settings.is_sync_down_enabled():
 		frappe.msgprint('BioTrackTHC is not enabled.', title='Error', indicator='red')
 		return
 
@@ -80,7 +80,7 @@ def weekly():
 
 def sync_if(frequency, default='Daily'):
 	settings = frappe.get_doc("BioTrack Settings")
-	if settings.is_sync_enabled() and (settings.schedule_in or default) == frequency:
+	if settings.is_sync_down_enabled() and (settings.schedule_in or default) == frequency:
 		sync_all()
 
 def run_hooks():

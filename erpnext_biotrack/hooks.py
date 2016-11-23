@@ -109,6 +109,9 @@ app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
 #	"Role": "home_page"
 # }
 
+extend_bootinfo = [
+	"erpnext_biotrack.biotrackthc.bootinfo.boot"
+]
 
 # Form custom scripts
 doctype_js = {
@@ -134,7 +137,7 @@ doctype_list_js = {
 }
 
 standard_queries = {
-	"Plant": "erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.get_plant_list"
+	"Plant": "erpnext_biotrack.traceability_system.doctype.plant.plant.get_plant_list"
 }
 
 # Website user home page (by function)
@@ -221,7 +224,7 @@ scheduler_events = {
 	],
 	"hourly": [
 		"erpnext_biotrack.tasks.hourly",
-		"erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.destroy_scheduled_plants",
+		"erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_scheduled_plants",
 	],
 	"weekly": [
 		"erpnext_biotrack.tasks.weekly"

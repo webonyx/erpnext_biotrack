@@ -28,17 +28,27 @@ removal_reasons = {
 
 class Plant(Document):
 	def on_submit(self):
-		if frappe.flags.in_import or frappe.flags.in_test:
-			return
-
-		if self.flags.ignore_stock_update:
+		if frappe.flags.in_import:
 			return
 
 		self.validate_item_balance()
 		self.make_stock_entry()
 
+		# bulk add
+		if self.qty > 1 and not self.flags.in_bulk:
+			self.flags.bulk_add = True
+			self.flags.bulk_plants = []
+
+			for i in xrange(self.qty - 1):
+				plant = frappe.copy_doc(self)
+				plant.qty = 1
+				plant.flags.in_bulk = True
+				plant.submit()
+				self.flags.bulk_plants.append(plant)
+
+
 	def on_cancel(self):
-		if self.flags.ignore_stock_update:
+		if self.flags.in_import:
 			return
 
 		self.make_stock_entry_cancel()
@@ -57,14 +67,14 @@ class Plant(Document):
 	def validate_item_balance(self):
 		# able to delete new Plants
 		item = frappe.get_doc("Item", self.get("item_code"))
-		qty = get_stock_balance(item.item_code, item.default_warehouse)
+		qty = get_stock_balance(item.item_code, self.get("from_warehouse"))
 		if qty < self.qty:
 			frappe.throw("The provided quantity <strong>{0}</strong> exceeds stock balance. "
 						 "Stock balance remaining <strong>{1}</strong>".format(self.qty, qty))
 
 	def make_stock_entry(self):
 		item = frappe.get_doc("Item", self.get("item_code"))
-		ste = make_stock_entry(item_code=item.name, source=item.default_warehouse, qty=1, do_not_save=True)
+		ste = make_stock_entry(item_code=item.name, source=self.get("from_warehouse"), qty=1, do_not_save=True)
 		ste.plant = self.name
 		ste.submit()
 

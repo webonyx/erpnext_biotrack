@@ -16,19 +16,31 @@ def is_bio_plant(plant):
 
 
 def on_submit(plant, method):
+	# only root plant get handled
+	if plant.flags.in_bulk:
+		return
+
+	plants = plant.flags.bulk_plants or []
+	plants.append(plant)
+
+	if len(plants) != plant.get("qty"):
+		frappe.throw("Bulk adding qty mismatch")
+
 	plant_room = frappe.get_doc("Plant Room", plant.get("plant_room"))
 	result = call("plant_new", {
 		"room": plant_room.external_id,
-		"quantity": 1,
+		"quantity": plant.get("qty"),
 		"strain": plant.get("strain"),
 		"source": plant.get("item_code"),
 		"mother": cint(plant.get("is_mother")),
 		"location": get_location()
 	})
 
-	plant.set("bio_barcode", result.get("barcode_id")[0])
-	plant.flags.ignore_validate_update_after_submit = True
-	plant.save()
+	for idx, barcode in enumerate(result.get("barcode_id")):
+		doc = plants[idx]
+		doc.set("bio_barcode", barcode)
+		doc.flags.ignore_validate_update_after_submit = True
+		doc.save()
 
 
 def on_cancel(plant, method):

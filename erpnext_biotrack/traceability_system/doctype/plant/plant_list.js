@@ -4,7 +4,7 @@ frappe.listview_settings['Plant'] = {
     get_indicator: function (doc) {
         if (doc.disabled) {
             return [__("Destroyed"), "grey", "disabled,=,Yes"];
-        } else if(doc.destroy_scheduled){
+        } else if (doc.destroy_scheduled) {
             return [__("Destroy Scheduled"), "orange", "destroy_scheduled,=,Yes"];
         } else {
             return [this.calculate_time_in_room(doc.posting_date), "green", "disabled,=,No"];
@@ -15,12 +15,14 @@ frappe.listview_settings['Plant'] = {
         DocListView.listview.stats.push("state");
         DocListView.listview.stats.push("plant_room");
 
-        DocListView.page.add_action_item(__("Synchronization"), function () {
-            frappe.call({
-                method: "erpnext_biotrack.tasks.client_sync",
-                args: {"doctype": "Plant"}
+        if (frappe.boot.biotrackthc_sync_down) {
+            DocListView.page.add_action_item(__("BioTrackTHC Sync"), function () {
+                frappe.call({
+                    method: "erpnext_biotrack.tasks.client_sync",
+                    args: {"doctype": "Plant"}
+                })
             })
-        })
+        }
     },
     calculate_time_in_room: function (posting_date) {
         var diff = frappe.datetime.get_diff(frappe.datetime.get_today(), posting_date);

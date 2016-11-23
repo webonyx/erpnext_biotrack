@@ -2,18 +2,29 @@
 // For license information, please see license.txt
 
 frappe.provide("erpnext_biotrack.plant");
+
 frappe.ui.form.on('Plant', {
+    onload: function (frm) {
+        frm.set_df_property("from_warehouse", "only_select", true);
+    },
     refresh: function (frm) {
         var is_new = frm.is_new();
-        frm.toggle_display("qty", !is_new);
+        frm.toggle_display("qty", frm.doc.docstatus != 1);
         frm.toggle_display("destroy_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);
         frm.toggle_display("disabled", !is_new);
         frm.toggle_reqd("item_group", is_new);
         frm.toggle_reqd("item_code", is_new);
+        frm.toggle_reqd("from_warehouse", frm.doc.docstatus != 1);
 
         erpnext_biotrack.plant.setup_actions(frm);
+        erpnext_biotrack.plant.setup_queries(frm);
+
+        if (frm.doc.docstatus == 0) {
+            erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
+            })
+        }
 
         function cal_remaining_time(d) {
             var expire_d = moment(d).add(72, "hours");
@@ -58,26 +69,140 @@ frappe.ui.form.on('Plant', {
             }
 
         }
-
-        frm.fields_dict['item_code'].get_query = function (doc, cdt, cdn) {
-            if (frm.doc.item_group) {
-                return {
-                    filters: {'item_group': frm.doc.item_group}
-                }
-            } else {
-                return {
-                    filters: {'item_group': ["in", frm.get_field('item_group').df.options.split("\n")]}
-                }
-            }
-        };
     },
-    bulk_add: function (frm) {
-        frm.toggle_display("qty", frm.doc.bulk_add);
-        frm.toggle_reqd("qty", frm.doc.bulk_add);
+    item_group: function (frm) {
+        frm.set_value('item_code', '');
+    },
+    item_code: function (frm) {
+        erpnext_biotrack.plant.setup_queries(frm);
+        frm.set_value('from_warehouse', '');
+    },
+    from_warehouse: function (frm) {
+        erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
+            if (!actual_qty) {
+                frappe.msgprint(
+                    {
+                        message: __(
+                            "Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>",
+                            [frm.doc.item_code, frm.doc.from_warehouse]
+                        ),
+                        title: "Insufficient Stock",
+                        indicator: 'red'
+                    }
+                );
+            }
+        })
     }
 });
 
+frappe.ui.form.on('Plant', 'before_submit', function (frm) {
+    var deferred = $.Deferred();
+    if (frm.doc.qty > 5 && frappe.boot.biotrackthc_sync_up) {
+        frappe.confirm(
+            __('High quantity with BioTrackTHC synchronization enabled would increase network latency. Would you like to continue?'),
+            function () {
+                deferred.resolve()
+            }, function () {
+                validated = 0;
+                deferred.reject()
+            }
+        );
+    } else {
+        deferred.resolve()
+    }
+
+    return deferred.promise();
+});
+
+frappe.ui.form.on('Plant', 'before_submit', function (frm) {
+    var deferred = $.Deferred();
+    erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
+        if (frm.doc.qty > actual_qty) {
+            frappe.msgprint(
+                {
+                    message: __('Available qty is <strong>{0}</strong>, you need <strong>{1}</strong>', [actual_qty, frm.doc.qty]),
+                    title: "Insufficient Stock",
+                    indicator: 'red'
+                }
+            );
+
+            validated = 0;
+            deferred.reject();
+        } else {
+            deferred.resolve();
+        }
+
+    });
+
+    return deferred.promise();
+});
+
 $.extend(erpnext_biotrack.plant, {
+    get_warehouse_details: function (frm, fn) {
+        frappe.call({
+            method: 'erpnext.stock.doctype.stock_entry.stock_entry.get_warehouse_details',
+            args: {
+                "args": {
+                    item_code: frm.doc.item_code,
+                    warehouse: frm.doc.from_warehouse,
+                    posting_date: frm.doc.posting_date,
+                    posting_time: frm.doc.posting_time
+                }
+            },
+            callback: function (r) {
+                var actual_qty = r.message.actual_qty || 0;
+                frm.field_map('qty', function (field) {
+                    field.description = __('Available <strong>{0}</strong>', [actual_qty]);
+                });
+
+                fn(actual_qty);
+            }
+        });
+    },
+    setup_queries: function (frm) {
+        frm.fields_dict['item_code'].get_query = function (doc, cdt, cdn) {
+            if (frm.doc.item_group) {
+                return {
+                    filters: {is_stock_item: 1, item_group: frm.doc.item_group}
+                }
+            } else {
+                return {
+                    filters: {is_stock_item: 1, item_group: ["in", frm.get_field('item_group').df.options.split("\n")]}
+                }
+            }
+        };
+
+        if (frm.doc.item_code) {
+            frappe.call({
+                method: 'erpnext.stock.dashboard.item_dashboard.get_data',
+                args: {
+                    item_code: frm.doc.item_code
+                },
+                callback: function (r) {
+                    var data = r.message || [];
+                    frm.fields_dict['from_warehouse'].get_query = function (doc, cdt, cdn) {
+                        return {
+                            filters: {
+                                'name': ["in", data.map(function (r) {
+                                    return r.warehouse
+                                })]
+                            }
+                        }
+                    };
+
+                    if (!data) {
+                        frappe.msgprint(
+                            {
+                                title: __('Insufficient Stock'),
+                                message: __('Item <strong>{0}</strong> is not available in any warehouses', [frm.doc.item_code]),
+                                indicator: 'red'
+                            }
+                        );
+                    }
+                }
+            });
+        }
+    },
     setup_actions: function (frm) {
         frm.page.clear_actions_menu();
 
@@ -171,7 +296,12 @@ $.extend(erpnext_biotrack.plant, {
                     fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
                 },
                 {
-                    fieldname: 'uom', label: 'UOM', fieldtype: 'Select', read_only: 1, options: ['Gram'], 'default': 'Gram'
+                    fieldname: 'uom',
+                    label: 'UOM',
+                    fieldtype: 'Select',
+                    read_only: 1,
+                    options: ['Gram'],
+                    'default': 'Gram'
                 },
                 {
                     fieldname: 'flower',
@@ -180,7 +310,10 @@ $.extend(erpnext_biotrack.plant, {
                     reqd: 1
                 },
                 {
-                    fieldname: 'other_material', label: 'Other Plant Material Weight', fieldtype: 'Float', 'default': 0.00
+                    fieldname: 'other_material',
+                    label: 'Other Plant Material Weight',
+                    fieldtype: 'Float',
+                    'default': 0.00
                 },
                 {
                     fieldname: 'waste', label: 'Waste Weight', fieldtype: 'Float', 'default': 0.00

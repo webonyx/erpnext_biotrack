@@ -74,7 +74,7 @@ def sync_plant(data):
 	state = cint(data.get("state"))
 	doc.state = "Drying" if state == 1 else ("Cured" if state == 2 else "Growing")
 
-	doc.flags.ignore_stock_update = True
+	doc.flags.in_import = True
 	doc.flags.ignore_validate_update_after_submit = True
 	doc.flags.ignore_mandatory = True
 
