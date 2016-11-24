@@ -1,12 +1,4 @@
 frappe.ui.form.on("Item", {
-    onload: function (frm) {
-        frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
-            return {
-                filters: {'parent_item_group': 'WA State Classifications'}
-            }
-        };
-    },
-
     refresh: function (frm) {
         if (!frm.is_new()) {
             // Download certificate button
@@ -33,41 +25,17 @@ frappe.ui.form.on("Item", {
                             frm.set_value('certificate', attachment.file_url);
                             frm.save('Save');
                         }
-                    })
+                    });
 
                     dialog.set_title(__('Attach Certificate'));
                 });
             }
 
 
-            if (frm.doc.is_stock_item) {
-                var $btn = frm.add_custom_button(__("Sub Lot/Batch"), function () {
-                    frappe.call({
-                        method: 'erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_stock_balance_for',
-                        args: {
-                            item_code: frm.doc['item_code'],
-                            warehouse: frm.doc['default_warehouse'],
-                            posting_date: null,
-                            posting_time: null
-                        },
-                        callback: function (r) {
-                            var actual_qty = r.message.qty;
-                            if (actual_qty) {
-                                erpnext.item.clone_item(frm.doc, actual_qty, r.message.rate)
-                            } else {
-                                frappe.msgprint(
-                                    {
-                                        message: __("Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>. <br><br>Available qty is <strong>0</strong>", [frm.doc['item_name'], frm.doc['default_warehouse']]),
-                                        title: "Insufficient Stock",
-                                        indicator: 'red'
-                                    }
-                                );
-                                $btn.prop('disabled', true);
-                            }
-                        }
-                    });
-
-                })
+            if (frm.doc.is_stock_item && (frm.doc.item_group === 'Flower' || frm.doc.item_group === 'Other Plant Material')) {
+                frm.add_custom_button(__('Create Lot'), function () {
+                    erpnext.item.create_lot(frm.doc);
+                });
             }
         }
 
@@ -75,11 +43,150 @@ frappe.ui.form.on("Item", {
 
     },
     is_marijuana_item: function (frm) {
-        erpnext.item.toggle_marijuana_attributes(frm)
+        erpnext.item.toggle_marijuana_attributes(frm);
     }
 });
 
 $.extend(erpnext.item, {
+    create_lot: function (doc) {
+        frappe.call({
+            method: 'erpnext.stock.dashboard.item_dashboard.get_data',
+            args: {
+                item_code: doc.item_code
+            },
+            callback: function (r) {
+                var data = r.message || [];
+                if (data) {
+                    open_dialog_form(r.message);
+                } else {
+                    frappe.msgprint(
+                        {
+                            title: __('Error'),
+                            message: __('Item <strong>{0}</strong> is out of stock', [doc.item_code]),
+                            indicator: 'red'
+                        }
+                    );
+                }
+            }
+        });
+
+        function open_dialog_form(data) {
+            frappe.model.with_doctype('Stock Entry', function () {
+                var ste = frappe.model.get_new_doc('Stock Entry');
+                ste.purpose = "Material Issue";
+                ste.conversion = 'Create Lot';
+                ste.lot_group = doc.item_group + ' Lot';
+
+                var dialog = new frappe.ui.Dialog({
+                    title: __('{0} Lot Creation Tool', [doc.item_group]),
+                    fields: [
+                        {
+                            fieldname: 'item_code', label: __('Item'),
+                            fieldtype: 'Link', options: 'Item', read_only: 1, 'default': doc.item_code
+                        },
+                        {
+                            fieldname: 'warehouse', label: __('Warehouse'),
+                            fieldtype: 'Select', options: data.map(function (r) {
+                                return r.warehouse
+                            }
+                        ), reqd: 1
+
+                        },
+                        {
+                            fieldname: 'qty',
+                            label: __('Quantity'),
+                            reqd: 1,
+                            fieldtype: 'Float',
+                            depends_on: 'warehouse'
+                        },
+                        {
+                            fieldname: 'rate',
+                            label: __('Valuation Rate'),
+                            fieldtype: 'Currency',
+                            reqd: 1,
+                            depends_on: 'warehouse'
+                        }
+                    ]
+                });
+
+                var update_doc = function () {
+                    ste.from_warehouse = dialog.get_value('warehouse');
+                    ste.items = [];
+
+                    var row = frappe.model.add_child(ste, 'items');
+                    row.item_code = dialog.get_value('item_code');
+                    row.f_warehouse = dialog.get_value('warehouse');
+                    row.qty = dialog.get_value('qty');
+                };
+
+                var open_doc = function () {
+                    dialog.hide();
+                    update_doc();
+                    frappe.set_route('Form', 'Stock Entry', ste.name);
+                };
+
+                dialog.show();
+                var $body = $(dialog.body);
+
+                $body.find('select[data-fieldname="warehouse"]').on("change", function () {
+                    var val = $(this).val(), qty = 0, rate, r;
+                    if (val) {
+                        r = data.filter(function (d) {
+                            return d.warehouse === val;
+                        });
+
+                        if (r) {
+                            qty = r[0].actual_qty;
+                            rate = r[0].valuation_rate;
+                        }
+                    }
+
+                    dialog.get_field('qty').$wrapper.find(".help-box").html(__('Available <strong>{0}</strong>', [qty]));
+                    // dialog.set_value('qty', qty);
+                    dialog.set_value('rate', rate);
+                });
+
+                dialog.set_primary_action(__('Save'), function () {
+                    if (dialog.working) return;
+                    var data = dialog.get_values();
+                    if (data) {
+                        update_doc();
+
+                        dialog.working = true;
+                        frappe.call({
+                            method: "frappe.client.submit",
+                            args: {
+                                doc: ste
+                            },
+                            callback: function (r) {
+                                dialog.hide();
+                                // delete the old doc
+                                frappe.model.clear_doc(ste.doctype, ste.name);
+                                frappe.ui.form.update_calling_link(r.message.name);
+                                cur_frm.reload_doc();
+                            },
+                            error: function () {
+                                open_doc();
+                            },
+                            always: function () {
+                                dialog.working = false;
+                            },
+                            freeze: true
+                        });
+                    }
+                });
+
+                $('<p style="margin-left: 10px;"><a class="link-open text-muted small">'
+                    + __("Add more items or open full form") + '</a></p>')
+                    .appendTo($body)
+                    .find('.link-open')
+                    .on('click', function () {
+                        open_doc();
+                    });
+
+            });
+        }
+    },
     clone_item: function (doc, actual_qty, rate) {
         var dialog = new frappe.ui.Dialog({
             title: __('Sub Lot/Batch'),
@@ -148,11 +255,20 @@ $.extend(erpnext.item, {
 
         frm.toggle_display("is_marijuana_item", frm.doc.__islocal);
         frm.toggle_reqd("strain", frm.doc.is_marijuana_item);
-        frm.toggle_reqd("default_warehouse", frm.doc.is_marijuana_item);
+        // frm.toggle_reqd("default_warehouse", frm.doc.is_marijuana_item);
 
-        frm.toggle_display("actual_qty", frm.doc.is_marijuana_item);
-        frm.toggle_reqd("actual_qty", frm.doc.is_marijuana_item);
-        frm.toggle_display("barcode", !frm.doc.__islocal || (frm.doc.__islocal && !frm.doc.is_marijuana_item));
-
+        if (frm.doc.is_marijuana_item || frm.doc.bio_barcode) {
+            frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
+                return {
+                    filters: [["Item Group","docstatus","!=",2], ["Item Group","parent_item_group","=","WA State Classifications"]]
+                }
+            };
+        } else {
+            frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
+                return {
+                    filters: [["Item Group","docstatus","!=",2]]
+                }
+            };
+        }
     }
 });

@@ -4,24 +4,24 @@ if (settings.add_fields.indexOf('test_result') === -1) {
 }
 
 frappe.listview_settings['Item'] = $.extend({}, settings, {
-	get_indicator: function(doc) {
+    get_indicator: function (doc) {
         var indicator;
         if (settings.get_indicator) {
             indicator = settings.get_indicator(doc);
         }
 
-		if(indicator) {
-			return indicator;
-		} else if (doc.test_result){
+        if (indicator) {
+            return indicator;
+        } else if (doc.test_result) {
             var indicators = {
                 'Failed': 'red',
                 'Pending': 'grey',
                 'Passed': 'green',
                 'Rejected': 'red'
             };
-		    return [__(doc.test_result), indicators[doc.test_result], "test_result,=," + doc.test_result];
+            return [__(doc.test_result), indicators[doc.test_result], "test_result,=," + doc.test_result];
         }
-	},
+    },
 
     onload: function (list) {
         if (settings.onload) {
@@ -39,12 +39,14 @@ frappe.listview_settings['Item'] = $.extend({}, settings, {
             new_stock_entry('Create Product');
         });
 
-        list.page.add_action_item(__("Synchronization"), function () {
-            frappe.call({
-                method: "erpnext_biotrack.tasks.client_sync",
-                args: {"doctype": "Item"}
+        if (frappe.boot.biotrackthc_sync_down) {
+            list.page.add_action_item(__("BioTrackTHC Sync"), function () {
+                frappe.call({
+                    method: "erpnext_biotrack.biotrackthc.doctype.biotrack_settings.biotrack_settings.sync_now",
+                    args: {"doctype": "Item"}
+                })
             })
-        })
+        }
     }
 });
 

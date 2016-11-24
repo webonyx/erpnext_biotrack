@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from . import __version__ as app_version
 
 app_name = "erpnext_biotrack"
 app_title = "ERPNext BioTrack"
@@ -17,16 +18,15 @@ fixtures = [
 			["name", "in", (
 				# Item
 				"Item-strain",
-				"Item-actual_qty",
-				"Item-sub_lot_sec",
 				"Item-is_lot_item",
 				"Item-parent_item",
 				"Item-plant",
-				"Item-sub_items",
 				"Item-test_result",
 				"Item-sample_id",
 				"Item-is_marijuana_item",
-				"Item-last_sync",
+				"Item-bio_last_sync",
+				"Item-bio_barcode",
+				"Item-bio_remaining_quantity",
 				"Item-transaction_id",
 				"Item-linking_data",
 				"Item-certificate",
@@ -54,6 +54,7 @@ fixtures = [
 				"Delivery Note-depart_datetime",
 				"Delivery Note-arrive_datetime",
 
+				"Stock Entry-plant",
 				"Stock Entry-conversion",
 				"Stock Entry-conversion_sec",
 				"Stock Entry-product_group",
@@ -79,6 +80,8 @@ fixtures = [
 				"Quotation Item-test_result",
 				"Quotation Item-potency",
 				"Quotation Item-thca",
+
+				"Integration Request-action"
 			)]
 		]
 	},
@@ -91,7 +94,10 @@ error_report_email = "viet@webonyx.com"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
-app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
+app_include_js = [
+	"/assets/erpnext_biotrack/js/erpnext_biotrack.js",
+	"/assets/erpnext_biotrack/js/biotrackthc_integration.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
@@ -108,6 +114,11 @@ app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
 #	"Role": "home_page"
 # }
 
+integration_services = ["BioTrack"]
+
+extend_bootinfo = [
+	"erpnext_biotrack.biotrackthc.bootinfo.boot"
+]
 
 # Form custom scripts
 doctype_js = {
@@ -133,7 +144,7 @@ doctype_list_js = {
 }
 
 standard_queries = {
-	"Plant": "erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.get_plant_list"
+	"Plant": "erpnext_biotrack.traceability_system.doctype.plant.plant.get_plant_list"
 }
 
 # Website user home page (by function)
@@ -151,7 +162,7 @@ standard_queries = {
 # before_install = "erpnext_biotrack.install.before_install"
 after_install = "erpnext_biotrack.install.after_install"
 
-biotrack_after_sync = [
+biotrack_synced = [
 	"erpnext_biotrack.item_utils.item_linking_correction",
 	"erpnext_biotrack.item_utils.qa_result_population"
 ]
@@ -180,15 +191,31 @@ biotrack_after_sync = [
 
 doc_events = {
 	"Item": {
-		"validate": "erpnext_biotrack.item_utils.on_validate",
-		"after_insert": "erpnext_biotrack.item_utils.after_insert",
+		"validate": "erpnext_biotrack.item_utils.on_validate"
 	},
 	"Stock Entry": {
-		"on_submit": "erpnext_biotrack.stock_entry.on_submit",
+		"on_submit": [
+			"erpnext_biotrack.stock_entry.on_submit", # for conversion handler
+			"erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook", # for new_inventory sync up
+		],
 		"get_item_details": "erpnext_biotrack.stock_entry.get_item_details",
+		"after_conversion": "erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",
 	},
 	"File": {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",
+	},
+	"Plant": {
+		"on_submit": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"on_cancel": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"on_trash": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_schedule_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_destroy_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_destroy_schedule_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_convert_to_inventory": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_harvest": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_harvest_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"after_cure": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 	}
 }
 
@@ -199,16 +226,13 @@ scheduler_events = {
 	# 	"all": [
 	# 		"erpnext_biotrack.tasks.all"
 	# 	],
-	"daily": [
-		"erpnext_biotrack.tasks.daily"
-	],
+	# "daily": [
+	# ],
 	"hourly": [
-		"erpnext_biotrack.tasks.hourly",
-		"erpnext_biotrack.erpnext_biotrack.doctype.plant.plant.destroy_scheduled_plants",
+		"erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_scheduled_plants",
 	],
-	"weekly": [
-		"erpnext_biotrack.tasks.weekly"
-	]
+	# "weekly": [
+	# ]
 	# 	"monthly": [
 	# 		"erpnext_biotrack.tasks.monthly"
 	# 	]

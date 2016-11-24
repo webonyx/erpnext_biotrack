@@ -16,3 +16,12 @@ execute:frappe.delete_doc_if_exists("Custom Field", "Item-item_parent")
 execute:frappe.delete_doc_if_exists("Custom Field", "Quality Inspection-sample_code")
 execute:frappe.db.sql("""UPDATE tabItem set test_result = NULL""")
 erpnext_biotrack.patches.migrate_plant_room
+erpnext_biotrack.patches.v0_2.mirror_plant_to_traceability_system
+erpnext_biotrack.patches.v0_2.mirror_strain_to_traceability_system
+erpnext_biotrack.patches.v0_2.mirror_biotrackthc_doctypes
+erpnext_biotrack.patches.v0_2.migrate_integration_service
+execute:frappe.delete_doc_if_exists("DocType", "BioTrack Log")
+execute:frappe.db.sql("""UPDATE `tabDesktop Icon` set label = 'Traceability' WHERE label = 'Traceability System'""")
+execute:frappe.db.sql("""DELETE FROM `tabDesktop Icon` WHERE module_name = 'Plant'""")
+execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_items")
+execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_lot_sec")

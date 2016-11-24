@@ -10,7 +10,7 @@ from frappe.utils import get_fullname
 
 from .client import get_data
 from erpnext_biotrack.config import get_default_stock_warehouse
-from erpnext_biotrack.erpnext_biotrack.doctype.strain import find_strain
+from erpnext_biotrack.traceability_system.doctype.strain import find_strain
 from frappe.utils.data import flt, nowdate, nowtime, now, cint
 
 
@@ -21,38 +21,38 @@ def sync():
 	sync_time = now()
 	samples = []
 
-	data = normalize(get_biotrack_inventories())
-	plant_data = get_normalized_plants()
+	# data = normalize(get_biotrack_inventories())
+	# plant_data = get_normalized_plants()
 
-	for _, inventory in data.items():
+	for inventory in get_biotrack_inventories():
 		# filter to keep available parent only
-		ids = inventory.get("parentid") or []
-		parent_ids = []
-		if ids:
-			for key in (inventory.get("parentid") or []):
-				if key in data:
-					parent_ids.append(key)
+		# ids = inventory.get("parentid") or []
+		# parent_ids = []
+		# if ids:
+		# 	for key in (inventory.get("parentid") or []):
+		# 		if key in data:
+		# 			parent_ids.append(key)
+		#
+		# 	# lookup again database
+		# 	if not parent_ids:
+		# 		parent_ids = [r[0] for r in frappe.get_list("Item", filters=[["barcode", "in", ids]], as_list=True)]
+		#
+		# # plants filter
+		# ids = inventory.get("plantid") or []
+		# plant_ids = []
+		# if ids:
+		# 	for key in (inventory.get("plantid") or []):
+		# 		if key in plant_data:
+		# 			plant_ids.append(key)
+		#
+		# 	# lookup again database
+		# 	if not plant_ids:
+		# 		plant_ids = [r[0] for r in frappe.get_list("Plant", filters=[["name", "in", ids]], as_list=True)]
+		#
+		# inventory["parentid"] = parent_ids
+		# inventory["plantid"] = plant_ids
 
-			# lookup again database
-			if not parent_ids:
-				parent_ids = [r[0] for r in frappe.get_list("Item", filters=[["barcode", "in", ids]], as_list=True)]
-
-		# plants filter
-		ids = inventory.get("plantid") or []
-		plant_ids = []
-		if ids:
-			for key in (inventory.get("plantid") or []):
-				if key in plant_data:
-					plant_ids.append(key)
-
-			# lookup again database
-			if not plant_ids:
-				plant_ids = [r[0] for r in frappe.get_list("Plant", filters=[["name", "in", ids]], as_list=True)]
-
-		inventory["parentid"] = parent_ids
-		inventory["plantid"] = plant_ids
-
-		if inventory.get("is_sample") and parent_ids:
+		if inventory.get("is_sample"):
 			samples.append(inventory)
 			continue
 
@@ -65,27 +65,28 @@ def sync():
 	return success, 0
 
 
-def sync_item(biotrack_inventory):
-	barcode = str(biotrack_inventory.get("id"))
-	remaining_quantity = flt(biotrack_inventory.get("remaining_quantity"))
+def sync_item(data):
+	barcode = str(data.get("id"))
+	remaining_quantity = flt(data.get("remaining_quantity"))
 	name = None
 
 	item_values = get_item_values(barcode, ["name", "transaction_id"])
 	if item_values:
 		name, transaction_id = item_values
-		if not (frappe.flags.force_sync or False) and transaction_id == biotrack_inventory.get("transactionid"):
-			frappe.db.set_value("Item", name, "last_sync", now(), update_modified=False)
+		if not (frappe.flags.force_sync or False) and transaction_id == data.get("transactionid"):
+			frappe.db.set_value("Item", name, "bio_last_sync", now(), update_modified=False)
 			return False
 
 	# inventory type
-	item_group = find_item_group(biotrack_inventory)
-	warehouse = find_warehouse(biotrack_inventory)
+	item_group = find_item_group(data)
+	warehouse = find_warehouse(data)
+	current_remaining_quantity = 0
 
 	# product (Item) mapping
-	if biotrack_inventory.get("productname"):
-		item_name = biotrack_inventory.get("productname")
+	if data.get("productname"):
+		item_name = data.get("productname")
 	else:
-		item_name = " ".join(filter(None, [biotrack_inventory.get("strain"), item_group.name]))
+		item_name = " ".join(filter(None, [data.get("strain"), item_group.name]))
 
 	if not name:
 		item_code = barcode
@@ -93,7 +94,7 @@ def sync_item(biotrack_inventory):
 			"doctype": "Item",
 			"item_code": item_code,
 			"item_name": item_name,
-			"barcode": barcode,
+			"bio_barcode": barcode,
 			"is_stock_item": 1,
 			"stock_uom": "Gram",
 			"item_group": item_group.name,
@@ -101,59 +102,53 @@ def sync_item(biotrack_inventory):
 		})
 	else:
 		item = frappe.get_doc("Item", name)
+		current_remaining_quantity = item.bio_remaining_quantity
 
 	strain = ""
-	if biotrack_inventory.get("strain"):
-		strain = find_strain(biotrack_inventory.get("strain"))
+	if data.get("strain"):
+		strain = find_strain(data.get("strain"))
 
 	# Post task will do on biotrack_after_sync hook
-	parent_ids = biotrack_inventory.get("parentid")
-	plant_ids = biotrack_inventory.get("plantid")
+	parent_ids = data.get("parentid")
+	plant_ids = data.get("plantid")
 	if not item.is_lot_item and (parent_ids or plant_ids):
 		item.set("linking_data", json.dumps({"parent_ids": parent_ids, "plant_ids": plant_ids}))
 
 	item.update({
 		"item_name": item_name,
+		"bio_barcode": barcode,
 		"strain": strain,
-		"actual_qty": remaining_quantity,
-		"transaction_id": biotrack_inventory.get("transactionid"),
-		"last_sync": now(),
+		"bio_remaining_quantity": remaining_quantity,
+		"transaction_id": data.get("transactionid"),
+		"bio_last_sync": now(),
 		"disabled": 1 if remaining_quantity == 0 else 0,
 	})
 
+	item.flags.ignore_links = True
 	item.save()
 
-	if remaining_quantity and item.is_stock_item:
-		adjust_stock(item, remaining_quantity)
+	# adjust_stock
+	if item.is_stock_item:
+		if remaining_quantity > current_remaining_quantity:
+			make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=remaining_quantity - current_remaining_quantity)
+
+		# Consider to not modified down item's balance because it's hard to figure out the correct warehouse and its balance to deduct
+		# elif remaining_quantity < current_remaining_quantity:
+		# 	posting_date, posting_time = nowdate(), nowtime()
+		# 	balance = get_stock_balance_for(item.name, item.default_warehouse, posting_date, posting_time)
+		#
+		# 	if balance["qty"] >= remaining_quantity:
+		# 		make_stock_entry(item_code=item.name, source=item.default_warehouse,
+		# 					 qty=current_remaining_quantity - remaining_quantity)
 
 	# Disable Usable Marijuana item does not have product name
-	if not biotrack_inventory.get("productname") and item_group.external_id == 28:
+	if not data.get("productname") and item_group.external_id == 28:
 		frappe.db.set_value("Item", item.name, "disabled", 1)
 		log_invalid_item(item)
 
 	frappe.db.commit()
 
 	return True
-
-
-def adjust_stock(item, remaining_quantity):
-	posting_date, posting_time = nowdate(), nowtime()
-	balance = get_stock_balance_for(item.name, item.default_warehouse, posting_date, posting_time)
-	qty = flt(balance["qty"])
-	rate = flt(balance["rate"])
-
-	# Material Receipt
-	if remaining_quantity > qty:
-		make_stock_entry(item_code=item.name, target=item.default_warehouse, qty=remaining_quantity - qty)
-
-	if remaining_quantity < qty:
-		create_stock_reconciliation(
-			item_code=item.name,
-			item_name=item.item_name,
-			warehouse=item.default_warehouse,
-			qty=remaining_quantity,
-			rate=rate if rate > 0 else 1
-		)
 
 
 def syn_samples(samples):
@@ -184,23 +179,6 @@ def syn_samples(samples):
 
 
 
-def create_stock_reconciliation(**args):
-	args = frappe._dict(args)
-	sr = frappe.new_doc("Stock Reconciliation")
-	sr.posting_date = args.posting_date or nowdate()
-	sr.posting_time = args.posting_time or nowtime()
-	sr.company = args.company or get_default_company()
-	sr.append("items", {
-		"item_code": args.item_code,
-		"item_name": args.item_name,
-		"warehouse": args.warehouse,
-		"qty": args.qty,
-		"valuation_rate": args.rate
-	})
-
-	sr.submit()
-	return sr
-
 
 def find_warehouse(data):
 	if not data.get("currentroom"):
@@ -226,8 +204,8 @@ def disable_deleted_items(sync_time=None):
 		sync_time = now()
 
 	return frappe.db.sql(
-		"update tabItem set `actual_qty` = 0, `disabled` = 1 where transaction_id IS NOT NULL and (`last_sync` IS NULL or `last_sync` < %(last_sync)s)",
-		{"last_sync": sync_time})
+		"update tabItem set `bio_remaining_quantity` = 0, `disabled` = 1 where transaction_id IS NOT NULL and (`bio_last_sync` IS NULL or `bio_last_sync` < %(bio_last_sync)s)",
+		{"bio_last_sync": sync_time})
 
 
 def log_invalid_item(item):
