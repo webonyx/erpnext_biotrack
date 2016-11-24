@@ -6,9 +6,9 @@ frappe.listview_settings['Warehouse'] = {
 		}
 	},
 	onload: function (DocListView) {
-		DocListView.page.add_action_item(__("Synchronization"), function () {
+		DocListView.page.add_action_item(__("BioTrackTHC Sync"), function () {
             frappe.call({
-                method: "erpnext_biotrack.tasks.client_sync",
+                method: "erpnext_biotrack.biotrackthc.doctype.biotrack_settings.biotrack_settings.sync_now",
                 args: {"doctype": "Warehouse"}
             })
         })

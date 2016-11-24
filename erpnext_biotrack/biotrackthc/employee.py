@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import frappe
 from datetime import date
 from frappe.defaults import get_defaults
-from erpnext_biotrack.utils import make_log
 from .client import get_data
 
 
@@ -43,27 +42,22 @@ def sync_employee(biotrack_employee, company, biotrack_employee_list):
 
 	naming_series = frappe.get_meta("Employee").get_options("naming_series") or "EMP/"
 
-	try:
-		employee.update({
-			"naming_series": naming_series,
-			"employee_name": employee_name,
-			"status": "Active",
-			"external_id": employee_id,
-			"external_transaction_id": transactionid,
-			"company": company,
-			"date_of_birth": date_of_birth,
-			"date_of_joining": date_of_joining,
-		})
+	employee.update({
+		"naming_series": naming_series,
+		"employee_name": employee_name,
+		"status": "Active",
+		"external_id": employee_id,
+		"external_transaction_id": transactionid,
+		"company": company,
+		"date_of_birth": date_of_birth,
+		"date_of_joining": date_of_joining,
+	})
 
-		employee.flags.ignore_mandatory = True
-		employee.save()
+	employee.flags.ignore_mandatory = True
+	employee.save()
 
-		biotrack_employee_list.append(biotrack_employee.get("employee_id"))
-		frappe.db.commit()
-
-	except Exception as e:
-		make_log(title=e.message, status="Error", method="sync_employee", message=frappe.get_traceback(),
-				 request_data=biotrack_employee, exception=True)
+	biotrack_employee_list.append(biotrack_employee.get("employee_id"))
+	frappe.db.commit()
 
 
 def lookup_employee(name, external_id):

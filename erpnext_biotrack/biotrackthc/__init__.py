@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
 from erpnext_biotrack.biotrackthc.client import BioTrackClientError
-from erpnext_biotrack.utils import make_log
 from .client import post
 import frappe
-
+from frappe.integration_broker.doctype.integration_service.integration_service import get_integration_controller
 
 def sync_up_enabled():
 	if frappe.flags.in_import or frappe.flags.in_test:
@@ -25,12 +24,41 @@ def call(fn, *args, **kwargs):
 	return post(fn, *args, **kwargs)
 
 
-def sync(resources=None, force_sync=False, verbose=False):
-	if isinstance(resources, basestring):
-		resources = [resources]
+def map_resources(doctype):
+	resources = []
+
+	if doctype == "Plant":
+		resources.append("plant")
+	elif doctype == "Item":
+		resources.append("inventory")
+		resources.append("plant")
+	elif doctype == "Customer":
+		resources.append("vendor")
+	elif doctype == "Employee":
+		resources.append("employee")
+	elif doctype == "Quality Inspection":
+		resources.append("qa_sample")
+	elif doctype == "Warehouse":
+		resources.append("inventory_room")
+		resources.append("plant_room")
+
+	return resources
+
+def sync(doctype=None, resources=None, force_sync=False, async_notify=False):
+	main_resources = []
 
 	if not resources:
-		resources = [
+		resources = []
+
+	elif isinstance(resources, basestring):
+		resources = [resources]
+
+	if doctype:
+		main_resources = map_resources(doctype)
+		main_resources += resources
+
+	if not main_resources:
+		main_resources = [
 			"employee",
 			"plant_room",
 			"inventory_room",
@@ -45,31 +73,31 @@ def sync(resources=None, force_sync=False, verbose=False):
 	frappe.flags.force_sync = force_sync
 	frappe.flags.in_import = True
 
-	make_log(title="BioTrackTHC: Sync started...", status="Queued", method="sync", message="Started")
-	for name in resources:
-		action = "sync_{}".format(name)
+	if async_notify:
+		frappe.publish_realtime("msgprint", {"message": "Sync started", "alert": True})
+
+	for name in main_resources:
 		method = frappe.get_attr("erpnext_biotrack.biotrackthc.{}.sync".format(name))
-		if verbose:
-			print 'Sync "{}"'.format(name)
 		try:
-			result = method()
-			if not isinstance(result, tuple):
-				result = (result, 0)
-
-			success, fail = result
-			make_log(method=action, message="synced {}, failed: {}".format(success, fail or 0))
-
+			method()
 		except BioTrackClientError as e:
-			make_log(
-				title="{} has terminated".format(name),
-				status="Error",
-				method=name,
-				message=frappe.get_traceback(),
-				exception=True
-			)
+			make_log(name, frappe.get_traceback(), "Failed")
 
-	frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", frappe.utils.now())
-	make_log(title="BioTrackTHC: Sync Completed", status="Success", method="sync", message="Completed")
+	if not doctype:
+		frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", frappe.utils.now())
+		make_log("Sync Completed")
+
+	if async_notify:
+		frappe.publish_realtime("msgprint", {"message": "Sync completed", "alert": True})
+		if doctype:
+			frappe.publish_realtime("list_update", {"doctype": doctype})
 
 	frappe.flags.force_sync = False
 	frappe.flags.in_import = False
+
+def make_log(action, data=None, status='Completed'):
+	service = get_integration_controller("BioTrack")
+	integration_req = service.create_request(data)
+	integration_req.action = action
+	integration_req.status = status
+	integration_req.save()

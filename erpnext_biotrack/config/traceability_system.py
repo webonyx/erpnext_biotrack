@@ -27,6 +27,14 @@ def get_data():
                 {
                     "type": "doctype",
                     "name": "Item",
+                },
+				{
+                    "type": "doctype",
+                    "name": "Item Group",
+                },
+				{
+                    "type": "doctype",
+                    "name": "Warehouse",
                 }
             ]
         },
@@ -37,11 +45,6 @@ def get_data():
 					"type": "doctype",
 					"name": "BioTrack Settings",
 					"label": "BioTrackTHC Settings",
-				},
-				{
-					"type": "doctype",
-					"name": "BioTrack Log",
-					"label": "BioTrackTHC Sync Log",
 				}
 			]
 		}

@@ -80,6 +80,8 @@ fixtures = [
 				"Quotation Item-test_result",
 				"Quotation Item-potency",
 				"Quotation Item-thca",
+
+				"Integration Request-action"
 			)]
 		]
 	},
@@ -92,7 +94,10 @@ error_report_email = "viet@webonyx.com"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
-app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
+app_include_js = [
+	"/assets/erpnext_biotrack/js/erpnext_biotrack.js",
+	"/assets/erpnext_biotrack/js/biotrackthc_integration.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_biotrack/css/erpnext_biotrack.css"
@@ -108,6 +113,8 @@ app_include_js = "/assets/erpnext_biotrack/js/erpnext_biotrack.js"
 # role_home_page = {
 #	"Role": "home_page"
 # }
+
+integration_services = ["BioTrack"]
 
 extend_bootinfo = [
 	"erpnext_biotrack.biotrackthc.bootinfo.boot"
@@ -155,7 +162,7 @@ standard_queries = {
 # before_install = "erpnext_biotrack.install.before_install"
 after_install = "erpnext_biotrack.install.after_install"
 
-biotrack_after_sync = [
+biotrack_synced = [
 	"erpnext_biotrack.item_utils.item_linking_correction",
 	"erpnext_biotrack.item_utils.qa_result_population"
 ]
@@ -219,16 +226,13 @@ scheduler_events = {
 	# 	"all": [
 	# 		"erpnext_biotrack.tasks.all"
 	# 	],
-	"daily": [
-		"erpnext_biotrack.tasks.daily"
-	],
+	# "daily": [
+	# ],
 	"hourly": [
-		"erpnext_biotrack.tasks.hourly",
 		"erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_scheduled_plants",
 	],
-	"weekly": [
-		"erpnext_biotrack.tasks.weekly"
-	]
+	# "weekly": [
+	# ]
 	# 	"monthly": [
 	# 		"erpnext_biotrack.tasks.monthly"
 	# 	]

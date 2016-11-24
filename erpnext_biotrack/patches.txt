@@ -19,3 +19,5 @@ erpnext_biotrack.patches.migrate_plant_room
 erpnext_biotrack.patches.v0_2.mirror_plant_to_traceability_system
 erpnext_biotrack.patches.v0_2.mirror_strain_to_traceability_system
 erpnext_biotrack.patches.v0_2.mirror_biotrackthc_doctypes
+execute:frappe.delete_doc_if_exists("DocType", "BioTrack Log")
+execute:frappe.db.sql("""UPDATE `tabDesktop Icon` set label = 'Traceability' WHERE label = 'Traceability System'""")

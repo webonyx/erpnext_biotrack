@@ -3,12 +3,12 @@
 
 frappe.ui.form.on('BioTrack Settings', {
     refresh: function (frm) {
-        if (frm.doc.enabled) {
+        if (frm.doc.username) {
             if (frm.doc.synchronization == 'All' || frm.doc.synchronization == 'Down') {
                 cur_frm.add_custom_button('<span class="octicon octicon-sync" aria-hidden="true"></span> ' + __('Sync Now'),
                     function () {
                         frappe.call({
-                            method: "erpnext_biotrack.tasks.sync"
+                            method: "erpnext_biotrack.biotrackthc.doctype.biotrack_settings.biotrack_settings.sync_now"
                         })
                     }
                 )
@@ -19,8 +19,9 @@ frappe.ui.form.on('BioTrack Settings', {
             }
         }
 
-        cur_frm.add_custom_button('<span class="octicon octicon-info" aria-hidden="true"></span> ' + __("Sync Log"), function () {
-            frappe.set_route("List", "BioTrack Log");
+        cur_frm.add_custom_button('<span class="octicon octicon-info" aria-hidden="true"></span> ' + __("Show Log"), function () {
+            frappe.route_options = {"integration_request_service": "BioTrack"};
+			frappe.set_route("List", "Integration Request");
         });
 
         $('<a class="btn btn-link btn-xs"' +
