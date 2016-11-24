@@ -16,4 +16,5 @@ def execute():
 	frappe.db.sql("UPDATE tabPlant SET `posting_date` = DATE(`birthdate`) WHERE birthdate IS NOT NULL")
 	frappe.db.sql("UPDATE tabPlant SET `posting_time` = TIME(`birthdate`) WHERE birthdate IS NOT NULL")
 
+	frappe.reload_doc('traceability_system', 'doctype', 'plant', force=True)
 	frappe.clear_cache()

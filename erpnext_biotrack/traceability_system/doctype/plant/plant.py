@@ -349,4 +349,5 @@ def destroy_scheduled_plants():
 		plant = frappe.get_doc("Plant", name)
 		plant.disabled = 1
 		plant.remove_time = now()
+		plant.flags.ignore_validate_update_after_submit = True
 		plant.save()
