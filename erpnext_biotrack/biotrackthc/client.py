@@ -52,6 +52,7 @@ class BioTrackClient:
 		service = get_integration_controller("BioTrack")
 		integration_req = service.create_request(log)
 		integration_req.action = action
+		integration_req.integration_type = "Remote"
 
 		request = get_request_session()
 		response = request.post(self.__API_URL__, data=json.dumps(data), headers={'Content-Type': 'application/json'})

@@ -15,8 +15,6 @@ def execute():
 	frappe.db.sql("UPDATE tabDocType SET `module` = 'BioTrackTHC' WHERE `name` = 'BioTrack Log'")
 	frappe.db.sql("UPDATE tabDocType SET `module` = 'Traceability System' WHERE `name` = 'Item Sub Lot'")
 	frappe.reload_doc('biotrackthc', 'doctype', 'biotrack_settings')
-	frappe.reload_doc('biotrackthc', 'doctype', 'biotrack_log')
-	frappe.reload_doc('traceability_system', 'doctype', 'item_sub_lot')
 
 	frappe.delete_doc_if_exists("DocType", "Item Conversation Detail")
 	frappe.delete_doc_if_exists("DocType", "Item Conversation")

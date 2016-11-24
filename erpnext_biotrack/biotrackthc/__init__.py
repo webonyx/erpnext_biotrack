@@ -29,6 +29,8 @@ def map_resources(doctype):
 
 	if doctype == "Plant":
 		resources.append("plant")
+	elif doctype == "Plant Room":
+		resources.append("plant_room")
 	elif doctype == "Item":
 		resources.append("inventory")
 		resources.append("plant")
@@ -40,7 +42,6 @@ def map_resources(doctype):
 		resources.append("qa_sample")
 	elif doctype == "Warehouse":
 		resources.append("inventory_room")
-		resources.append("plant_room")
 
 	return resources
 
@@ -80,7 +81,7 @@ def sync(doctype=None, resources=None, force_sync=False, async_notify=False):
 		method = frappe.get_attr("erpnext_biotrack.biotrackthc.{}.sync".format(name))
 		try:
 			method()
-		except BioTrackClientError as e:
+		except Exception as e:
 			make_log(name, frappe.get_traceback(), "Failed")
 
 	if not doctype:
