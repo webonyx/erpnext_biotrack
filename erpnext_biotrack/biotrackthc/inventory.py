@@ -1,9 +1,6 @@
 from __future__ import unicode_literals
 import frappe, json
-from erpnext import get_default_company
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
-from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
-from erpnext_biotrack.biotrackthc.plant import get_normalized as get_normalized_plants
 from erpnext_biotrack.biotrackthc.qa_sample import make_sample
 from erpnext_biotrack.item_utils import get_item_values
 from frappe.utils import get_fullname
@@ -21,37 +18,7 @@ def sync():
 	sync_time = now()
 	samples = []
 
-	# data = normalize(get_biotrack_inventories())
-	# plant_data = get_normalized_plants()
-
 	for inventory in get_biotrack_inventories():
-		# filter to keep available parent only
-		# ids = inventory.get("parentid") or []
-		# parent_ids = []
-		# if ids:
-		# 	for key in (inventory.get("parentid") or []):
-		# 		if key in data:
-		# 			parent_ids.append(key)
-		#
-		# 	# lookup again database
-		# 	if not parent_ids:
-		# 		parent_ids = [r[0] for r in frappe.get_list("Item", filters=[["barcode", "in", ids]], as_list=True)]
-		#
-		# # plants filter
-		# ids = inventory.get("plantid") or []
-		# plant_ids = []
-		# if ids:
-		# 	for key in (inventory.get("plantid") or []):
-		# 		if key in plant_data:
-		# 			plant_ids.append(key)
-		#
-		# 	# lookup again database
-		# 	if not plant_ids:
-		# 		plant_ids = [r[0] for r in frappe.get_list("Plant", filters=[["name", "in", ids]], as_list=True)]
-		#
-		# inventory["parentid"] = parent_ids
-		# inventory["plantid"] = plant_ids
-
 		if inventory.get("is_sample"):
 			samples.append(inventory)
 			continue

@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from erpnext_biotrack.biotrackthc.client import get_client, BioTrackClientError
+from erpnext_biotrack.biotrackthc.inventory import get_biotrack_inventories
 from frappe.integration_broker.doctype.integration_service.integration_service import IntegrationService
 from frappe.utils import call_hook_method
 from frappe.utils.background_jobs import enqueue
@@ -104,6 +105,16 @@ def get_service_details():
 		</p>
 	</div>
 	"""
+
+@frappe.whitelist()
+def detect_locations():
+	locations = {}
+	for data in get_biotrack_inventories():
+		location = data.get("location")
+		if not location in locations:
+			locations[location] = location
+
+	return {"locations": [x for x in locations]}
 
 @frappe.whitelist()
 def sync_now(doctype=None):

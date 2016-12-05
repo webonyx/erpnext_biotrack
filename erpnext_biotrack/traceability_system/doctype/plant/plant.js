@@ -361,10 +361,10 @@ $.extend(erpnext_biotrack.plant, {
         var doc = frm.doc,
             fields = [
                 {
-                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, default: doc.name
+                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, 'default': doc.name
                 },
                 {
-                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, default: doc.strain
+                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
                 }
             ],
             dialog;

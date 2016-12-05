@@ -61,10 +61,10 @@ class BioTrackClient:
 
 		if not action.startswith("sync_"):
 			log["response"] = result
+			print_log(result, " - Response")
 		else:
 			log["response"] = {"success": result.get('success')}
 
-		print_log(result, " - Response")
 		integration_req.data = json.dumps(log)
 
 		if not result.get('success'):
