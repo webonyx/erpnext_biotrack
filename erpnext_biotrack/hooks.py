@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 from . import __version__ as app_version
 
 app_name = "erpnext_biotrack"
-app_title = "ERPNext BioTrack"
+app_title = "ERPNext Traceability"
 app_publisher = "Webonyx"
-app_description = "BioTrack connector for ERPNext"
+app_description = "Traceability System based on ERPNext"
 app_icon = "octicon octicon-globe"
 app_color = "green"
-app_email = "jared@webonyx.com"
+app_email = "viet@webonyx.com"
 app_license = "MIT"
 
 fixtures = [
@@ -74,6 +74,8 @@ fixtures = [
 				"Supplier-license_no",
 
 				"Quality Inspection-barcode",
+				"Quality Inspection-is_sample",
+				"Quality Inspection-employee",
 				"Quality Inspection-qa_lab",
 				"Quality Inspection-test_result",
 
@@ -131,6 +133,7 @@ doctype_js = {
 	"Purchase Order": "custom_scripts/purchase_order.js",
 	"Quotation": "custom_scripts/quotation.js",
 	"Stock Entry": "custom_scripts/stock_entry.js",
+	"Quality Inspection": "custom_scripts/quality_inspection.js",
 }
 
 # List custom scripts
@@ -200,6 +203,11 @@ doc_events = {
 		],
 		"get_item_details": "erpnext_biotrack.stock_entry.get_item_details",
 		"after_conversion": "erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",
+	},
+	"Quality Inspection": {
+		"on_submit": [
+			"erpnext_biotrack.quality_inspection.on_submit"
+		]
 	},
 	"File": {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",

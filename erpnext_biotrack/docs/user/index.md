@@ -1,1 +1,3 @@
+# User Manual
+
 {index}

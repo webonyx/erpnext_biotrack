@@ -12,6 +12,18 @@ frappe.ui.form.on("Item", {
                     .appendTo(frm.page.inner_toolbar);
             }
 
+            if (erpnext.item.is_sample_available(frm.doc)) {
+                frm.add_custom_button(__('Sample'), function () {
+                    frappe.model.with_doctype('Quality Inspection', function () {
+                        var doc = frappe.model.get_new_doc('Quality Inspection');
+                        doc.inspection_type = 'In Process';
+                        doc.is_sample = 1;
+                        doc.item_code = frm.doc.name;
+                        frappe.set_route('Form', doc.doctype, doc.name);
+                    })
+                }, __('Make'));
+            }
+
             // Only Attach Certificate to parent Item
             if (!frm.doc.parent_item) {
                 frm.add_custom_button(__("Attach Certificate"), function () {
@@ -48,6 +60,19 @@ frappe.ui.form.on("Item", {
 });
 
 $.extend(erpnext.item, {
+    is_sample_available: function (doc) {
+        var sample_types = [
+            __('Flower Lot'),
+            __('CO2 Hash Oil'),
+            __('Food Grade Solvent Extract'),
+            __('Hydrocarbon Wax'),
+            __('Marijuana Extract for Inhalation'),
+            __('Solid Marijuana Infused Edible'),
+            __('Usable Marijuana')
+        ];
+
+        return $.inArray(__(doc.item_group), sample_types) !== -1
+    },
     create_lot: function (doc) {
         frappe.call({
             method: 'erpnext.stock.dashboard.item_dashboard.get_data',
@@ -260,13 +285,13 @@ $.extend(erpnext.item, {
         if (frm.doc.is_marijuana_item || frm.doc.bio_barcode) {
             frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
                 return {
-                    filters: [["Item Group","docstatus","!=",2], ["Item Group","parent_item_group","=","WA State Classifications"]]
+                    filters: [["Item Group", "docstatus", "!=", 2], ["Item Group", "parent_item_group", "=", "WA State Classifications"]]
                 }
             };
         } else {
             frm.fields_dict['item_group'].get_query = function (doc, cdt, cdn) {
                 return {
-                    filters: [["Item Group","docstatus","!=",2]]
+                    filters: [["Item Group", "docstatus", "!=", 2]]
                 }
             };
         }
