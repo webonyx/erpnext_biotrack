@@ -17,10 +17,6 @@ def on_submit(doc, method):
 	if not doc.is_sample:
 		return
 
-	# Stock update had been handled by delivery_note
-	if doc.inspection_type == "Outgoing" and doc.delivery_note_no:
-		return
-
 	valid_groups = [
 		_('Flower Lot'),
 		_('CO2 Hash Oil'),
@@ -36,6 +32,10 @@ def on_submit(doc, method):
 		frappe.throw(
 			_("Item is not eligible for making sample."),
 			title="Invalid Item")
+
+	# Stock update had been handled by delivery_note
+	if doc.inspection_type == "Outgoing" and doc.delivery_note_no:
+		return
 
 	inventories = get_data(item_code=doc.item_code)
 	source_warehouse = None
