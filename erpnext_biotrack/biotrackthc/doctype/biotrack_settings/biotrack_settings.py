@@ -4,7 +4,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from erpnext_biotrack.biotrackthc.client import get_client, BioTrackClientError
+from erpnext_biotrack.biotrackthc.client import get_client, post, BioTrackClientError
 from erpnext_biotrack.biotrackthc.inventory import get_biotrack_inventories
 from frappe.integration_broker.doctype.integration_service.integration_service import IntegrationService
 from frappe.utils import call_hook_method
@@ -107,9 +107,15 @@ def get_service_details():
 	"""
 
 @frappe.whitelist()
-def detect_locations():
+def detect_locations(license_number, username, password, is_training=0):
 	locations = {}
-	for data in get_biotrack_inventories():
+
+	if is_dummy_password(password):
+		settings = frappe.get_doc("BioTrack Settings")
+		password = settings.get_password()
+
+	client = get_client(license_number, username, password, is_training)
+	for data in get_biotrack_inventories(client=client):
 		location = data.get("location")
 		if not location in locations:
 			locations[location] = location
@@ -147,3 +153,7 @@ def sync_if(frequency, default='Daily'):
 		from erpnext_biotrack.biotrackthc import sync
 		sync()
 		call_hook_method('biotrack_synced')
+
+
+def is_dummy_password(pwd):
+	return ''.join(set(pwd)) == '*'

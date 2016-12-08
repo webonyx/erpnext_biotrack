@@ -1,33 +1,12 @@
-#### Go to Item list
-`Traceability System > Inventory >  Item`
+#### Make Flower Lot
 
 ---
 
-#### New Item
+#### Make Product
 
 ---
 
-#### Add Item quantity to a Warehouse
-
----
-
-#### Adjust Item quantity
-
----
-
-#### Move Item to another Warehouse
-
----
-
-#### Create Flower Lot
-
----
-
-#### Create Product
-
----
-
-#### Sample
+#### Make Sample
 
 Item groups are eligible for making sample:
  

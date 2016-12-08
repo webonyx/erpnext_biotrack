@@ -96,20 +96,22 @@ def get_client(license_number, username, password, is_training=0):
 	return BioTrackClient(license_number, username, password, is_training)
 
 
-def get_data(action, params=None, key=None):
-	result = post(action, data=params)
+def get_data(action, params=None, key=None, client=None):
+	result = post(action, data=params, client=client)
 	if key and key in result:
 		return result[key]
 
 	return result
 
 
-def post(action, data):
+def post(action, data, client=None):
+
 	settings = frappe.get_doc("BioTrack Settings")
 	if not settings.is_enabled():
 		raise BioTrackClientError('BioTrackTHC integration is not enabled')
 
-	client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
+	if not client:
+		client = get_client(settings.license_number, settings.username, settings.get_password(), settings.is_training)
 
 	def try_from_cache():
 		filename = action + '.json'

@@ -204,5 +204,5 @@ def normalize(data):
 	return normalized
 
 
-def get_biotrack_inventories(active=1):
-	return get_data("sync_inventory", {"active": active}, 'inventory')
+def get_biotrack_inventories(active=1, client=None):
+	return get_data("sync_inventory", {"active": active}, 'inventory', client=client)

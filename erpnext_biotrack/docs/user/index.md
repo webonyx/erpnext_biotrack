@@ -1,3 +1,3 @@
-# User Manual
+# Traceability User Manual
 
 {index}

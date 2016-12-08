@@ -3,7 +3,7 @@
 
 frappe.ui.form.on('BioTrack Settings', {
     refresh: function (frm) {
-        frm.events.toggle_location(frm);
+        toggle_location(frm);
 
         if (frm.doc.username) {
             if (frm.doc.synchronization == 'All' || frm.doc.synchronization == 'Down') {
@@ -32,18 +32,22 @@ frappe.ui.form.on('BioTrack Settings', {
             .appendTo(cur_frm.page.inner_toolbar);
     },
 
-    synchronization: function (frm) {
-        frm.events.toggle_location(frm);
-    },
+    synchronization: toggle_location,
+    license_number: toggle_location,
+    username: toggle_location,
+    password: toggle_location,
+});
 
-    toggle_location: function (frm) {
-        var needLocation = (frm.doc.synchronization == 'All' || frm.doc.synchronization == 'Up');
+function toggle_location(frm) {
+    var needLocation = (frm.doc.synchronization == 'All' || frm.doc.synchronization == 'Up'),
+            detectAble = !!(needLocation && frm.doc.license_number && frm.doc.username && frm.doc.password);
 
         frm.toggle_reqd("location", needLocation);
         frm.toggle_display("location", needLocation);
-        frm.toggle_display("detect_location", needLocation && frm.doc.license_number && frm.doc.username && frm.doc.password);
-    }
-});
+        frm.toggle_display("detect_location", needLocation);
+
+        frm.get_field('detect_location').$input.attr('disabled', !detectAble);
+}
 
 cur_frm.cscript.detect_location = function () {
     var dialog = new frappe.ui.Dialog({
@@ -61,6 +65,12 @@ cur_frm.cscript.detect_location = function () {
 
     frappe.call({
         method: "erpnext_biotrack.biotrackthc.doctype.biotrack_settings.biotrack_settings.detect_locations",
+        args: {
+            license_number: cur_frm.doc.license_number,
+            username: cur_frm.doc.username,
+            password: cur_frm.doc.password,
+            is_training: cur_frm.doc.is_training
+        },
         callback: function (r) {
             var location_list = dialog.get_field('location_list');
             location_list.df.options = r.message.locations;
