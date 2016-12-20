@@ -35,18 +35,20 @@ frappe.ui.form.on('BioTrack Settings', {
     synchronization: toggle_location,
     license_number: toggle_location,
     username: toggle_location,
-    password: toggle_location,
+    password: toggle_location
 });
 
 function toggle_location(frm) {
     var needLocation = (frm.doc.synchronization == 'All' || frm.doc.synchronization == 'Up'),
-            detectAble = !!(needLocation && frm.doc.license_number && frm.doc.username && frm.doc.password);
+        detectAble = !!(needLocation && frm.doc.license_number && frm.doc.username && frm.doc.password);
 
-        frm.toggle_reqd("location", needLocation);
-        frm.toggle_display("location", needLocation);
-        frm.toggle_display("detect_location", needLocation);
+    frm.toggle_reqd("location", needLocation);
+    frm.toggle_display("location", needLocation);
+    frm.toggle_display("detect_location", needLocation);
 
+    if (needLocation) {
         frm.get_field('detect_location').$input.attr('disabled', !detectAble);
+    }
 }
 
 cur_frm.cscript.detect_location = function () {
