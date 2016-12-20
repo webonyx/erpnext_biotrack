@@ -374,7 +374,7 @@ $.extend(erpnext_biotrack.plant, {
             fields: fields
         });
 
-        dialog.set_primary_action(__('Move'), function () {
+        dialog.set_primary_action(__('Convert'), function () {
             frappe.call({
                 doc: doc,
                 method: 'convert_to_inventory',

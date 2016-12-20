@@ -125,10 +125,7 @@ def after_harvest(plant, method, items, flower, other_material=None, waste=None,
 	})
 
 	map_item_derivatives(items, res.get("derivatives", []))
-
-	plant.set("bio_transaction_id", res.get("transactionid"))
-	plant.flags.ignore_validate_update_after_submit = True
-	plant.save()
+	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
 def before_harvest_undo(plant, method):
 	if not is_bio_plant(plant):
@@ -146,9 +143,7 @@ def before_harvest_undo(plant, method):
 		# ignore error
 		pass
 
-	plant.set("bio_transaction_id", None)
-	plant.flags.ignore_validate_update_after_submit = True
-	plant.save()
+	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", None)
 
 
 def after_cure(plant, method, items, flower, other_material=None, waste=None, additional_collection=None):
@@ -163,7 +158,7 @@ def after_cure(plant, method, items, flower, other_material=None, waste=None, ad
 	})
 
 	map_item_derivatives(items, res.get("derivatives", []))
-	frappe.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
+	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
 def after_convert_to_inventory(plant, method, item):
 	if not is_bio_plant(plant):
@@ -173,8 +168,8 @@ def after_convert_to_inventory(plant, method, item):
 		"barcodeid": plant.bio_barcode
 	})
 
-	frappe.set_value("Item", item.name, "bio_barcode", plant.bio_barcode)
-	frappe.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
+	frappe.db.set_value("Item", item.name, "bio_barcode", plant.bio_barcode)
+	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
 def make_weights_data(flower, other_material=None, waste=None):
 	amount_map = {
