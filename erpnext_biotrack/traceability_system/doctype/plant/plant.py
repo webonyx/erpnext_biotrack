@@ -3,16 +3,16 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe, datetime
+import frappe
 from erpnext.stock.utils import get_stock_balance
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
-from erpnext_biotrack.item_utils import get_item_values, make_item, generate_item_code
+from erpnext_biotrack.item_utils import make_item, generate_item_code
 from frappe.desk.reportview import build_match_conditions
+from frappe.utils import call_hook_method
 from frappe.utils.data import cint, now, flt, add_to_date
 from frappe.model.document import Document
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
-from frappe.utils.background_jobs import enqueue
 
 removal_reasons = {
 	0: 'Other',
@@ -108,6 +108,11 @@ class Plant(Document):
 				ste.cancel()
 				ste.delete()
 			item.delete()
+
+	def move_to(self, plant_room):
+		self.plant_room = plant_room.name
+		self.flags.ignore_validate_update_after_submit = True
+		self.save()
 
 	@Document.whitelist
 	def cure(self, flower, other_material=None, waste=None, additional_collection=None):
@@ -304,6 +309,23 @@ def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 						 (", ".join(fields), searchfield, "%s", "%s", "%s", "%s", "%s", "%s"),
 						 ("%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, start, page_len))
 
+
+@frappe.whitelist()
+def move():
+	"""Plant moving api"""
+	import json
+
+	items = json.loads(frappe.form_dict.get('items'))
+	target = frappe.form_dict.get('target')
+	plant_room = frappe.get_doc("Plant Room", target)
+
+	plants = []
+	for name in items:
+		plant = frappe.get_doc("Plant", name)
+		plant.move_to(plant_room)
+		plants.append(plant)
+
+	call_hook_method("plant_events", None, "plant_move", plants=plants, plant_room=plant_room)
 
 def bulk_clone(name):
 	source_plant = frappe.get_doc("Plant", name)

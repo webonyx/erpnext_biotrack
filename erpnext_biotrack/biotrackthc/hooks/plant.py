@@ -8,14 +8,19 @@ def call_hook(plant, method, *args, **kwargs):
 	if not sync_up_enabled():
 		return
 
-	return getattr(sys.modules[__name__], method)(plant, method, *args, **kwargs)
+	if plant:
+		# doc events
+		return getattr(sys.modules[__name__], method)(plant, *args, **kwargs)
+	else:
+		# events with multiple plants
+		return getattr(sys.modules[__name__], method)(*args, **kwargs)
 
 
 def is_bio_plant(plant):
 	return cstr(plant.get("bio_barcode")) != ""
 
 
-def on_submit(plant, method):
+def on_submit(plant):
 	# only root plant get handled
 	if plant.flags.in_bulk:
 		return
@@ -43,7 +48,7 @@ def on_submit(plant, method):
 		doc.save()
 
 
-def on_cancel(plant, method):
+def on_cancel(plant):
 	"""Call plant_new_undo api"""
 	if not is_bio_plant(plant):
 		return
@@ -53,7 +58,7 @@ def on_cancel(plant, method):
 		"barcodeid": [plant.bio_barcode],
 	})
 
-def on_trash(plant, method):
+def on_trash(plant):
 	if not is_bio_plant(plant):
 		return
 
@@ -64,7 +69,25 @@ def on_trash(plant, method):
 	except Exception as e:
 		frappe.local.message_log.pop()
 
-def before_harvest_schedule(plant, method):
+def plant_move(plants, plant_room):
+	if not plant_room.external_id:
+		return
+
+	barcodeid = []
+	for plant in plants:
+		if is_bio_plant(plant):
+			barcodeid.append(plant.get("bio_barcode"))
+
+	if len(barcodeid):
+		try:
+			call("plant_move", {
+				"room": plant_room.external_id,
+				"barcodeid": barcodeid,
+			})
+		except Exception as e:
+			frappe.local.message_log.pop()
+
+def before_harvest_schedule(plant):
 	if not is_bio_plant(plant):
 		return
 
@@ -73,7 +96,7 @@ def before_harvest_schedule(plant, method):
 		"barcodeid": [plant.bio_barcode],
 	})
 
-def before_harvest_schedule_undo(plant, method):
+def before_harvest_schedule_undo(plant):
 	if not is_bio_plant(plant):
 		return
 
@@ -86,7 +109,7 @@ def before_harvest_schedule_undo(plant, method):
 		# ignore error
 		pass
 
-def before_destroy_schedule(plant, method, *args, **kwargs):
+def before_destroy_schedule(plant, *args, **kwargs):
 	if not is_bio_plant(plant):
 		return
 
@@ -100,7 +123,7 @@ def before_destroy_schedule(plant, method, *args, **kwargs):
 		"override": 1 if kwargs.get("override") else 0
 	})
 
-def before_destroy_schedule_undo(plant, method):
+def before_destroy_schedule_undo(plant):
 	if not is_bio_plant(plant):
 		return
 
@@ -113,7 +136,7 @@ def before_destroy_schedule_undo(plant, method):
 		# ignore error
 		pass
 
-def after_harvest(plant, method, items, flower, other_material=None, waste=None, additional_collection=None):
+def after_harvest(plant, items, flower, other_material=None, waste=None, additional_collection=None):
 	if not is_bio_plant(plant):
 		return
 
@@ -127,7 +150,7 @@ def after_harvest(plant, method, items, flower, other_material=None, waste=None,
 	map_item_derivatives(items, res.get("derivatives", []))
 	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
-def before_harvest_undo(plant, method):
+def before_harvest_undo(plant):
 	if not is_bio_plant(plant):
 		return
 
@@ -146,7 +169,7 @@ def before_harvest_undo(plant, method):
 	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", None)
 
 
-def after_cure(plant, method, items, flower, other_material=None, waste=None, additional_collection=None):
+def after_cure(plant, items, flower, other_material=None, waste=None, additional_collection=None):
 	if not is_bio_plant(plant):
 		return
 
@@ -160,7 +183,7 @@ def after_cure(plant, method, items, flower, other_material=None, waste=None, ad
 	map_item_derivatives(items, res.get("derivatives", []))
 	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
 
-def after_convert_to_inventory(plant, method, item):
+def after_convert_to_inventory(plant, item):
 	if not is_bio_plant(plant):
 		return
 

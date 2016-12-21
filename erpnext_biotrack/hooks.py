@@ -227,6 +227,10 @@ doc_events = {
 	}
 }
 
+plant_events = [
+	"erpnext_biotrack.biotrackthc.hooks.plant.call_hook"
+]
+
 # Scheduled Tasks
 # ---------------
 
