@@ -69,7 +69,7 @@ def on_trash(plant):
 	except Exception as e:
 		frappe.local.message_log.pop()
 
-def plant_move(plants, plant_room):
+def bulk_plant_move(plants, plant_room):
 	if not plant_room.external_id:
 		return
 
@@ -82,6 +82,21 @@ def plant_move(plants, plant_room):
 		try:
 			call("plant_move", {
 				"room": plant_room.external_id,
+				"barcodeid": barcodeid,
+			})
+		except Exception as e:
+			frappe.local.message_log.pop()
+
+
+def bulk_harvest_schedule(plants):
+	barcodeid = []
+	for plant in plants:
+		if is_bio_plant(plant):
+			barcodeid.append(plant.get("bio_barcode"))
+
+	if len(barcodeid):
+		try:
+			call("plant_harvest_schedule", {
 				"barcodeid": barcodeid,
 			})
 		except Exception as e:

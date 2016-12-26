@@ -11,6 +11,10 @@ def get_data():
                     "type": "doctype",
                     "name": "Plant",
                 },
+				{
+                    "type": "doctype",
+                    "name": "Plant Entry",
+                },
                 {
                     "type": "doctype",
                     "name": "Plant Room",

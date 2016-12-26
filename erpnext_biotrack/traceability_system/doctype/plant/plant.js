@@ -484,17 +484,12 @@ $.extend(erpnext_biotrack.plant, {
         );
     },
     harvest_schedule_undo: function (frm) {
-        frappe.confirm(
-            'Please confirm this action',
-            function () {
-                frappe.call({
-                    doc: frm.doc,
-                    method: 'harvest_schedule_undo',
-                    callback: function (data) {
-                        cur_frm.reload_doc();
-                    }
-                });
+        frappe.call({
+            doc: frm.doc,
+            method: 'harvest_schedule_undo',
+            callback: function (data) {
+                cur_frm.reload_doc();
             }
-        );
-    },
+        });
+    }
 });

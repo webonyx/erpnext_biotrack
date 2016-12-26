@@ -21,6 +21,7 @@ fixtures = [
 				"Item-is_lot_item",
 				"Item-parent_item",
 				"Item-plant",
+				"Item-plant_entry",
 				"Item-test_result",
 				"Item-sample_id",
 				"Item-is_marijuana_item",
@@ -147,7 +148,7 @@ doctype_list_js = {
 }
 
 standard_queries = {
-	"Plant": "erpnext_biotrack.traceability_system.doctype.plant.plant.get_plant_list"
+	# "Plant": "erpnext_biotrack.traceability_system.doctype.plant.plant.get_plant_list"
 }
 
 # Website user home page (by function)
@@ -224,7 +225,10 @@ doc_events = {
 		"after_harvest": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"before_harvest_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"after_cure": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-	}
+	},
+	"Plant Entry": {
+		"before_submit": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook"
+	},
 }
 
 plant_events = [

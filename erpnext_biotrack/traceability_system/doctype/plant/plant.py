@@ -3,6 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+import json
 import frappe
 from erpnext.stock.utils import get_stock_balance
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
@@ -88,8 +89,9 @@ class Plant(Document):
 
 	def collect_item(self, item_group, qty):
 		default_warehouse = get_default_warehouse()
+
 		return make_item(properties={
-			"item_name": item_group.item_group_name,
+			"item_name": " ".join([self.get("strain"), item_group.item_group_name]),
 			"item_code": generate_item_code(),
 			"item_group": item_group.name,
 			"default_warehouse": default_warehouse.name,
@@ -254,7 +256,9 @@ class Plant(Document):
 		if self.harvest_scheduled:
 			frappe.throw("Plant <strong>{}</strong> has been scheduled for harvesting.".format(self.name))
 
-		self.run_method("before_harvest_schedule")
+		if not self.flags.ignore_hooks:
+			self.run_method("before_harvest_schedule")
+
 		self.harvest_scheduled = 1
 		self.harvest_schedule_time = now()
 
@@ -313,8 +317,6 @@ def get_plant_list(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 def move():
 	"""Plant moving api"""
-	import json
-
 	items = json.loads(frappe.form_dict.get('items'))
 	target = frappe.form_dict.get('target')
 	plant_room = frappe.get_doc("Plant Room", target)
@@ -325,7 +327,22 @@ def move():
 		plant.move_to(plant_room)
 		plants.append(plant)
 
-	call_hook_method("plant_events", None, "plant_move", plants=plants, plant_room=plant_room)
+	call_hook_method("plant_events", None, "bulk_plant_move", plants=plants, plant_room=plant_room)\
+
+@frappe.whitelist()
+def harvest_schedule():
+	"""Plant moving api"""
+	items = json.loads(frappe.form_dict.get('items'))
+
+	plants = []
+	for name in items:
+		plant = frappe.get_doc("Plant", name)
+		if not plant.harvest_scheduled:
+			plant.flags.ignore_hooks = True
+			plant.harvest_schedule()
+			plants.append(plant)
+
+	call_hook_method("plant_events", None, "bulk_harvest_schedule", plants=plants)
 
 def bulk_clone(name):
 	source_plant = frappe.get_doc("Plant", name)
