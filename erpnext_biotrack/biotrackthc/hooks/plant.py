@@ -69,7 +69,7 @@ def on_trash(plant):
 	except Exception as e:
 		frappe.local.message_log.pop()
 
-def bulk_plant_move(plants, plant_room):
+def on_plant_move(plants, plant_room):
 	if not plant_room.external_id:
 		return
 
@@ -88,68 +88,60 @@ def bulk_plant_move(plants, plant_room):
 			frappe.local.message_log.pop()
 
 
-def bulk_harvest_schedule(plants):
+def on_harvest_schedule(plants, undo=False):
 	barcodeid = []
+	if not isinstance(plants, list):
+		plants = [plants]
+
 	for plant in plants:
 		if is_bio_plant(plant):
 			barcodeid.append(plant.get("bio_barcode"))
 
 	if len(barcodeid):
-		try:
+		# figure out err: # Barcode 9160883599199700 is no longer in a state where it can be harvested
+		if undo:
+			try:
+				call("plant_harvest_schedule_undo", {
+					"barcodeid": barcodeid,
+				})
+			except Exception as e:
+				# ignore error
+				frappe.local.message_log.pop()
+		else:
 			call("plant_harvest_schedule", {
 				"barcodeid": barcodeid,
 			})
-		except Exception as e:
-			frappe.local.message_log.pop()
 
-def before_harvest_schedule(plant):
-	if not is_bio_plant(plant):
-		return
+def on_destroy_schedule(plants, reason_type=None, reason=None, override=None, undo=False):
+	barcodeid = []
+	if not isinstance(plants, list):
+		plants = [plants]
 
-	# Barcode 9160883599199700 is no longer in a state where it can be harvested
-	call("plant_harvest_schedule", {
-		"barcodeid": [plant.bio_barcode],
-	})
+	for plant in plants:
+		if is_bio_plant(plant):
+			barcodeid.append(plant.get("bio_barcode"))
 
-def before_harvest_schedule_undo(plant):
-	if not is_bio_plant(plant):
-		return
+	if len(barcodeid):
+		if not undo and not reason_type:
+			frappe.throw("Reason type is required")
 
-	try:
-		call("plant_harvest_schedule_undo", {
-			"barcodeid": [plant.bio_barcode],
-		})
-	except Exception as e:
-		frappe.local.message_log.pop()
-		# ignore error
-		pass
+		if undo:
+			try:
+				call("plant_destroy_schedule_undo", {
+					"barcodeid": barcodeid,
+				})
+			except Exception as e:
+				frappe.local.message_log.pop()
+				# ignore error
+				pass
+		else:
+			call("plant_destroy_schedule", {
+				"barcodeid": barcodeid,
+				"reason_extended": reason_type,
+				"reason": reason,
+				"override": override or 0
+			})
 
-def before_destroy_schedule(plant, *args, **kwargs):
-	if not is_bio_plant(plant):
-		return
-
-	if not "reason_key" in kwargs:
-		frappe.throw('"reason_key" is missing')
-
-	call("plant_destroy_schedule", {
-		"barcodeid": [plant.bio_barcode],
-		"reason_extended": kwargs.get("reason_key"),
-		"reason": kwargs.get("reason"),
-		"override": 1 if kwargs.get("override") else 0
-	})
-
-def before_destroy_schedule_undo(plant):
-	if not is_bio_plant(plant):
-		return
-
-	try:
-		call("plant_destroy_schedule_undo", {
-			"barcodeid": [plant.bio_barcode],
-		})
-	except Exception as e:
-		frappe.local.message_log.pop()
-		# ignore error
-		pass
 
 def after_harvest(plant, items, flower, other_material=None, waste=None, additional_collection=None):
 	if not is_bio_plant(plant):

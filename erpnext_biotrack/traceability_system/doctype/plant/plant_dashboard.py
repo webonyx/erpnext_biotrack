@@ -4,16 +4,14 @@ def get_data():
 	return {
 		'non_standard_fieldnames': {
 			'Stock Entry': 'plant',
+			'Plant Entry': 'plant_code',
 			'Item': 'plant',
 		},
 		'transactions': [
-			# {
-			# 	'label': _('Traceability'),
-			# 	'items': ['Item']
-			# },
+
 			{
 				'label': _('Traceability'),
-				'items': ['Stock Entry', 'Item']
+				'items': ['Stock Entry', 'Plant Entry', 'Item']
 			}
 		]
 	}

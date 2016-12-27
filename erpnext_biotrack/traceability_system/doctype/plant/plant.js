@@ -225,18 +225,31 @@ $.extend(erpnext_biotrack.plant, {
 
         if (!frm.doc.destroy_scheduled) {
             if (frm.doc.state == 'Growing') {
+                var harvest_scheduled = frm.get_field('harvest_scheduled'),
+                    $btnUndo = harvest_scheduled.$wrapper.find('.btn-undo');
+
                 if (!frm.doc.harvest_scheduled) {
-                    frm.page.add_action_item(__('Schedule for Harvesting'), function () {
+                    $btnUndo.remove()
+                    frm.page.add_action_item(__('Harvest Schedule'), function () {
                         erpnext_biotrack.plant.harvest_schedule(frm);
                     });
                 } else {
+                    if (!$btnUndo.length) {
+                        harvest_scheduled.toggle_description(false);
+                        var $undo = $('<button class="btn btn-default btn-xs btn-undo">' + __('Undo') + '</button>')
+                            .on('click', function () {
+                                erpnext_biotrack.plant.harvest_schedule_undo(frm);
+                            });
+                        harvest_scheduled.$wrapper.find('.checkbox').append($undo);
+                    }
+
                     frm.page.add_action_item(__('Harvest'), function () {
                         erpnext_biotrack.plant.harvest_cure(frm);
                     });
                 }
 
 
-                frm.page.add_action_item(__('Convert to Mature Plant'), function () {
+                frm.page.add_action_item(__('Move to Warehouse'), function () {
                     erpnext_biotrack.plant.move_to_inventory(frm);
                 })
             } else if (frm.doc.state == 'Drying') {
@@ -245,25 +258,12 @@ $.extend(erpnext_biotrack.plant, {
                 });
             }
 
-            if (frm.doc.harvest_scheduled) {
-                if (frm.doc.state == 'Growing') {
-                    frm.page.add_action_item(__("Undo Scheduled Harvest"), function () {
-                        erpnext_biotrack.plant.harvest_schedule_undo(frm);
-                    })
-                }
-            } else {
-
-                frm.page.add_action_item(__("Schedule for Destruction"), function () {
-                    erpnext_biotrack.plant.destroy_schedule(frm);
-                });
-            }
-
         } else {
-            frm.add_custom_button('Undo Destruction Notification', function () {
+            frm.add_custom_button(__('Destroy Schedule Undo'), function () {
                 erpnext_biotrack.plant.destroy_schedule_undo(frm);
             });
 
-            frm.add_custom_button('Override Destruction Notification', function () {
+            frm.add_custom_button(__('Destroy Schedule Override'), function () {
                 erpnext_biotrack.plant.destroy_schedule(frm);
             });
         }
@@ -283,6 +283,7 @@ $.extend(erpnext_biotrack.plant, {
             method: 'harvest_schedule',
             callback: function (data) {
                 cur_frm.reload_doc();
+                frappe.utils.play_sound("submit");
             }
         });
     },
@@ -332,6 +333,7 @@ $.extend(erpnext_biotrack.plant, {
             fields: fields,
             onhide: function () {
                 cur_frm.reload_doc();
+                frappe.utils.play_sound("submit");
             }
         });
 
@@ -370,11 +372,11 @@ $.extend(erpnext_biotrack.plant, {
             dialog;
 
         dialog = new frappe.ui.Dialog({
-            title: __('Convert to Mature Plant'),
+            title: __('Move To Warehouse'),
             fields: fields
         });
 
-        dialog.set_primary_action(__('Convert'), function () {
+        dialog.set_primary_action(__('Move'), function () {
             frappe.call({
                 doc: doc,
                 method: 'convert_to_inventory',
@@ -391,7 +393,7 @@ $.extend(erpnext_biotrack.plant, {
         var doc = frm.doc,
             fields = [
                 {
-                    fieldname: 'reason', label: __('Please choose a reason for scheduling this destruction'),
+                    fieldname: 'reason', label: __('Choose a reason for scheduling this destruction'),
                     fieldtype: 'Select', options: [
                     'Other',
                     'Waste',
@@ -460,6 +462,7 @@ $.extend(erpnext_biotrack.plant, {
                 callback: function (data) {
                     dialog.hide();
                     cur_frm.reload_doc();
+                    frappe.utils.play_sound("submit");
                 }
             });
         });
@@ -470,24 +473,24 @@ $.extend(erpnext_biotrack.plant, {
     },
 
     destroy_schedule_undo: function (frm) {
-        frappe.confirm(
-            'You are going to cancel destruction notification?',
-            function () {
-                frappe.call({
-                    doc: frm.doc,
-                    method: 'destroy_schedule_undo',
-                    callback: function (data) {
-                        cur_frm.reload_doc();
-                    }
-                });
+        frappe.call({
+            doc: frm.doc,
+            method: 'destroy_schedule_undo',
+            callback: function (data) {
+                frappe.utils.play_sound("submit");
+                cur_frm.reload_doc();
             }
-        );
+        });
     },
     harvest_schedule_undo: function (frm) {
+        var $btn = frm.get_field('harvest_scheduled').$wrapper.find('.btn-undo')
+        $btn.attr('disabled', true);
         frappe.call({
             doc: frm.doc,
             method: 'harvest_schedule_undo',
             callback: function (data) {
+                frappe.utils.play_sound("submit");
+                $btn.remove();
                 cur_frm.reload_doc();
             }
         });

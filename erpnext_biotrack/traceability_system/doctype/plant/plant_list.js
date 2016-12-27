@@ -1,12 +1,14 @@
 frappe.listview_settings['Plant'] = {
-    add_fields: ['disabled', 'posting_date', 'harvest_scheduled', 'destroy_scheduled'],
+    add_fields: ['disabled', 'posting_date', 'harvest_scheduled', 'destroy_scheduled', 'state'],
     filters: [["disabled", "=", "No"]],
     get_indicator: function (doc) {
         if (doc.disabled) {
             return [__("Destroyed"), "grey", "disabled,=,Yes"];
         } else if (doc.destroy_scheduled) {
             return [__("Destroy Scheduled"), "orange", "destroy_scheduled,=,Yes"];
-        } else if (doc.harvest_scheduled) {
+        } else if (doc.state === 'Drying') {
+            return [__("Cure Ready"), "orange", "state,=,Drying"];
+        }  else if (doc.harvest_scheduled) {
             return [__("Harvest Ready"), "orange", "harvest_scheduled,=,Yes"];
         } else {
             return [this.calculate_time_in_room(doc.posting_date), "green", "disabled,=,No"];
@@ -53,7 +55,7 @@ frappe.listview_settings['Plant'] = {
 
         list.get_plants_to_destroy = function () {
             return this.get_plants(function (d) {
-                return d.docstatus === 1 && d.disabled === 0 && d.destroy_scheduled === 0;
+                return d.docstatus === 1 && d.disabled === 0;
             });
         }
 
@@ -128,7 +130,8 @@ frappe.listview_settings['Plant'] = {
             return '<ol>' + rows.join('') + '</ol>'
         }
 
-        var i = 1; rows = plants.map(function (p) {
+        var i = 1;
+        rows = plants.map(function (p) {
             return '<div class="grid-row" data-idx="1">' +
                 '<div class="row">' +
                 '<div class="row-index col col-xs-1">' + i++ + '</div>' +
@@ -280,28 +283,72 @@ frappe.listview_settings['Plant'] = {
             return
         }
 
-        var html = frappe.listview_settings.Plant.build_preview_table(checked_items, true);
         var dialog = new frappe.ui.Dialog({
-            title: __('Destroy Schedule'),
+            title: __('{0} Plants selected', [checked_items.length]),
             fields: [
                 {
-                    fieldname: 'plants',
-                    fieldtype: 'HTML', options: html
-
+                    fieldname: 'description', label: __('Reason Detail'),
+                    fieldtype: 'HTML', options: __('This will initiate the 72 hour waiting period.')
+                },
+                {
+                    fieldname: 'reason', label: __('Please choose a reason for scheduling this destruction'),
+                    fieldtype: 'Select', options: [
+                    'Other',
+                    'Waste',
+                    'Unhealthy or Died',
+                    'Infestation',
+                    'Product Return',
+                    'Mistake',
+                    'Spoilage',
+                    'Quality Control'
+                ]
+                },
+                {
+                    fieldname: 'reason_txt', label: __('Reason Detail'),
+                    fieldtype: 'Text'
+                },
+                {
+                    fieldname: 'override', label: __('Override Scheduled Plants'),
+                    fieldtype: 'Check'
                 }
             ]
         });
 
         dialog.set_primary_action(__('Schedule'), function () {
+            var values = dialog.get_values();
+            if (!values) {
+                return;
+            }
+
+            if (!values.reason) {
+                frappe.msgprint({
+                    message: __('Please specify a reason'),
+                    indicator: 'red',
+                    title: 'Error'
+                });
+
+                return;
+            }
+
+            if (values.reason == 'Other' && !values.reason_txt) {
+                frappe.msgprint({
+                    message: __('Please input a reason detail'),
+                    indicator: 'red',
+                    title: 'Error'
+                });
+
+                return;
+            }
+
+            values['items'] = $.map(checked_items, function (d, i) {
+                return d.name
+            })
+
             list.set_working(true);
             frappe.call({
                 method: "erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_schedule",
                 freeze: true,
-                args: {
-                    items: $.map(checked_items, function (d, i) {
-                        return d.name
-                    })
-                },
+                args: values,
                 callback: function (r) {
                     dialog.hide();
                     frappe.listview_settings.Plant.refresh_list(list);

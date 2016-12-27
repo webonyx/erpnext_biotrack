@@ -227,11 +227,13 @@ class Plant(Document):
 	def destroy_schedule(self, reason, reason_txt=None, override=None):
 		if self.destroy_scheduled and not override:
 			frappe.throw(
-				"Plant <strong>{}</strong> has already been scheduled for destruction. Check <strong>`Reset Scheduled time`</strong> to reschedule.".format(
+				"Plant <strong>{}</strong> has already been scheduled for destruction.".format(
 					self.name))
 
-		reason_key = removal_reasons.keys()[removal_reasons.values().index(reason)]
-		self.run_method("before_destroy_schedule", reason_key=reason_key, reason=reason_txt, override=override)
+		reason_type = removal_reasons.keys()[removal_reasons.values().index(reason)]
+
+		if not self.flags.ignore_hooks:
+			self.run_method("on_destroy_schedule", reason_type=reason_type, reason=reason_txt, override=override)
 
 		self.destroy_scheduled = 1
 		self.remove_reason = reason_txt or reason
@@ -244,7 +246,7 @@ class Plant(Document):
 		if not self.destroy_scheduled:
 			return
 
-		self.run_method("before_destroy_schedule_undo")
+		self.run_method("on_destroy_schedule", undo=True)
 		self.flags.ignore_validate_update_after_submit = True
 		self.destroy_scheduled = 0
 		self.remove_reason = None
@@ -254,10 +256,10 @@ class Plant(Document):
 	@Document.whitelist
 	def harvest_schedule(self):
 		if self.harvest_scheduled:
-			frappe.throw("Plant <strong>{}</strong> has been scheduled for harvesting.".format(self.name))
+			frappe.throw("Plant <strong>{}</strong> has been scheduled for harvest.".format(self.name))
 
 		if not self.flags.ignore_hooks:
-			self.run_method("before_harvest_schedule")
+			self.run_method("on_harvest_schedule")
 
 		self.harvest_scheduled = 1
 		self.harvest_schedule_time = now()
@@ -273,7 +275,7 @@ class Plant(Document):
 		if self.state == "Drying":
 			frappe.throw("Plant <strong>{}</strong> has already on harvesting process.".format(self.name))
 
-		self.run_method("before_harvest_schedule_undo")
+		self.run_method("on_harvest_schedule", undo=True)
 
 		self.harvest_scheduled = 0
 		self.harvest_schedule_time = None
@@ -327,11 +329,10 @@ def move():
 		plant.move_to(plant_room)
 		plants.append(plant)
 
-	call_hook_method("plant_events", None, "bulk_plant_move", plants=plants, plant_room=plant_room)\
+	call_hook_method("plant_events", None, "on_plant_move", plants=plants, plant_room=plant_room)\
 
 @frappe.whitelist()
 def harvest_schedule():
-	"""Plant moving api"""
 	items = json.loads(frappe.form_dict.get('items'))
 
 	plants = []
@@ -342,7 +343,24 @@ def harvest_schedule():
 			plant.harvest_schedule()
 			plants.append(plant)
 
-	call_hook_method("plant_events", None, "bulk_harvest_schedule", plants=plants)
+	call_hook_method("plant_events", None, "on_harvest_schedule", plants=plants)
+
+@frappe.whitelist()
+def destroy_schedule():
+	items = json.loads(frappe.form_dict.get('items'))
+	reason = frappe.form_dict.get('reason')
+	reason_txt = frappe.form_dict.get('reason_txt')
+	override = frappe.form_dict.get('override')
+	reason_type = removal_reasons.keys()[removal_reasons.values().index(reason)]
+
+	plants = []
+	for name in items:
+		plant = frappe.get_doc("Plant", name)
+		plant.flags.ignore_hooks = True
+		plant.destroy_schedule(reason=reason, reason_txt=reason_txt, override=override)
+		plants.append(plant)
+
+	call_hook_method("plant_events", None, "on_destroy_schedule", plants=plants, reason_type=reason_type, reason=reason_txt, override=override)
 
 def bulk_clone(name):
 	source_plant = frappe.get_doc("Plant", name)
