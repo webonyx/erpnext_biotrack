@@ -88,6 +88,12 @@ fixtures = [
 			)]
 		]
 	},
+	{
+		"doctype": "Role",
+		"filters": [
+			["name", "in", ("Traceability User", "Traceability Manager")]
+		]
+	}
 ]
 
 error_report_email = "viet@webonyx.com"

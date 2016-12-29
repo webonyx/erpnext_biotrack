@@ -25,3 +25,4 @@ execute:frappe.db.sql("""UPDATE `tabDesktop Icon` set label = 'Traceability' WHE
 execute:frappe.db.sql("""DELETE FROM `tabDesktop Icon` WHERE module_name = 'Plant'""")
 execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_items")
 execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_lot_sec")
+erpnext_biotrack.patches.fix_roles
