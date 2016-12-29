@@ -218,14 +218,11 @@ doc_events = {
 		"on_cancel": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"on_trash": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"on_harvest_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"on_destroy_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"after_convert_to_inventory": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"after_harvest": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"before_harvest_undo": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"after_cure": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"on_destroy_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook"
 	},
 	"Plant Entry": {
-		"before_submit": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook"
+		"before_submit": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook",
+		"before_cancel": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook"
 	},
 }
 

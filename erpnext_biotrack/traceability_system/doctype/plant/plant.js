@@ -288,106 +288,26 @@ $.extend(erpnext_biotrack.plant, {
         });
     },
     harvest_cure: function (frm) {
-        var doc = frm.doc,
-            fields = [
-                {
-                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, 'default': doc.name
-                },
-                {
-                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
-                },
-                {
-                    fieldname: 'uom',
-                    label: 'UOM',
-                    fieldtype: 'Select',
-                    read_only: 1,
-                    options: ['Gram'],
-                    'default': 'Gram'
-                },
-                {
-                    fieldname: 'flower',
-                    label: __('Flower {0} Weight', [doc.state == 'Growing' ? 'Wet' : 'Dry']),
-                    fieldtype: 'Float',
-                    reqd: 1
-                },
-                {
-                    fieldname: 'other_material',
-                    label: 'Other Plant Material Weight',
-                    fieldtype: 'Float',
-                    'default': 0.00
-                },
-                {
-                    fieldname: 'waste', label: 'Waste Weight', fieldtype: 'Float', 'default': 0.00
-                }
-            ],
-            dialog;
+        frappe.model.with_doctype('Plant Entry', function () {
+            var doc = frappe.model.get_new_doc('Plant Entry')
+            doc.purpose = (frm.doc.state === 'Growing' ? 'Harvest' : 'Cure')
+            var row = frappe.model.add_child(doc, 'plants')
+                row.plant_code = frm.doc.name
+                row.strain = frm.doc.strain
 
-        fields.push(
-            {
-                fieldname: 'additional_collection', label: 'Additional Collections', fieldtype: 'Check'
-            }
-        );
-
-        dialog = new frappe.ui.Dialog({
-            title: __((doc.state == 'Growing' ? 'Harvest' : 'Cure') + ' Plant'),
-            fields: fields,
-            onhide: function () {
-                cur_frm.reload_doc();
-                frappe.utils.play_sound("submit");
-            }
-        });
-
-        dialog.set_primary_action(__('Submit'), function () {
-            var values = dialog.get_values();
-            if (!values) {
-                return;
-            }
-
-            delete values['name'];
-            delete values['strain'];
-            delete values['uom']; // discard and use Gram by default
-
-            frappe.call({
-                doc: doc,
-                method: (doc.state == 'Growing' ? 'harvest' : 'cure'),
-                args: values,
-                callback: function (data) {
-                    dialog.hide();
-                }
-            });
-        });
-
-        dialog.show();
+            frappe.set_route('Form', doc.doctype, doc.name)
+        })
     },
     move_to_inventory: function (frm) {
-        var doc = frm.doc,
-            fields = [
-                {
-                    fieldname: 'name', label: 'Plant Identifier', fieldtype: 'Data', read_only: 1, 'default': doc.name
-                },
-                {
-                    fieldname: 'strain', label: 'Strain', fieldtype: 'Data', read_only: 1, 'default': doc.strain
-                }
-            ],
-            dialog;
+        frappe.model.with_doctype('Plant Entry', function () {
+            var doc = frappe.model.get_new_doc('Plant Entry')
+            doc.purpose = 'Convert';
+            var row = frappe.model.add_child(doc, 'plants')
+                row.plant_code = frm.doc.name
+                row.strain = frm.doc.strain
 
-        dialog = new frappe.ui.Dialog({
-            title: __('Move To Warehouse'),
-            fields: fields
-        });
-
-        dialog.set_primary_action(__('Move'), function () {
-            frappe.call({
-                doc: doc,
-                method: 'convert_to_inventory',
-                callback: function (data) {
-                    dialog.hide();
-                    frappe.set_route('List', 'Plant');
-                }
-            });
-        });
-
-        dialog.show();
+            frappe.set_route('Form', doc.doctype, doc.name)
+        })
     },
     destroy_schedule: function (frm) {
         var doc = frm.doc,

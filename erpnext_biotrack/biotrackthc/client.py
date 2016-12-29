@@ -7,13 +7,6 @@ from frappe.integration_broker.doctype.integration_service.integration_service i
 class BioTrackClientError(frappe.ValidationError):
 	http_status_code = 500
 
-	def __init__(self, *args, **kwargs):
-		if len(args) and isinstance(args[0], basestring):
-			frappe.local.message_log.append(args[0])
-
-		super(frappe.ValidationError, self).__init__(*args, **kwargs)
-
-
 class BioTrackEmptyDataError(BioTrackClientError): pass
 
 
@@ -55,7 +48,13 @@ class BioTrackClient:
 		integration_req.integration_type = "Remote"
 
 		request = get_request_session()
-		response = request.post(self.__API_URL__, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+
+		# catch network errors
+		try:
+			response = request.post(self.__API_URL__, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+		except Exception as e:
+			raise BioTrackClientError(e.message)
+
 		response.raise_for_status()
 		result = response.json()
 

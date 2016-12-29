@@ -3,10 +3,38 @@
 frappe.provide("traceability.cultivation");
 
 traceability.cultivation.PlantEntry = frappe.ui.form.Controller.extend({
+    onload: function () {
+    },
     refresh: function () {
         erpnext.toggle_naming_series();
         // this.toggle_related_fields(this.frm.doc);
         this.frm.toggle_display("company", false);
+        this._toggle_related_fields()
+    },
+    validate: function (doc) {
+        if (doc.purpose !== 'Convert' && !doc.flower) {
+            msgprint(__("Please set Flower weight"));
+            validated = false;
+        }
+
+        var cl = doc.plants || [];
+        if (!cl.length) {
+            msgprint(__("Plant table can not be blank"));
+            validated = false;
+        }
+
+        var ple = doc.plants[0];
+        var mixedStrain = $.grep(doc.plants, function (p) {
+            return p.strain !== ple.strain
+        })
+
+        if (mixedStrain.length) {
+            msgprint(__("Plants must be same Strain"));
+            validated = false;
+        }
+    },
+    purpose: function () {
+        this._toggle_related_fields()
     },
     get_plants: function () {
         var me = this, fields = [
@@ -48,45 +76,15 @@ traceability.cultivation.PlantEntry = frappe.ui.form.Controller.extend({
             });
         });
         d.show();
-
-        // return this.frm.call({
-        //     doc: me.frm.doc,
-        //     method: "get_plants",
-        //     callback: function (r) {
-        //         if (!r.exc) refresh_field("plants");
-        //     }
-        // });
     },
+    _toggle_related_fields: function () {
+        var convert = this.frm.doc.purpose === 'Convert';
+        this.frm.toggle_display("details_section", !convert);
+        this.frm.toggle_reqd("flower", !convert);
+    }
 });
 
 cur_frm.script_manager.make(traceability.cultivation.PlantEntry);
-
-cur_frm.cscript.validate = function (doc, cdt, cdn) {
-    cur_frm.cscript.validate_plants(doc);
-}
-
-cur_frm.cscript.validate_plants = function (doc) {
-    if (!doc.flower) {
-        msgprint(__("Please set Flower weight"));
-        validated = false;
-    }
-
-    var cl = doc.plants || [];
-    if (!cl.length) {
-        msgprint(__("Plant table can not be blank"));
-        validated = false;
-    }
-
-    var ple = doc.plants[0];
-    var mixedStrain = $.grep(doc.plants, function (p) {
-        return p.strain !== ple.strain
-    })
-
-    if (mixedStrain.length) {
-        msgprint(__("Plants must be same Strain"));
-        validated = false;
-    }
-}
 
 frappe.ui.form.on('Plant Entry Detail', {
     plant_code: function (doc, cdt, cdn) {
@@ -112,7 +110,22 @@ frappe.ui.form.on('Plant Entry Detail', {
         }
     }
 })
+
 frappe.ui.form.on('Plant Entry', {
+    onload: function (frm) {
+        if (frm.doc.__islocal) {
+            if (!frm.doc.warehouse) {
+                frappe.call({
+                    method: "erpnext_biotrack.traceability.doctype.traceability_settings.traceability_settings.get_default_warehouse",
+                    callback: function (r) {
+                        if (!r.exe) {
+                            frm.set_value("target_warehouse", r.message.cultivation_warehouse);
+                        }
+                    }
+                });
+            }
+        }
+    },
     refresh: function (frm) {
 
     }

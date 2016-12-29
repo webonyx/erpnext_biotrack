@@ -1,6 +1,7 @@
 import sys
 import frappe
 from erpnext_biotrack.biotrackthc import sync_up_enabled, get_location, call
+from erpnext_biotrack.biotrackthc.client import BioTrackClientError
 from frappe.utils.data import cstr, cint, flt
 
 
@@ -12,7 +13,7 @@ def call_hook(plant, method, *args, **kwargs):
 		# doc events
 		return getattr(sys.modules[__name__], method)(plant, *args, **kwargs)
 	else:
-		# events with multiple plants
+		# multiple plants events
 		return getattr(sys.modules[__name__], method)(*args, **kwargs)
 
 
@@ -50,7 +51,7 @@ def on_submit(plant):
 
 def on_cancel(plant):
 	"""Call plant_new_undo api"""
-	if not is_bio_plant(plant):
+	if not is_bio_plant(plant) or plant.state != "Growing":
 		return
 
 	# Barcode 9160883599199700 is no longer in a state where it can be un-done.
@@ -66,8 +67,8 @@ def on_trash(plant):
 		call("plant_destroy", {
 			"barcodeid": [plant.bio_barcode],
 		})
-	except Exception as e:
-		frappe.local.message_log.pop()
+	except BioTrackClientError as e:
+		frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
 
 def on_plant_move(plants, plant_room):
 	if not plant_room.external_id:
@@ -84,8 +85,8 @@ def on_plant_move(plants, plant_room):
 				"room": plant_room.external_id,
 				"barcodeid": barcodeid,
 			})
-		except Exception as e:
-			frappe.local.message_log.pop()
+		except BioTrackClientError as e:
+			frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
 
 
 def on_harvest_schedule(plants, undo=False):
@@ -104,13 +105,17 @@ def on_harvest_schedule(plants, undo=False):
 				call("plant_harvest_schedule_undo", {
 					"barcodeid": barcodeid,
 				})
-			except Exception as e:
+			except BioTrackClientError as e:
 				# ignore error
-				frappe.local.message_log.pop()
+				pass
 		else:
-			call("plant_harvest_schedule", {
-				"barcodeid": barcodeid,
-			})
+			try:
+				call("plant_harvest_schedule", {
+					"barcodeid": barcodeid,
+				})
+			except BioTrackClientError as e:
+				frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
+
 
 def on_destroy_schedule(plants, reason_type=None, reason=None, override=None, undo=False):
 	barcodeid = []
@@ -125,81 +130,21 @@ def on_destroy_schedule(plants, reason_type=None, reason=None, override=None, un
 		if not undo and not reason_type:
 			frappe.throw("Reason type is required")
 
-		if undo:
-			try:
+		try:
+			if undo:
 				call("plant_destroy_schedule_undo", {
 					"barcodeid": barcodeid,
 				})
-			except Exception as e:
-				frappe.local.message_log.pop()
-				# ignore error
-				pass
-		else:
-			call("plant_destroy_schedule", {
-				"barcodeid": barcodeid,
-				"reason_extended": reason_type,
-				"reason": reason,
-				"override": override or 0
-			})
-
-
-def after_harvest(plant, items, flower, other_material=None, waste=None, additional_collection=None):
-	if not is_bio_plant(plant):
-		return
-
-	res = call("plant_harvest", {
-		"barcodeid": plant.bio_barcode,
-		"location": get_location(),
-		"weights": make_weights_data(flower, other_material, waste),
-		"collectadditional": cint(additional_collection),
-	})
-
-	map_item_derivatives(items, res.get("derivatives", []))
-	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
-
-def before_harvest_undo(plant):
-	if not is_bio_plant(plant):
-		return
-
-	if not plant.get("bio_transaction_id"):
-		return
-
-	try:
-		call("plant_harvest_undo", {
-			"transactionid": plant.get("bio_transaction_id"),
-		})
-	except Exception as e:
-		frappe.local.message_log.pop()
-		# ignore error
-		pass
-
-	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", None)
-
-
-def after_cure(plant, items, flower, other_material=None, waste=None, additional_collection=None):
-	if not is_bio_plant(plant):
-		return
-
-	res = call("plant_cure", {
-		"barcodeid": plant.bio_barcode,
-		"location": get_location(),
-		"weights": make_weights_data(flower, other_material, waste),
-		"collectadditional": cint(additional_collection),
-	})
-
-	map_item_derivatives(items, res.get("derivatives", []))
-	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
-
-def after_convert_to_inventory(plant, item):
-	if not is_bio_plant(plant):
-		return
-
-	res = call("plant_convert_to_inventory", {
-		"barcodeid": plant.bio_barcode
-	})
-
-	frappe.db.set_value("Item", item.name, "bio_barcode", plant.bio_barcode)
-	frappe.db.set_value("Plant", plant.name, "bio_transaction_id", res.get("transactionid"))
+			else:
+				call("plant_destroy_schedule", {
+					"barcodeid": barcodeid,
+					"reason_extended": reason_type,
+					"reason": reason,
+					"override": override or 0
+				})
+		except BioTrackClientError as e:
+			# ignore error
+			pass
 
 def make_weights_data(flower, other_material=None, waste=None):
 	amount_map = {
@@ -235,7 +180,10 @@ def make_weights_data(flower, other_material=None, waste=None):
 def map_item_derivatives(items, derivatives):
 	for derivative in derivatives:
 		item_group = frappe.get_doc("Item Group", {"external_id": derivative.get("barcode_type")})
+		if isinstance(items, dict):
+			items = items.values()
+
 		for item in items:
 			if item.item_group == item_group.name:
-				item.set("barcode", derivative.get("barcode_id"))
+				item.set("bio_barcode", derivative.get("barcode_id"))
 				item.save()

@@ -1,5 +1,6 @@
 import sys
 import frappe
+from frappe import _
 from erpnext_biotrack.biotrackthc import sync_up_enabled, get_location, call
 from erpnext_biotrack.biotrackthc.client import BioTrackClientError
 from frappe.utils.data import cstr, cint, flt
@@ -95,7 +96,7 @@ def after_conversion(doc, method):
 	for entry in doc.get("items"):
 		bio_barcode = frappe.get_value("Item", entry.item_code, "bio_barcode")
 		if not bio_barcode:
-			frappe.throw(_("{0} is not a BioTrack Item. Consider to select BioTrack items only or turn off BioTrack synchronization").format(entry.item_code))
+			frappe.throw(_("{0} is not a BioTrack Item. Consider to select BioTrack items only or turn off BioTrack sync-up").format(entry.item_code))
 
 		data.append({
 			"barcodeid": bio_barcode,
@@ -113,9 +114,8 @@ def _create_lot(stock_entry, data):
 	try:
 		res = call("inventory_create_lot", {"data": data})
 		frappe.set_value("Item", stock_entry.lot_item, "bio_barcode", res.get("barcode_id"))
-	except BioTrackClientError as ex:
-		frappe.local.message_log.pop()
-		frappe.throw(ex.message, title="BioTrack synchrony failed")
+	except BioTrackClientError as e:
+		frappe.throw(cstr(e.message), title="BioTrack sync-up failed")
 
 def _create_product(stock_entry, data):
 	product_type = frappe.get_value("Item Group", stock_entry.product_group, "external_id")
@@ -143,8 +143,7 @@ def _create_product(stock_entry, data):
 	try:
 		response = call("inventory_convert", request_data)
 	except BioTrackClientError as ex:
-		frappe.local.message_log.pop()
-		frappe.throw(ex.message, title="BioTrack synchrony failed")
+		frappe.throw(cstr(ex.message), title="BioTrack sync-up failed")
 
 	derivatives = response.get("derivatives", [])
 

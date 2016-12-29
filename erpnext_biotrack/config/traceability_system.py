@@ -43,8 +43,12 @@ def get_data():
             ]
         },
 		{
-			"label": _("Integrations"),
+			"label": _("Setup"),
 			"items": [
+				{
+					"type": "doctype",
+					"name": "Traceability Settings",
+				},
 				{
 					"type": "doctype",
 					"name": "BioTrack Settings",

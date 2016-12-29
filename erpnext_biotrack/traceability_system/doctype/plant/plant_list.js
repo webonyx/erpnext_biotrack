@@ -1,3 +1,24 @@
+frappe.provide('traceability.plant');
+traceability.plant = {
+    make_plant_entry: function (purpose, plants) {
+        if (!plants.length) {
+            return
+        }
+
+        frappe.model.with_doctype('Plant Entry', function () {
+            var doc = frappe.model.get_new_doc('Plant Entry')
+            doc.purpose = purpose;
+            plants.forEach(function (d) {
+                var row = frappe.model.add_child(doc, 'plants')
+                row.plant_code = d.name
+                row.strain = d.strain
+            })
+
+            frappe.set_route('Form', doc.doctype, doc.name)
+        })
+    }
+}
+
 frappe.listview_settings['Plant'] = {
     add_fields: ['disabled', 'posting_date', 'harvest_scheduled', 'destroy_scheduled', 'state'],
     filters: [["disabled", "=", "No"]],
@@ -31,31 +52,43 @@ frappe.listview_settings['Plant'] = {
             }, true)
         }
 
+        function active_plant(d) {
+            return d.docstatus === 1 && d.disabled === 0
+        }
+
         list.get_plants = function (returnIf) {
-            return $.grep(this.get_checked_items(), returnIf);
+            return $.grep(this.get_checked_items(), returnIf)
         }
 
         list.get_plants_to_move = function () {
             return this.get_plants(function (d) {
-                return d.docstatus === 1 && d.disabled === 0;
+                return active_plant(d)
             });
         }
 
         list.get_plants_for_harvest_schedule = function () {
             return this.get_plants(function (d) {
-                return d.docstatus === 1 && d.disabled === 0 && d.destroy_scheduled === 0 && d.harvest_scheduled === 0;
+                return active_plant(d) && d.destroy_scheduled === 0 && d.state === 'Growing' && d.harvest_scheduled === 0;
             });
         }
 
         list.get_plants_for_harvest = function () {
             return this.get_plants(function (d) {
-                return d.docstatus === 1 && d.disabled === 0 && d.destroy_scheduled === 0 && d.harvest_scheduled === 1;
+                return active_plant(d) && d.destroy_scheduled === 0 && d.state === 'Growing' && d.harvest_scheduled === 1;
             });
         }
 
+        list.get_plants_to_cure = function () {
+            return this.get_plants(function (d) {
+                return active_plant(d) && d.destroy_scheduled === 0 && d.state === 'Drying';
+            });
+        }
+
+        list.get_plants_to_convert = list.get_plants_for_harvest_schedule
+
         list.get_plants_to_destroy = function () {
             return this.get_plants(function (d) {
-                return d.docstatus === 1 && d.disabled === 0;
+                return active_plant(d);
             });
         }
 
@@ -71,7 +104,8 @@ frappe.listview_settings['Plant'] = {
 
         add_action(__('Move'), this.move_plant, 'pl-move');
         add_action(__('Harvest'), this.harvest, 'pl-harvest');
-        add_action(__('Convert'), this.convert, 'pl-convert');
+        add_action(__('Cure'), this.cure, 'pl-cure');
+        add_action(__('Move to Warehouse'), this.convert, 'pl-convert');
         add_action(__('Harvest Schedule'), this.harvest_schedule, 'pl-harvest-schedule');
         add_action(__('Destroy Schedule'), this.destroy_schedule, 'pl-destroy-schedule');
     },
@@ -117,6 +151,8 @@ frappe.listview_settings['Plant'] = {
         toggle_action('.pl-harvest-schedule', list.get_plants_for_harvest_schedule());
         toggle_action('.pl-destroy-schedule', list.get_plants_to_destroy());
         toggle_action('.pl-harvest', list.get_plants_for_harvest());
+        toggle_action('.pl-cure', list.get_plants_to_cure());
+        toggle_action('.pl-convert', list.get_plants_to_convert());
     },
     build_preview_table: function (plants, list) {
         var rows;
@@ -259,23 +295,15 @@ frappe.listview_settings['Plant'] = {
         dialog.show();
     },
     harvest: function (list) {
-        var checked_items = list.get_plants_for_harvest();
-        if (!checked_items.length) {
-            return
-        }
-
-        frappe.model.with_doctype('Plant Entry', function () {
-            var doc = frappe.model.get_new_doc('Plant Entry');
-            doc.purpose = "Harvest";
-            checked_items.forEach(function (d) {
-                var row = frappe.model.add_child(doc, 'plants');
-                row.plant_code = d.name;
-                row.strain = d.strain;
-            });
-
-            frappe.set_route('Form', doc.doctype, doc.name);
-        })
+        traceability.plant.make_plant_entry('Harvest', list.get_plants_for_harvest())
     },
+    cure: function (list) {
+        traceability.plant.make_plant_entry('Cure', list.get_plants_to_cure())
+    },
+    convert: function (list) {
+        traceability.plant.make_plant_entry('Convert', list.get_plants_to_convert())
+    },
+
     destroy_schedule: function (list) {
         var checked_items = list.get_plants_to_destroy();
 
