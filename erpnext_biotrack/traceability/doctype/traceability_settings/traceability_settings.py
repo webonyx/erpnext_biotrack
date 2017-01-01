@@ -12,7 +12,7 @@ class TraceabilitySettings(Document):
 @frappe.whitelist()
 def get_default_warehouse():
 	cultivation_warehouse = frappe.db.get_single_value("Traceability Settings",
-											   "default_cultivation_warehouse")
+											   "default_source_warehouse")
 	harvest_warehouse = frappe.db.get_single_value("Traceability Settings",
 											  "default_harvest_warehouse")
 

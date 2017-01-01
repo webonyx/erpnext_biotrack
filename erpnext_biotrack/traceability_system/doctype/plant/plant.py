@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import json
 import frappe
+from frappe import _
 from erpnext.stock.utils import get_stock_balance
 from erpnext_biotrack.biotrackthc import call as biotrackthc_call
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
@@ -28,12 +29,20 @@ removal_reasons = {
 
 
 class Plant(Document):
-	def on_submit(self):
+	def validate(self):
 		if frappe.flags.in_import:
 			return
 
-		self.validate_item_balance()
-		self.make_stock_entry()
+		if (self.item_code and self.source_plant) or (not self.item_code and not self.source_plant):
+			frappe.throw(_('Either Source Plant or Source Item is required.'))
+
+	def before_submit(self):
+		if frappe.flags.in_import or self.flags.in_bulk:
+			return
+
+		if self.item_code:
+			self.validate_item_balance()
+			self.make_stock_entry()
 
 		# bulk add
 		if self.qty > 1 and not self.flags.in_bulk:
@@ -48,11 +57,12 @@ class Plant(Document):
 				self.flags.bulk_plants.append(plant)
 
 
-	def on_cancel(self):
+	def before_cancel(self):
 		if self.flags.in_import:
 			return
 
-		self.make_stock_entry_cancel()
+		if self.item_code:
+			self.cancel_stock_entry()
 
 	def on_trash(self):
 		# able to delete new Plants
@@ -67,20 +77,37 @@ class Plant(Document):
 
 	def validate_item_balance(self):
 		# able to delete new Plants
+		source_warehouse = self.get_source_warehouse()
+
 		item = frappe.get_doc("Item", self.get("item_code"))
-		qty = get_stock_balance(item.item_code, self.get("from_warehouse"))
+		qty = get_stock_balance(item.item_code, source_warehouse)
 		if qty < self.qty:
-			frappe.throw("The provided quantity <strong>{0}</strong> exceeds stock balance. "
-						 "Stock balance remaining <strong>{1}</strong>".format(self.qty, qty))
+			frappe.throw("The provided quantity <strong>{0}</strong> exceeds stock balance in warehouse {1}. "
+						 "Stock balance remaining <strong>{2}</strong>".format(self.qty, source_warehouse, qty))
+
+	def get_source_warehouse(self):
+		source_warehouse = frappe.db.get_single_value("Traceability Settings", "default_source_warehouse")
+		if not source_warehouse:
+			filters = {
+				"item_code": self.item_code,
+				"actual_qty": [">", 0]
+			}
+
+			source_warehouse = frappe.get_value("Bin", filters=filters, fieldname='warehouse')
+
+			if not source_warehouse:
+				frappe.throw(_("Item {0} is not available in any warehouse").format(self.item_code))
+
+		return source_warehouse
 
 	def make_stock_entry(self):
 		item = frappe.get_doc("Item", self.get("item_code"))
-		ste = make_stock_entry(item_code=item.name, source=self.get("from_warehouse"), qty=1, do_not_save=True)
+		ste = make_stock_entry(item_code=item.name, source=self.get_source_warehouse(), qty=1, do_not_save=True)
 		ste.plant = self.name
 		ste.submit()
 
 
-	def make_stock_entry_cancel(self):
+	def cancel_stock_entry(self):
 		name = frappe.db.exists("Stock Entry", {"plant": self.name})
 		if name:
 			ste = frappe.get_doc("Stock Entry", name)
@@ -112,9 +139,7 @@ class Plant(Document):
 			item.delete()
 
 	def move_to(self, plant_room):
-		self.plant_room = plant_room.name
-		self.flags.ignore_validate_update_after_submit = True
-		self.save()
+		frappe.db.set_value("Plant", self.name, "plant_room", plant_room.name)
 
 	@Document.whitelist
 	def cure(self, flower, other_material=None, waste=None, additional_collection=None):
@@ -361,6 +386,23 @@ def destroy_schedule():
 		plants.append(plant)
 
 	call_hook_method("plant_events", None, "on_destroy_schedule", plants=plants, reason_type=reason_type, reason=reason_txt, override=override)
+
+@frappe.whitelist()
+def get_source_details():
+	source_plant = frappe.form_dict.get("source_plant")
+	source_item = frappe.form_dict.get("item_code")
+
+	if source_plant:
+		source = frappe.get_doc("Plant", source_plant)
+	else:
+		source = frappe.get_doc("Item", source_item)
+
+	ret = {
+		"strain": source.strain,
+		"item_group": source.item_group if source_item else "Mature Plant",
+	}
+
+	return ret
 
 def bulk_clone(name):
 	source_plant = frappe.get_doc("Plant", name)

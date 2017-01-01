@@ -9,22 +9,15 @@ frappe.ui.form.on('Plant', {
     },
     refresh: function (frm) {
         var is_new = frm.is_new();
-        frm.toggle_display("qty", frm.doc.docstatus != 1);
+        frm.toggle_display("qty", is_new);
         frm.toggle_display("destroy_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);
         frm.toggle_display("disabled", !is_new);
-        frm.toggle_reqd("item_group", is_new);
-        frm.toggle_reqd("item_code", is_new);
-        frm.toggle_reqd("from_warehouse", frm.doc.docstatus != 1);
+        frm.toggle_display("source_plant", false);
 
         erpnext_biotrack.plant.setup_actions(frm);
         erpnext_biotrack.plant.setup_queries(frm);
-
-        if (frm.doc.docstatus == 0) {
-            erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
-            })
-        }
 
         function cal_remaining_time(d) {
             var expire_d = moment(d).add(72, "hours");
@@ -63,35 +56,36 @@ frappe.ui.form.on('Plant', {
                 );
             } else {
                 frm.dashboard.add_comment(
-                    __("This Plant is scheduled for destruction. <strong>{0}</strong>", [cal_remaining_time(frm.doc.remove_time)]),
+                    __("Plant has been scheduled for destruction. <strong>{0}</strong>", [cal_remaining_time(frm.doc.remove_time)]),
                     true
                 );
             }
 
         }
     },
-    item_group: function (frm) {
-        frm.set_value('item_code', '');
+    validate: function (frm) {
+        if ((!frm.doc.source_plant && !frm.doc.item_code) || (frm.doc.source_plant && frm.doc.item_code)) {
+            frappe.msgprint({
+                'title': __('Validation Error'),
+                'message': __('Either Source Plant or Source Item is required.'),
+                'indicator': 'red'
+            })
+
+            validated = false
+        }
+    },
+    strain: function (frm) {
+        erpnext_biotrack.plant.setup_queries(frm);
     },
     item_code: function (frm) {
-        erpnext_biotrack.plant.setup_queries(frm);
-        frm.set_value('from_warehouse', '');
+        if (frm.doc.item_code) {
+            erpnext_biotrack.plant.get_source_details(frm, {'item_code': frm.doc.item_code});
+        }
     },
-    from_warehouse: function (frm) {
-        erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
-            if (!actual_qty) {
-                frappe.msgprint(
-                    {
-                        message: __(
-                            "Qty not available for <strong>{0}</strong> in warehouse <strong>{1}</strong>",
-                            [frm.doc.item_code, frm.doc.from_warehouse]
-                        ),
-                        title: "Insufficient Stock",
-                        indicator: 'red'
-                    }
-                );
-            }
-        })
+    source_plant: function (frm) {
+        if (frm.doc.source_plant) {
+            erpnext_biotrack.plant.get_source_details(frm, {'source_plant': frm.doc.source_plant});
+        }
     }
 });
 
@@ -114,94 +108,47 @@ frappe.ui.form.on('Plant', 'before_submit', function (frm) {
     return deferred.promise();
 });
 
-frappe.ui.form.on('Plant', 'before_submit', function (frm) {
-    var deferred = $.Deferred();
-    erpnext_biotrack.plant.get_warehouse_details(frm, function (actual_qty) {
-        if (frm.doc.qty > actual_qty) {
-            frappe.msgprint(
-                {
-                    message: __('Available qty is <strong>{0}</strong>, you need <strong>{1}</strong>', [actual_qty, frm.doc.qty]),
-                    title: "Insufficient Stock",
-                    indicator: 'red'
-                }
-            );
-
-            validated = 0;
-            deferred.reject();
-        } else {
-            deferred.resolve();
-        }
-
-    });
-
-    return deferred.promise();
-});
-
 $.extend(erpnext_biotrack.plant, {
-    get_warehouse_details: function (frm, fn) {
+    get_source_details: function (frm, args) {
         frappe.call({
-            method: 'erpnext.stock.doctype.stock_entry.stock_entry.get_warehouse_details',
-            args: {
-                "args": {
-                    item_code: frm.doc.item_code,
-                    warehouse: frm.doc.from_warehouse,
-                    posting_date: frm.doc.posting_date,
-                    posting_time: frm.doc.posting_time
-                }
-            },
+            method: 'erpnext_biotrack.traceability_system.doctype.plant.plant.get_source_details',
+            args: args,
             callback: function (r) {
-                var actual_qty = r.message.actual_qty || 0;
-                frm.field_map('qty', function (field) {
-                    field.description = __('Available <strong>{0}</strong>', [actual_qty]);
-                });
+                $.each(r.message, function (k, v) {
+                    if (v) {
+                        frm.doc[k] = v
+                    }
+                })
 
-                fn(actual_qty);
+                frm.refresh()
             }
         });
     },
     setup_queries: function (frm) {
-        frm.fields_dict['item_code'].get_query = function (doc, cdt, cdn) {
-            if (frm.doc.item_group) {
-                return {
-                    filters: {is_stock_item: 1, item_group: frm.doc.item_group}
-                }
-            } else {
-                return {
-                    filters: {is_stock_item: 1, item_group: ["in", frm.get_field('item_group').df.options.split("\n")]}
-                }
+        frm.fields_dict['source_plant'].get_query = function (doc, cdt, cdn) {
+            var filters = {is_mother_plant: 1}
+            if (frm.doc.strain) {
+                filters['strain'] = frm.doc.strain
+            }
+
+            return {
+                filters: filters
             }
         };
 
-        if (frm.doc.item_code) {
-            frappe.call({
-                method: 'erpnext.stock.dashboard.item_dashboard.get_data',
-                args: {
-                    item_code: frm.doc.item_code
-                },
-                callback: function (r) {
-                    var data = r.message || [];
-                    frm.fields_dict['from_warehouse'].get_query = function (doc, cdt, cdn) {
-                        return {
-                            filters: {
-                                'name': ["in", data.map(function (r) {
-                                    return r.warehouse
-                                })]
-                            }
-                        }
-                    };
+        frm.fields_dict['item_code'].get_query = function (doc, cdt, cdn) {
+            var filters = {is_stock_item: 1, item_group: ["in", frm.get_field('item_group').df.options.split("\n")]}
 
-                    if (!data) {
-                        frappe.msgprint(
-                            {
-                                title: __('Insufficient Stock'),
-                                message: __('Item <strong>{0}</strong> is not available in any warehouses', [frm.doc.item_code]),
-                                indicator: 'red'
-                            }
-                        );
-                    }
-                }
-            });
-        }
+            if (frm.doc.strain) {
+                filters['strain'] = frm.doc.strain
+            } else {
+                filters['strain'] = ["!=", ""]
+            }
+
+            return {
+                filters: filters
+            }
+        };
     },
     setup_actions: function (frm) {
         frm.page.clear_actions_menu();
@@ -292,8 +239,8 @@ $.extend(erpnext_biotrack.plant, {
             var doc = frappe.model.get_new_doc('Plant Entry')
             doc.purpose = (frm.doc.state === 'Growing' ? 'Harvest' : 'Cure')
             var row = frappe.model.add_child(doc, 'plants')
-                row.plant_code = frm.doc.name
-                row.strain = frm.doc.strain
+            row.plant_code = frm.doc.name
+            row.strain = frm.doc.strain
 
             frappe.set_route('Form', doc.doctype, doc.name)
         })
@@ -303,8 +250,8 @@ $.extend(erpnext_biotrack.plant, {
             var doc = frappe.model.get_new_doc('Plant Entry')
             doc.purpose = 'Convert';
             var row = frappe.model.add_child(doc, 'plants')
-                row.plant_code = frm.doc.name
-                row.strain = frm.doc.strain
+            row.plant_code = frm.doc.name
+            row.strain = frm.doc.strain
 
             frappe.set_route('Form', doc.doctype, doc.name)
         })

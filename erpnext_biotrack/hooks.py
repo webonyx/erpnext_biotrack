@@ -220,8 +220,8 @@ doc_events = {
 		"on_trash": "erpnext_biotrack.item_utils.remove_certificate_on_trash_file",
 	},
 	"Plant": {
-		"on_submit": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
-		"on_cancel": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_submit": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
+		"before_cancel": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"on_trash": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"on_harvest_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook",
 		"on_destroy_schedule": "erpnext_biotrack.biotrackthc.hooks.plant.call_hook"

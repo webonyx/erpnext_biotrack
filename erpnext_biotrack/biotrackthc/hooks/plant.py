@@ -21,7 +21,7 @@ def is_bio_plant(plant):
 	return cstr(plant.get("bio_barcode")) != ""
 
 
-def on_submit(plant):
+def before_submit(plant):
 	# only root plant get handled
 	if plant.flags.in_bulk:
 		return
@@ -33,31 +33,46 @@ def on_submit(plant):
 		frappe.throw("Bulk adding qty mismatch")
 
 	plant_room = frappe.get_doc("Plant Room", plant.get("plant_room"))
-	result = call("plant_new", {
-		"room": plant_room.external_id,
-		"quantity": plant.get("qty"),
-		"strain": plant.get("strain"),
-		"source": plant.get("item_code"),
-		"mother": cint(plant.get("is_mother")),
-		"location": get_location()
-	})
+
+	source = None
+	if plant.get("item_code"):
+		source = frappe.get_value("Item", plant.item_code, "bio_barcode")
+	elif plant.get("source_plant"):
+		source = frappe.get_value("Plant", plant.source_plant, "bio_barcode")
+
+	if not source:
+		return
+
+	try:
+		result = call("plant_new", {
+			"room": plant_room.external_id,
+			"quantity": plant.get("qty"),
+			"strain": plant.get("strain"),
+			"source": source,
+			"mother": cint(plant.get("is_mother")),
+			"location": get_location()
+		})
+	except BioTrackClientError as e:
+		plant.cancel_stock_entry()
+		frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
 
 	for idx, barcode in enumerate(result.get("barcode_id")):
 		doc = plants[idx]
-		doc.set("bio_barcode", barcode)
-		doc.flags.ignore_validate_update_after_submit = True
-		doc.save()
+		frappe.db.set_value("Plant", doc.name, "bio_barcode", barcode)
 
 
-def on_cancel(plant):
+def before_cancel(plant):
 	"""Call plant_new_undo api"""
 	if not is_bio_plant(plant) or plant.state != "Growing":
 		return
 
 	# Barcode 9160883599199700 is no longer in a state where it can be un-done.
-	call("plant_new_undo", {
-		"barcodeid": [plant.bio_barcode],
-	})
+	try:
+		call("plant_new_undo", {
+			"barcodeid": [plant.bio_barcode],
+		})
+	except BioTrackClientError as e:
+		frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
 
 def on_trash(plant):
 	if not is_bio_plant(plant):
