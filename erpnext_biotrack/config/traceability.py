@@ -43,6 +43,16 @@ def get_data():
             ]
         },
 		{
+			"label": _("Reports"),
+			"items": [
+				{
+					"type": "report",
+					"name": "Growing Plants",
+					"doctype": "Plant",
+					"is_query_report": True
+				}
+			]
+		},{
 			"label": _("Setup"),
 			"items": [
 				{

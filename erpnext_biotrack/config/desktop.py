@@ -4,10 +4,10 @@ from frappe import _
 def get_data():
     return [
         {
-            "module_name": "Traceability System",
+            "module_name": "Traceability",
             "label": _("Traceability"),
             "color": "green",
-            "icon": "icon-leaf",
+            "icon": "fa fa-leaf",
             "type": "module",
             "hidden": 1
         },

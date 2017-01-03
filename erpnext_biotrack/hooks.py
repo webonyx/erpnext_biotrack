@@ -6,7 +6,7 @@ app_name = "erpnext_biotrack"
 app_title = "ERPNext Traceability"
 app_publisher = "Webonyx"
 app_description = "Traceability System based on ERPNext"
-app_icon = "octicon octicon-globe"
+app_icon = "fa fa-leaf"
 app_color = "green"
 app_email = "viet@webonyx.com"
 app_license = "MIT"
@@ -84,7 +84,11 @@ fixtures = [
 				"Quotation Item-potency",
 				"Quotation Item-thca",
 
-				"Integration Request-action"
+				"Integration Request-action",
+
+				"Plant Room-bio_id",
+				"Plant Room-bio_name",
+				"Plant Room-bio_transactionid"
 			)]
 		]
 	},
@@ -154,7 +158,7 @@ doctype_list_js = {
 }
 
 standard_queries = {
-	# "Plant": "erpnext_biotrack.traceability_system.doctype.plant.plant.get_plant_list"
+	# "Plant": "erpnext_biotrack.traceability.doctype.plant.plant.get_plant_list"
 }
 
 # Website user home page (by function)
@@ -230,6 +234,11 @@ doc_events = {
 		"before_submit": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook",
 		"before_cancel": "erpnext_biotrack.biotrackthc.hooks.plant_entry.call_hook"
 	},
+	"Plant Room": {
+		"after_insert": "erpnext_biotrack.biotrackthc.hooks.plant_room.call_hook",
+		"on_update": "erpnext_biotrack.biotrackthc.hooks.plant_room.call_hook",
+		"on_trash": "erpnext_biotrack.biotrackthc.hooks.plant_room.call_hook",
+	},
 }
 
 plant_events = [
@@ -246,7 +255,7 @@ scheduler_events = {
 	# "daily": [
 	# ],
 	"hourly": [
-		"erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_scheduled_plants",
+		"erpnext_biotrack.traceability.doctype.plant.plant.destroy_scheduled_plants",
 	],
 	# "weekly": [
 	# ]

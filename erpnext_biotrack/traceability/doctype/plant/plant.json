@@ -905,7 +905,7 @@
  "max_attachments": 1, 
  "modified": "2016-12-30 20:34:37.842776", 
  "modified_by": "Administrator", 
- "module": "Traceability System", 
+ "module": "Traceability",
  "name": "Plant", 
  "name_case": "", 
  "owner": "Administrator", 

@@ -26,3 +26,5 @@ execute:frappe.db.sql("""DELETE FROM `tabDesktop Icon` WHERE module_name = 'Plan
 execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_items")
 execute:frappe.delete_doc_if_exists("Custom Field", "Item-sub_lot_sec")
 erpnext_biotrack.patches.fix_roles
+erpnext_biotrack.patches.v0_3.migrate_doctype_to_traceability
+erpnext_biotrack.patches.v0_3.migrate_plant_room_data

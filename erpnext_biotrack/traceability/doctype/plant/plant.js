@@ -111,7 +111,7 @@ frappe.ui.form.on('Plant', 'before_submit', function (frm) {
 $.extend(erpnext_biotrack.plant, {
     get_source_details: function (frm, args) {
         frappe.call({
-            method: 'erpnext_biotrack.traceability_system.doctype.plant.plant.get_source_details',
+            method: 'erpnext_biotrack.traceability.doctype.plant.plant.get_source_details',
             args: args,
             callback: function (r) {
                 $.each(r.message, function (k, v) {

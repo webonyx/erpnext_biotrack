@@ -7,7 +7,7 @@ from frappe.utils import get_fullname
 
 from .client import get_data
 from erpnext_biotrack.config import get_default_stock_warehouse
-from erpnext_biotrack.traceability_system.doctype.strain import find_strain
+from erpnext_biotrack.traceability.doctype.strain import find_strain
 from frappe.utils.data import flt, nowdate, nowtime, now, cint
 
 

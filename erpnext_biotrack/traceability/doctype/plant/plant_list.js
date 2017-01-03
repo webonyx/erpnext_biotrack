@@ -239,7 +239,7 @@ frappe.listview_settings['Plant'] = {
             }
 
             frappe.call({
-                method: "erpnext_biotrack.traceability_system.doctype.plant.plant.move",
+                method: "erpnext_biotrack.traceability.doctype.plant.plant.move",
                 freeze: true,
                 args: {
                     items: $.map(items, function (d, i) {
@@ -278,7 +278,7 @@ frappe.listview_settings['Plant'] = {
         dialog.set_primary_action(__('Schedule'), function () {
             list.set_working(true);
             frappe.call({
-                method: "erpnext_biotrack.traceability_system.doctype.plant.plant.harvest_schedule",
+                method: "erpnext_biotrack.traceability.doctype.plant.plant.harvest_schedule",
                 freeze: true,
                 args: {
                     items: $.map(checked_items, function (d, i) {
@@ -374,7 +374,7 @@ frappe.listview_settings['Plant'] = {
 
             list.set_working(true);
             frappe.call({
-                method: "erpnext_biotrack.traceability_system.doctype.plant.plant.destroy_schedule",
+                method: "erpnext_biotrack.traceability.doctype.plant.plant.destroy_schedule",
                 freeze: true,
                 args: values,
                 callback: function (r) {

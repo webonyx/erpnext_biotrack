@@ -15,16 +15,16 @@ def sync():
 
 
 def sync_plant_room(biotrack_data):
-	name = frappe.db.sql("SELECT name FROM `tabPlant Room` WHERE plant_room_name=%(plant_room_name)s OR external_id=%(external_id)s",
+	name = frappe.db.sql("SELECT name FROM `tabPlant Room` WHERE plant_room_name=%(plant_room_name)s OR bio_id=%(bio_id)s",
 		{
 			"plant_room_name": biotrack_data.get("name"),
-			"external_id": biotrack_data.get("roomid")
+			"bio_id": biotrack_data.get("roomid")
 		}
 	, as_dict=True)
 
 	if name:
 		doc = frappe.get_doc("Plant Room", name[0])
-		if doc.get("external_transaction_id") == biotrack_data.get("transactionid"):
+		if doc.get("bio_transactionid") == biotrack_data.get("transactionid"):
 			return False
 
 	else:
@@ -32,8 +32,9 @@ def sync_plant_room(biotrack_data):
 
 	doc.update({
 		"plant_room_name": biotrack_data.get("name"),
-		"external_id": biotrack_data.get("roomid"),
-		"external_transaction_id": biotrack_data.get("transactionid"),
+		"bio_name": biotrack_data.get("name"),
+		"bio_id": biotrack_data.get("roomid"),
+		"bio_transactionid": biotrack_data.get("transactionid"),
 		"disabled": biotrack_data.get("deleted"),
 	})
 
