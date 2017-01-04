@@ -152,7 +152,6 @@ doctype_list_js = {
 	"Item": "custom_scripts/item_list.js",
 	"Customer": "custom_scripts/customer_list.js",
 	"Employee": "custom_scripts/employee_list.js",
-	"Supplier": "custom_scripts/supplier_list.js",
 	"Quality Inspection": "custom_scripts/quality_inspection_list.js",
 	"Warehouse": "custom_scripts/warehouse_list.js"
 }

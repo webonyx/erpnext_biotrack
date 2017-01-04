@@ -40,9 +40,6 @@ frappe.listview_settings['Plant'] = {
         console.log(list);
     },
     onload: function (list) {
-        list.listview.stats.push("state");
-        list.listview.stats.push("plant_room");
-
         if (frappe.boot.biotrackthc_sync_down) {
             list.page.add_action_item(__("BioTrackTHC Sync"), function () {
                 frappe.call({

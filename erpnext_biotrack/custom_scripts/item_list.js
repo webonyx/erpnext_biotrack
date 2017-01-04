@@ -28,9 +28,6 @@ frappe.listview_settings['Item'] = $.extend({}, settings, {
             settings.onload(list);
         }
 
-        list.listview.stats.push("test_result");
-        list.listview.stats.push("item_group");
-
         list.page.add_action_item(__("Create Lot"), function () {
             new_stock_entry('Create Lot');
         });
