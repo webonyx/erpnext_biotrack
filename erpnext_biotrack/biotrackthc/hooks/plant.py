@@ -2,6 +2,7 @@ import sys
 import frappe
 from erpnext_biotrack.biotrackthc import sync_up_enabled, get_location, call
 from erpnext_biotrack.biotrackthc.client import BioTrackClientError
+from erpnext_biotrack.biotrackthc.hooks.plant_room import is_bio_plant_room
 from frappe.utils.data import cstr, cint, flt
 
 
@@ -23,7 +24,7 @@ def is_bio_plant(plant):
 
 def before_submit(plant):
 	# only root plant get handled
-	if plant.flags.in_bulk:
+	if plant.brother_plant:
 		return
 
 	plants = plant.flags.bulk_plants or []
@@ -33,6 +34,9 @@ def before_submit(plant):
 		frappe.throw("Bulk adding qty mismatch")
 
 	plant_room = frappe.get_doc("Plant Room", plant.get("plant_room"))
+
+	if not is_bio_plant_room(plant_room):
+		return
 
 	source = None
 	if plant.get("item_code"):
@@ -45,7 +49,7 @@ def before_submit(plant):
 
 	try:
 		result = call("plant_new", {
-			"room": plant_room.external_id,
+			"room": plant_room.bio_id,
 			"quantity": plant.get("qty"),
 			"strain": plant.get("strain"),
 			"source": source,
@@ -53,12 +57,12 @@ def before_submit(plant):
 			"location": get_location()
 		})
 	except BioTrackClientError as e:
-		plant.cancel_stock_entry()
+		plant.revert_on_failure()
 		frappe.throw(cstr(e.message), title="BioTrackTHC sync up failed")
-
-	for idx, barcode in enumerate(result.get("barcode_id")):
-		doc = plants[idx]
-		frappe.db.set_value("Plant", doc.name, "bio_barcode", barcode)
+	else:
+		for idx, barcode in enumerate(result.get("barcode_id")):
+			doc = plants[idx]
+			frappe.db.set_value("Plant", doc.name, "bio_barcode", barcode, update_modified=False)
 
 
 def before_cancel(plant):

@@ -40,7 +40,6 @@ fixtures = [
 				"Employee-external_id",
 				"Employee-external_transaction_id",
 
-
 				"Warehouse-external_id",
 				"Warehouse-external_transaction_id",
 				"Warehouse-quarentine",
@@ -207,12 +206,13 @@ doc_events = {
 		"validate": "erpnext_biotrack.item_utils.on_validate"
 	},
 	"Stock Entry": {
-		"on_submit": [
-			"erpnext_biotrack.stock_entry.on_submit", # for conversion handler
-			"erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook", # for new_inventory sync up
+		"before_submit": [
+			"erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",  # for new_inventory sync up
+			"erpnext_biotrack.stock_entry.before_submit",  # for conversion handler
 		],
+		"validate": "erpnext_biotrack.stock_entry.validate",
 		"get_item_details": "erpnext_biotrack.stock_entry.get_item_details",
-		"after_conversion": "erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",
+		"on_conversion": "erpnext_biotrack.biotrackthc.hooks.stock_entry.call_hook",
 	},
 	"Quality Inspection": {
 		"on_submit": [

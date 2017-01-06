@@ -9,7 +9,7 @@ frappe.ui.form.on('Plant', {
     },
     refresh: function (frm) {
         var is_new = frm.is_new();
-        frm.toggle_display("qty", is_new);
+        frm.toggle_display("qty", (frm.doc.docstatus == 0));
         frm.toggle_display("destroy_scheduled", !is_new);
         frm.toggle_display("harvest_scheduled", !is_new);
         frm.toggle_display("state", !is_new);

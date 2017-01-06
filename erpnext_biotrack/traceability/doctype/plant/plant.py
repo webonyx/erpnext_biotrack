@@ -11,6 +11,7 @@ from erpnext_biotrack.biotrackthc import call as biotrackthc_call
 from erpnext_biotrack.biotrackthc.inventory_room import get_default_warehouse
 from erpnext_biotrack.item_utils import make_item, generate_item_code
 from frappe.desk.reportview import build_match_conditions
+from frappe.model.delete_doc import delete_from_table
 from frappe.utils import call_hook_method
 from frappe.utils.data import cint, now, flt, add_to_date
 from frappe.model.document import Document
@@ -42,20 +43,33 @@ class Plant(Document):
 
 		if self.item_code:
 			self.validate_item_balance()
-			self.make_stock_entry()
 
 		# bulk add
-		if self.qty > 1 and not self.flags.in_bulk:
+		if self.qty > 1 and self.brother_plant is None:
 			self.flags.bulk_add = True
 			self.flags.bulk_plants = []
 
 			for i in xrange(self.qty - 1):
 				plant = frappe.copy_doc(self)
 				plant.qty = 1
+				plant.brother_plant = self.name
 				plant.flags.in_bulk = True
-				plant.submit()
+				plant.save()
 				self.flags.bulk_plants.append(plant)
 
+	def on_submit(self):
+		# root plant
+		if self.brother_plant is None:
+			if self.item_code:
+				frappe.flags.ignore_external_sync = True
+				self.make_stock_entry()
+				frappe.flags.ignore_external_sync = False
+
+			# Submit brother plants
+			for name in frappe.get_list("Plant", {"brother_plant": self.name}):
+				doc = frappe.get_doc("Plant", name)
+				if doc.docstatus == 0:
+					doc.submit()
 
 	def before_cancel(self):
 		if self.flags.in_import:
@@ -102,16 +116,17 @@ class Plant(Document):
 
 	def make_stock_entry(self):
 		item = frappe.get_doc("Item", self.get("item_code"))
-		ste = make_stock_entry(item_code=item.name, source=self.get_source_warehouse(), qty=1, do_not_save=True)
+		ste = make_stock_entry(item_code=item.name, source=self.get_source_warehouse(), qty=self.qty, do_not_save=True)
 		ste.plant = self.name
 		ste.submit()
 
 
-	def cancel_stock_entry(self):
-		name = frappe.db.exists("Stock Entry", {"plant": self.name})
-		if name:
-			ste = frappe.get_doc("Stock Entry", name)
-			ste.cancel()
+	def revert_on_failure(self):
+		for name in frappe.get_list("Plant", {"brother_plant": self.name}):
+			doc = frappe.get_doc("Plant", name)
+			frappe.delete_doc("Plant", doc.name)
+
+		frappe.db.commit()
 
 
 	def collect_item(self, item_group, qty):

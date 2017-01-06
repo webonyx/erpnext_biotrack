@@ -17,7 +17,7 @@ def is_bio_item(item):
 	return cstr(item.get("bio_barcode")) != ""
 
 
-def on_submit(doc, method):
+def before_submit(doc, method):
 	"""BioTrack sync up: inventory_new or inventory_adjust"""
 	if doc.purpose == "Material Issue" and not doc.conversion:
 		for item_entry in doc.get("items"):
@@ -63,6 +63,7 @@ def _inventory_new(item, qty):
 
 	item.update({
 		"bio_barcode": res.get("barcode_id")[0],
+		"transaction_id": res.get("transactionid"),
 		"bio_remaining_quantity": qty
 	})
 
@@ -89,7 +90,7 @@ def _inventory_adjust(item, additional_quantity=None, remove_quantity=None):
 
 	item.save()
 
-def after_conversion(doc, method):
+def on_conversion(doc, method):
 	qty = 0
 	data = []
 
@@ -113,19 +114,19 @@ def after_conversion(doc, method):
 def _create_lot(stock_entry, data):
 	try:
 		res = call("inventory_create_lot", {"data": data})
-		frappe.set_value("Item", stock_entry.lot_item, "bio_barcode", res.get("barcode_id"))
+		frappe.db.set_value("Item", stock_entry.lot_item, {"bio_barcode": res.get("barcode_id"), "disabled": 0}, update_modified=False)
 	except BioTrackClientError as e:
 		frappe.throw(cstr(e.message), title="BioTrack sync-up failed")
 
 def _create_product(stock_entry, data):
-	product_type = frappe.get_value("Item Group", stock_entry.product_group, "external_id")
+	derivative_type = frappe.get_value("Item Group", stock_entry.product_group, "external_id")
 	request_data = {}
 
-	if not product_type:
-		frappe.throw("Inventory type not found")
+	if not derivative_type:
+		frappe.throw("Invalid Inventory type on '{0}'".format(stock_entry.product_group))
 
 	request_data["data"] = data
-	request_data["derivative_type"] = cint(product_type)
+	request_data["derivative_type"] = cint(derivative_type)
 	request_data["derivative_quantity"] = flt(stock_entry.product_qty)
 	request_data["derivative_quantity_uom"] = "g"
 	request_data["waste"] = flt(stock_entry.product_waste)
@@ -133,7 +134,7 @@ def _create_product(stock_entry, data):
 
 	product_usable = flt(stock_entry.product_usable)
 
-	if product_usable > 0:
+	if product_usable:
 		request_data["derivative_usable"] = product_usable
 
 	if stock_entry.product_name:
@@ -152,7 +153,7 @@ def _create_product(stock_entry, data):
 		barcode = derivative.get("barcode_id")
 
 		if item_type == 27 and stock_entry.waste_item:
-			frappe.set_value("Item", stock_entry.waste_item, "bio_barcode", barcode)
+			frappe.db.set_value("Item", stock_entry.waste_item, {"bio_barcode": barcode, "disabled": 0}, update_modified=False)
 
-		elif item_type == product_type and stock_entry.product_item:
-			frappe.set_value("Item", stock_entry.product_item, "bio_barcode", barcode)
+		elif item_type == derivative_type and stock_entry.product_item:
+			frappe.db.set_value("Item", stock_entry.product_item, {"bio_barcode": barcode, "disabled": 0}, update_modified=False)

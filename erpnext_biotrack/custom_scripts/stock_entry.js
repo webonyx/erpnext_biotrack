@@ -1,5 +1,4 @@
 var available_products = [];
-var ccscript = $.extend({}, {}, cur_frm.cscript);
 
 var ste_listeners = {
     onload: function (frm) {
@@ -7,14 +6,39 @@ var ste_listeners = {
         frm.set_df_property("product_group", "only_select", true);
     },
     refresh: function (frm) {
-        // ste.toggle_related_fields(frm);
+        ste_listeners.toggle_related_fields(frm);
         ste.set_items_query(frm);
+    },
+    validate: function (frm) {
+        var doc = frm.doc;
 
-        ste_listeners.conversion(frm);
+        if (!doc.conversion) {
+            return
+        }
+
 
     },
+    toggle_related_fields: function (frm) {
+        var conversion_support = frm.doc.purpose === 'Material Issue'
+
+        frm.toggle_display("conversion_sec", conversion_support);
+        frm.toggle_display("lot_group", frm.doc.conversion == 'Create Lot');
+
+        frm.toggle_display(
+            ["product_group", "product_name", "product_qty", "product_usable", "product_waste"],
+            frm.doc.conversion == 'Create Product'
+        );
+
+        frm.toggle_reqd('product_group', frm.doc.conversion === 'Create Product');
+        frm.toggle_reqd('product_qty', frm.doc.conversion === 'Create Product');
+        frm.toggle_reqd('lot_group', frm.doc.conversion === 'Create Lot');
+    },
+    purpose: function (frm) {
+        ste_listeners.toggle_related_fields(frm);
+    },
     conversion: function (frm) {
-        ste.toggle_related_fields(frm);
+        ste_listeners.toggle_related_fields(frm);
+        ste.set_items_query(frm);
 
         if (frm.doc.conversion === 'Create Product') {
             if (!available_products.length) {
@@ -44,7 +68,6 @@ var ste_listeners = {
             method: 'erpnext_biotrack.controllers.queries.lookup_product_sources',
             args: {product: frm.doc.product_group},
             callback: function (r) {
-                ste.reset_items(frm);
                 ste.item_filters.item_group = ['item_group', 'in', r.message || []];
                 ste.set_items_query(frm);
             }
@@ -53,7 +76,6 @@ var ste_listeners = {
 
     lot_group: function (frm) {
         ste.set_items_query(frm);
-        ste.reset_items(frm);
     },
     from_warehouse: function (frm) {
         ste.set_items_query(frm);
@@ -61,10 +83,9 @@ var ste_listeners = {
 };
 
 frappe.ui.form.on("Stock Entry", ste_listeners);
-cur_frm.cscript = $.extend(cur_frm.cscript, {
-    items_add: function (doc, cdt, cdn) {
-        ccscript.items_add.apply(ccscript, arguments);
-
+frappe.ui.form.on("Stock Entry Detail", {
+    items_add: function (frm, cdt, cdn) {
+        var doc = frm.doc
         if (!doc.conversion) {
             return;
         }
@@ -77,8 +98,11 @@ cur_frm.cscript = $.extend(cur_frm.cscript, {
             // add strain into query filter to make sure next item is same strain
             ste.set_items_query(cur_frm);
         }
+
     },
-    items_remove: function (doc) {
+    items_remove: function (frm) {
+        var doc = frm.doc
+
         if (!doc.conversion) {
             return;
         }
@@ -86,27 +110,16 @@ cur_frm.cscript = $.extend(cur_frm.cscript, {
         // Reset item query base on first row
         if (doc['items'].length === 0) {
             ste.item_filters.strain = null;
-            ste.set_items_query(cur_frm);
+            ste.set_items_query(cur_frm)
         }
     }
-
 });
 
 var ste = {
     item_filters: {
         item_group: null
     },
-    toggle_related_fields: function (frm) {
-        frm.toggle_display("lot_group", frm.doc.conversion == 'Create Lot');
-        frm.toggle_display(
-            ["product_group", "product_name", "product_qty", "product_usable", "product_waste"],
-            frm.doc.conversion == 'Create Product'
-        );
 
-        frm.toggle_reqd('product_group', frm.doc.conversion === 'Create Product');
-        frm.toggle_reqd('product_qty', frm.doc.conversion === 'Create Product');
-        frm.toggle_reqd('lot_group', frm.doc.conversion === 'Create Lot');
-    },
     reset_items: function (frm) {
         if (frm.is_new()) {
             frm.doc['items'] = [];
@@ -148,9 +161,7 @@ var ste = {
                 if (cond) {
                     filters.push(cond)
                 }
-            }
-
-            if (frm.doc.conversion === 'Create Product' && ste.item_filters.item_group) {
+            } else if (ste.item_filters.item_group) {
                 filters.push(ste.item_filters.item_group);
             }
         }

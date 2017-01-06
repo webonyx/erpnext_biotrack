@@ -27,10 +27,10 @@ frappe.listview_settings['Plant'] = {
             return [__("Destroyed"), "grey", "disabled,=,Yes"];
         } else if (doc.destroy_scheduled) {
             return [__("Destroy Scheduled"), "orange", "destroy_scheduled,=,Yes"];
-        } else if (doc.state === 'Drying') {
-            return [__("Cure Ready"), "orange", "state,=,Drying"];
         }  else if (doc.harvest_scheduled) {
             return [__("Harvest Ready"), "orange", "harvest_scheduled,=,Yes"];
+        } else if (doc.state === 'Drying') {
+            return [__("Drying"), "orange", "state,=,Drying"];
         } else {
             return [this.calculate_time_in_room(doc.posting_date), "green", "disabled,=,No"];
         }
@@ -394,7 +394,7 @@ frappe.listview_settings['Plant'] = {
     calculate_time_in_room: function (posting_date) {
         var diff = frappe.datetime.get_diff(frappe.datetime.get_today(), posting_date);
         if (diff == 0) {
-            return comment_when(posting_date);
+            return '0 day';
         }
 
         if (diff == 1) {
