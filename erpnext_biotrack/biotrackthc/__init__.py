@@ -28,11 +28,13 @@ def map_resources(doctype):
 	resources = []
 
 	if doctype == "Plant":
+		resources.append("plant_room")
 		resources.append("plant")
 	elif doctype == "Plant Room":
 		resources.append("plant_room")
 	elif doctype == "Item":
 		resources.append("inventory")
+		resources.append("plant_room")
 		resources.append("plant")
 	elif doctype == "Customer":
 		resources.append("vendor")
