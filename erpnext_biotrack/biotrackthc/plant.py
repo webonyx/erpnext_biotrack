@@ -46,7 +46,7 @@ def sync_plant(data):
 		})
 
 
-	plant_room = frappe.get_doc("Plant Room", {"external_id": data.get("room")})
+	plant_room = frappe.get_doc("Plant Room", {"bio_id": data.get("room")})
 	doc.update({
 		"strain": find_strain(data.get("strain")),
 		"plant_room": plant_room.get("name") if plant_room else "",

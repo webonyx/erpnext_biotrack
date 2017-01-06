@@ -82,7 +82,7 @@ def sync(doctype=None, resources=None, force_sync=False, async_notify=False):
 		try:
 			method()
 		except Exception as e:
-			make_log(name, frappe.get_traceback(), "Failed")
+			make_log(name, frappe.get_traceback() or e.message, "Failed")
 
 	if not doctype:
 		frappe.db.set_value("BioTrack Settings", None, "last_sync_datetime", frappe.utils.now())
