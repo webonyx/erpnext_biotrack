@@ -1,8 +1,27 @@
-#### Make Flower Lot
+#### Convert Flower to Flower Lot
+
+`Traceability > Stock Entry > New`
+
+* **Purpose** = Material Issue
+* **Conversion Type** = Create Lot
+* **Lot Type** = Flow Lot (This field will be appeared when you complete Conversion Type field above)
+* **Default Source Warehouse** Select warehouse where you want to take items for conversion. Once it's specified, item's qty will be automatically filled on item adding
+* **Items** Collect item for transaction
+
 
 ---
 
-#### Make Product
+#### Create Product
+
+`Traceability > Stock Entry > New`
+
+* **Purpose** = Material Issue
+* **Conversion Type** = Create Product
+* **Target Item Group** Select product type you want to get after conversion. Example: _Usable Marijuana_
+* **Total Units Produce From Conversion** Product qty
+* Other related product fields
+* **Default Source Warehouse** Select warehouse where you want to take items for conversion. Once it's specified, item's qty will be automatically filled on item adding
+* **Items** Collect item for transaction
 
 ---
 

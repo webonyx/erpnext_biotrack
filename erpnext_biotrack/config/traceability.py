@@ -38,6 +38,10 @@ def get_data():
                 },
 				{
                     "type": "doctype",
+                    "name": "Stock Entry",
+                },
+				{
+                    "type": "doctype",
                     "name": "Warehouse",
                 }
             ]
