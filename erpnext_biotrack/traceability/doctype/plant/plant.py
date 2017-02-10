@@ -361,15 +361,34 @@ def move():
 	"""Plant moving api"""
 	items = json.loads(frappe.form_dict.get('items'))
 	target = frappe.form_dict.get('target')
+	device = frappe.form_dict.get('device')
 	plant_room = frappe.get_doc("Plant Room", target)
 
 	plants = []
-	for name in items:
-		plant = frappe.get_doc("Plant", name)
-		plant.move_to(plant_room)
-		plants.append(plant)
+	invalid_plants = []
 
-	call_hook_method("plant_events", None, "on_plant_move", plants=plants, plant_room=plant_room)\
+	for name in items:
+		if device == "mobile":
+			filters = {"bio_barcode": name}
+		else:
+			filters = {"name": name}
+
+		if frappe.db.exists("Plant", filters):
+			plants.append(filters)
+		else:
+			invalid_plants.append(name)
+
+	if len(invalid_plants) == 0:
+		moved = []
+		for f in plants:
+			plant = frappe.get_doc("Plant", f)
+			plant.move_to(plant_room)
+			moved.append(plant)
+
+		call_hook_method("plant_events", None, "on_plant_move", plants=moved, plant_room=plant_room)
+	else:
+		frappe.throw("Scanned list have some plants that are not in system. They are: {}".format(", ".join(invalid_plants)))
+
 
 @frappe.whitelist()
 def harvest_schedule():
